@@ -1,0 +1,59 @@
+// ─── Dog ────────────────────────────────────────────────────────────────────
+
+export type DogSize = 'small' | 'medium' | 'large' | 'extra-large'
+
+export interface CareScheduleEntry {
+  time: string     // e.g. "08:00"
+  taskType: TaskType
+  note?: string
+}
+
+export interface Dog {
+  id: string
+  name: string
+  breed: string
+  size: DogSize
+  ownerName: string
+  ownerContact: string
+  photoUrl?: string
+  // Care instructions
+  behaviorNotes: string
+  foodNotes: string
+  medicationNotes: string
+  walkNotes: string
+  emergencyNotes: string
+  // Regular daily schedule
+  careSchedule: CareScheduleEntry[]
+  createdAt: string
+  updatedAt: string
+}
+
+// ─── Stay ────────────────────────────────────────────────────────────────────
+
+export interface Stay {
+  id: string
+  dogId: string
+  startDate: string   // ISO date string
+  endDate: string     // ISO date string
+  notes?: string
+  createdAt: string
+}
+
+// ─── Task ────────────────────────────────────────────────────────────────────
+
+export type TaskType = 'walk' | 'meal' | 'medication' | 'potty' | 'play' | 'groom' | 'other'
+
+export type TaskStatus = 'pending' | 'done' | 'skipped' | 'overdue'
+
+export interface Task {
+  id: string
+  stayId: string
+  dogId: string
+  dogName: string
+  type: TaskType
+  title: string
+  scheduledTime: string   // ISO datetime string
+  note?: string
+  status: TaskStatus
+  completedAt?: string
+}
