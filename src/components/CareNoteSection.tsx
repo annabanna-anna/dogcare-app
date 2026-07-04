@@ -12,7 +12,7 @@ export default function CareNoteSection({
   title,
   icon,
   content,
-  accentColor = '#f8593a',
+  accentColor = '#ff4514',
   emptyText = 'No notes added.',
 }: Props) {
   return (

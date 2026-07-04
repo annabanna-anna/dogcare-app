@@ -11,8 +11,8 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<Variant, string> = {
-  primary:   'bg-coral text-white active:bg-[#e04428] disabled:opacity-40',
-  secondary: 'bg-white border border-border-light text-text-primary active:bg-gray-50 disabled:opacity-40',
+  primary:   'bg-coral text-white active:bg-coral-deep disabled:opacity-40',
+  secondary: 'bg-white border-2 border-text-primary text-text-primary active:bg-gray-50 disabled:opacity-40',
   ghost:     'bg-transparent text-text-secondary active:bg-gray-100 disabled:opacity-40',
   danger:    'bg-[#fee2e2] text-[#b91c1c] active:bg-[#fecaca] disabled:opacity-40',
 }
@@ -34,7 +34,7 @@ export default function Button({
   return (
     <button
       className={`
-        inline-flex items-center justify-center gap-2 rounded-[14px] font-gabarito font-bold
+        inline-flex items-center justify-center gap-2 rounded-full font-gabarito font-extrabold
         transition-all duration-100 select-none
         ${variantClasses[variant]}
         ${sizeClasses[size]}

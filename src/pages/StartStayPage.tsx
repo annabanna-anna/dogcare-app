@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Dog as DogIcon, CalendarDays } from 'lucide-react'
+import { PawPrint, CalendarDays } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
 import BottomNav from '../components/BottomNav'
@@ -71,7 +71,7 @@ export default function StartStayPage() {
                     {dog.photoUrl ? (
                       <img src={dog.photoUrl} alt={dog.name} className="size-full object-cover" />
                     ) : (
-                      <DogIcon size={22} className="text-[#d1d5db]" />
+                      <PawPrint size={22} className="text-coral" strokeWidth={2.2} />
                     )}
                   </div>
                   <div className="flex-1">

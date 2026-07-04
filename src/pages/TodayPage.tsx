@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react'
-import { CheckCircle, Dog as DogIcon } from 'lucide-react'
+import { CheckCircle, PawPrint } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import TaskCard from '../components/TaskCard'
 import BottomNav from '../components/BottomNav'
+import WaggingDog from '../components/WaggingDog'
 import { mockTasks } from '../data/mockTasks'
 import { mockStays } from '../data/mockStays'
 import { mockDogs } from '../data/mockDogs'
@@ -61,13 +62,16 @@ export default function TodayPage() {
   return (
     <div className="min-h-svh bg-cream pb-28">
       {/* Header */}
-      <div className="px-6 pt-8 pb-4">
-        <p className="font-gabarito font-bold text-[13px] text-coral uppercase tracking-wide mb-1">
-          {formatTodayHeading()}
-        </p>
-        <h1 className="font-teachers font-extrabold text-[56px] leading-none text-text-primary">
-          Today
-        </h1>
+      <div className="px-6 pt-8 pb-4 flex items-end justify-between">
+        <div>
+          <p className="font-gabarito font-extrabold text-[13px] text-coral uppercase tracking-widest mb-1">
+            {formatTodayHeading()}
+          </p>
+          <h1 className="font-teachers font-extrabold text-[56px] leading-none text-text-primary tracking-tight">
+            Today
+          </h1>
+        </div>
+        <WaggingDog size={88} className="animate-pop-in -mb-1" />
       </div>
 
       {/* Active Care */}
@@ -86,13 +90,13 @@ export default function TodayPage() {
                 <Link
                   key={dog.id}
                   to={`/dogs/${dog.id}`}
-                  className="flex items-center gap-3 border border-border-light rounded-[10px] px-3 py-2 bg-white active:bg-gray-50"
+                  className="flex items-center gap-3 rounded-full pl-1.5 pr-4 py-1.5 bg-card active:scale-[0.97] transition-transform"
                 >
-                  <div className="size-8 rounded-full overflow-hidden bg-[#f3f4f6] flex items-center justify-center shrink-0">
+                  <div className="size-9 rounded-full overflow-hidden bg-peach flex items-center justify-center shrink-0">
                     {dog.photoUrl ? (
                       <img src={dog.photoUrl} alt={dog.name} className="size-full object-cover" />
                     ) : (
-                      <DogIcon size={16} className="text-[#d1d5db]" />
+                      <PawPrint size={17} className="text-coral" strokeWidth={2.2} />
                     )}
                   </div>
                   <div>
@@ -119,23 +123,23 @@ export default function TodayPage() {
             </p>
             {doneCount === total && (
               <div className="flex items-center gap-1">
-                <CheckCircle size={14} className="text-green-vivid" />
-                <span className="font-gabarito text-[12px] text-text-secondary">
+                <CheckCircle size={14} className="text-coral" />
+                <span className="font-gabarito font-bold text-[12px] text-coral">
                   All done!
                 </span>
               </div>
             )}
             {doneCount < total && (
-              <span className="font-gabarito text-[12px] text-text-secondary">
+              <span className="font-gabarito font-bold text-[12px] text-text-secondary">
                 {doneCount}/{total} done
               </span>
             )}
           </div>
 
           {/* Progress bar */}
-          <div className="h-1.5 bg-border-faint rounded-full overflow-hidden">
+          <div className="h-2.5 bg-card rounded-full overflow-hidden">
             <div
-              className="h-full bg-green-vivid rounded-full transition-all duration-500"
+              className="h-full bg-coral rounded-full transition-all duration-500"
               style={{ width: total ? `${(doneCount / total) * 100}%` : '0%' }}
             />
           </div>
@@ -164,8 +168,8 @@ export default function TodayPage() {
 
       {todayTasks.length === 0 && (
         <div className="px-6 py-16 flex flex-col items-center gap-3 text-center">
-          <span className="text-5xl">🐾</span>
-          <p className="font-gabarito font-bold text-[17px] text-text-primary">
+          <WaggingDog size={120} className="animate-pop-in" />
+          <p className="font-teachers font-extrabold text-[22px] text-text-primary">
             No tasks today
           </p>
           <p className="font-gabarito text-[14px] text-text-secondary">

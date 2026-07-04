@@ -29,7 +29,7 @@ const typeLabel: Record<TaskType, string> = {
 
 const typeBg: Record<TaskType, string> = {
   walk: '#18ba1d',
-  meal: '#f8593a',
+  meal: '#ff4514',
   medication: '#2486ff',
   potty: '#18ba1d',
   play: '#f59e0b',
@@ -107,14 +107,14 @@ export default function DogProfilePage() {
           title="Behavior"
           icon={<Heart size={14} />}
           content={dog.behaviorNotes}
-          accentColor="#f8593a"
+          accentColor="#ff4514"
           emptyText="No behavior notes."
         />
         <CareNoteSection
           title="Food"
           icon={<UtensilsCrossed size={14} />}
           content={dog.foodNotes}
-          accentColor="#f8593a"
+          accentColor="#ff4514"
           emptyText="No food notes."
         />
         <CareNoteSection

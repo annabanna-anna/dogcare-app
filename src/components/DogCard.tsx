@@ -1,50 +1,70 @@
-import { Dog as DogIcon, ChevronRight } from 'lucide-react'
+import { useState } from 'react'
+import { PawPrint, ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { Dog, Stay } from '../types'
 import { formatShortDate } from '../utils/dateUtils'
 
+// rotating pastel blocks so the list feels like a deck of color cards
+const avatarPalettes = [
+  { bg: 'bg-peach', icon: 'text-coral' },
+  { bg: 'bg-lavender', icon: 'text-text-primary' },
+  { bg: 'bg-lemon', icon: 'text-text-primary' },
+  { bg: 'bg-mint', icon: 'text-green-vivid' },
+]
+
 interface Props {
   dog: Dog
   nextStay?: Stay
+  index?: number
 }
 
-export default function DogCard({ dog, nextStay }: Props) {
+export default function DogCard({ dog, nextStay, index = 0 }: Props) {
   const navigate = useNavigate()
+  const [imgFailed, setImgFailed] = useState(false)
+  const palette = avatarPalettes[index % avatarPalettes.length]
+  const showPhoto = dog.photoUrl && !imgFailed
 
   return (
     <button
       onClick={() => navigate(`/dogs/${dog.id}`)}
-      className="w-full bg-white border border-border-light rounded-[16px] p-4 flex items-center gap-3 active:bg-gray-50 transition-colors text-left"
+      className="w-full bg-card rounded-[22px] p-4 flex items-center gap-4 active:scale-[0.98] transition-transform text-left"
     >
       {/* Avatar */}
-      <div className="shrink-0 size-14 rounded-[12px] overflow-hidden bg-[#f3f4f6] flex items-center justify-center">
-        {dog.photoUrl ? (
-          <img src={dog.photoUrl} alt={dog.name} className="size-full object-cover" />
+      <div
+        className={`shrink-0 size-16 rounded-[18px] overflow-hidden ${palette.bg} flex items-center justify-center`}
+      >
+        {showPhoto ? (
+          <img
+            src={dog.photoUrl}
+            alt={dog.name}
+            className="size-full object-cover"
+            onError={() => setImgFailed(true)}
+          />
         ) : (
-          <DogIcon size={28} className="text-[#d1d5db]" />
+          <PawPrint size={30} className={palette.icon} strokeWidth={2.2} />
         )}
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="font-teachers font-semibold text-[18px] text-text-primary leading-tight">
+        <p className="font-teachers font-extrabold text-[20px] text-text-primary leading-tight">
           {dog.name}
         </p>
         <p className="font-gabarito text-[13px] text-text-secondary mt-0.5 truncate">
           {dog.breed} · {dog.ownerName}
         </p>
         {nextStay ? (
-          <span className="inline-flex items-center mt-1.5 rounded-full bg-[#dcfce7] px-2 py-0.5 text-[11px] font-gabarito font-bold text-[#15803d]">
-            Stay: {formatShortDate(nextStay.startDate)} – {formatShortDate(nextStay.endDate)}
+          <span className="inline-flex items-center mt-2 rounded-full bg-coral px-2.5 py-1 text-[11px] font-gabarito font-extrabold uppercase tracking-wide text-white">
+            {formatShortDate(nextStay.startDate)} – {formatShortDate(nextStay.endDate)}
           </span>
         ) : (
-          <span className="inline-flex items-center mt-1.5 rounded-full bg-[#f3f4f6] px-2 py-0.5 text-[11px] font-gabarito font-bold text-text-muted">
+          <span className="inline-flex items-center mt-2 rounded-full bg-white px-2.5 py-1 text-[11px] font-gabarito font-bold text-text-muted">
             No upcoming stay
           </span>
         )}
       </div>
 
-      <ChevronRight size={18} className="shrink-0 text-[#d1d1d1]" />
+      <ChevronRight size={20} className="shrink-0 text-text-primary" strokeWidth={2.5} />
     </button>
   )
 }
