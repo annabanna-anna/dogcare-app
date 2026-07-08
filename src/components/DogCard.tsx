@@ -47,7 +47,7 @@ export default function DogCard({ dog, nextStay, index = 0 }: Props) {
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="font-teachers font-extrabold text-[20px] text-text-primary leading-tight">
+        <p className="font-gabarito font-extrabold text-[20px] text-text-primary leading-tight">
           {dog.name}
         </p>
         <p className="font-gabarito text-[13px] text-text-secondary mt-0.5 truncate">

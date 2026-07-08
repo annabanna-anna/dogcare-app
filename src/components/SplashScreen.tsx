@@ -46,7 +46,7 @@ export default function SplashScreen({ fading }: Props) {
       </div>
 
       <div className="flex flex-col items-center gap-2">
-        <p className="font-teachers font-extrabold text-[44px] leading-none text-white tracking-tight">
+        <p className="font-gabarito font-extrabold text-[44px] leading-none text-white tracking-tight">
           Dog Care
         </p>
         <p className="font-gabarito font-bold text-[14px] text-white/80 uppercase tracking-widest">

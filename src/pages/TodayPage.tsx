@@ -3,7 +3,6 @@ import { CheckCircle, PawPrint } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import TaskCard from '../components/TaskCard'
 import BottomNav from '../components/BottomNav'
-import WaggingDog from '../components/WaggingDog'
 import { mockTasks } from '../data/mockTasks'
 import { mockStays } from '../data/mockStays'
 import { mockDogs } from '../data/mockDogs'
@@ -67,11 +66,10 @@ export default function TodayPage() {
           <p className="font-gabarito font-extrabold text-[13px] text-coral uppercase tracking-widest mb-1">
             {formatTodayHeading()}
           </p>
-          <h1 className="font-teachers font-extrabold text-[56px] leading-none text-text-primary tracking-tight">
+          <h1 className="font-gabarito font-extrabold text-[56px] leading-none text-text-primary tracking-tight">
             Today
           </h1>
         </div>
-        <WaggingDog size={88} className="animate-pop-in -mb-1" />
       </div>
 
       {/* Active Care */}
@@ -100,7 +98,7 @@ export default function TodayPage() {
                     )}
                   </div>
                   <div>
-                    <p className="font-teachers font-semibold text-[14px] text-text-primary leading-none">
+                    <p className="font-gabarito font-semibold text-[14px] text-text-primary leading-none">
                       {dog.name}
                     </p>
                     <p className="font-gabarito text-[12px] text-text-secondary mt-0.5">
@@ -168,8 +166,16 @@ export default function TodayPage() {
 
       {todayTasks.length === 0 && (
         <div className="px-6 py-16 flex flex-col items-center gap-3 text-center">
-          <WaggingDog size={120} className="animate-pop-in" />
-          <p className="font-teachers font-extrabold text-[22px] text-text-primary">
+          <svg width="120" height="98" viewBox="0 0 120 98" fill="none">
+            <g transform="translate(60 49) scale(0.95)">
+              <ellipse cx="0" cy="22" rx="26" ry="20" fill="#ff4514" />
+              <ellipse cx="-32" cy="-12" rx="12" ry="15" fill="#ff4514" />
+              <ellipse cx="-12" cy="-28" rx="11" ry="14" fill="#ff4514" />
+              <ellipse cx="12" cy="-28" rx="11" ry="14" fill="#ff4514" />
+              <ellipse cx="32" cy="-12" rx="12" ry="15" fill="#ff4514" />
+            </g>
+          </svg>
+          <p className="font-gabarito font-extrabold text-[22px] text-text-primary">
             No tasks today
           </p>
           <p className="font-gabarito text-[14px] text-text-secondary">

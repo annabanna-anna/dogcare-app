@@ -75,7 +75,7 @@ export default function StartStayPage() {
                     )}
                   </div>
                   <div className="flex-1">
-                    <p className="font-teachers font-semibold text-[16px] text-text-primary leading-none">
+                    <p className="font-gabarito font-semibold text-[16px] text-text-primary leading-none">
                       {dog.name}
                     </p>
                     <p className="font-gabarito text-[13px] text-text-secondary mt-0.5">

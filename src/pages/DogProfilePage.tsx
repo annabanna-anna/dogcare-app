@@ -82,7 +82,7 @@ export default function DogProfilePage() {
             )}
           </div>
           <div>
-            <p className="font-teachers font-extrabold text-[22px] text-text-primary leading-none mb-1">
+            <p className="font-gabarito font-extrabold text-[22px] text-text-primary leading-none mb-1">
               {dog.name}
             </p>
             <p className="font-gabarito text-[14px] text-text-secondary">{dog.breed}</p>

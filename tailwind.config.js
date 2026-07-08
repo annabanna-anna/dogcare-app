@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        cream: '#fafaf7',
+        cream: '#fcfcfc',
         coral: '#ff4514',
         'coral-deep': '#d93a10',
         'coral-soft': '#ffe4da',
@@ -43,7 +43,6 @@ export default {
         'pop-in': 'pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both',
       },
       fontFamily: {
-        teachers: ['Teachers', 'sans-serif'],
         gabarito: ['Gabarito', 'sans-serif'],
         jakarta: ['"Plus Jakarta Sans"', 'sans-serif'],
       },

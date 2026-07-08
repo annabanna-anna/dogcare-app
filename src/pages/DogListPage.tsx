@@ -40,7 +40,7 @@ export default function DogListPage() {
       {mockDogs.length === 0 && (
         <div className="px-6 py-16 flex flex-col items-center gap-3 text-center">
           <WaggingDog size={120} className="animate-pop-in" />
-          <p className="font-teachers font-extrabold text-[22px] text-text-primary">No dogs yet</p>
+          <p className="font-gabarito font-extrabold text-[22px] text-text-primary">No dogs yet</p>
           <p className="font-gabarito text-[14px] text-text-secondary">
             Tap + to add your first dog.
           </p>

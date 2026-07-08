@@ -51,7 +51,7 @@ export default function CalendarPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
-                  <p className="font-teachers font-semibold text-[17px] text-text-primary leading-none">
+                  <p className="font-gabarito font-semibold text-[17px] text-text-primary leading-none">
                     {dog.name}
                   </p>
                   {isActive && (

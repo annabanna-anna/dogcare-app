@@ -9,6 +9,7 @@ interface Props {
  */
 export default function WaggingDog({ size = 96, className = '' }: Props) {
   return (
+
     <svg
       width={size}
       height={size * 0.82}
@@ -47,5 +48,6 @@ export default function WaggingDog({ size = 96, className = '' }: Props) {
       {/* belly patch */}
       <ellipse cx="58" cy="74" rx="18" ry="12" fill="#ffd7c6" opacity="0.9" />
     </svg>
+
   )
 }

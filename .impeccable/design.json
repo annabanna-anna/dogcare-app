@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-06T00:00:00Z",
+  "title": "Design System: DogCare",
+  "extensions": {
+    "colorMeta": {
+      "ember": {
+        "role": "primary",
+        "displayName": "Ember",
+        "canonical": "oklch(63% 0.22 33)",
+        "tonalRamp": ["#3a0d02", "#6e1904", "#a12706", "#d93a10", "#ff4514", "#ff7a52", "#ffab8f", "#ffe4da"]
+      },
+      "studio-white": {
+        "role": "neutral",
+        "displayName": "Studio White",
+        "canonical": "oklch(99% 0.001 90)",
+        "tonalRamp": ["#1a1a1a", "#3d3d3d", "#6b6b6b", "#9a9a9a", "#c7c7c7", "#e5e5e5", "#f4f4f4", "#fcfcfc"]
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "Card",
+        "canonical": "oklch(96% 0.003 100)",
+        "tonalRamp": ["#232320", "#454540", "#67675f", "#8a8a80", "#adada2", "#cfcfc5", "#e2e2da", "#f4f4ef"]
+      },
+      "peach": { "role": "accent", "displayName": "Peach", "canonical": "oklch(89% 0.06 40)" },
+      "lavender": { "role": "accent", "displayName": "Lavender", "canonical": "oklch(83% 0.07 295)" },
+      "lemon": { "role": "accent", "displayName": "Lemon", "canonical": "oklch(92% 0.14 100)" },
+      "mint": { "role": "accent", "displayName": "Mint", "canonical": "oklch(90% 0.08 155)" },
+      "green-vivid": { "role": "semantic", "displayName": "Walk Green", "canonical": "oklch(63% 0.19 138)" },
+      "blue-task": { "role": "semantic", "displayName": "Medication Blue", "canonical": "oklch(61% 0.19 255)" },
+      "purple-task": { "role": "semantic", "displayName": "Groom Purple", "canonical": "oklch(48% 0.22 302)" },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "oklch(20% 0 0)" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "The single 'Today' heading on the primary screen only." },
+      "headline": { "displayName": "Headline", "purpose": "Page Header title on every secondary screen." },
+      "title": { "displayName": "Title", "purpose": "Dog Card names and section-level titles." },
+      "body": { "displayName": "Body", "purpose": "Task notes, care-note content, short descriptive copy." },
+      "label": { "displayName": "Label", "purpose": "Uppercase eyebrows, status chips, badges — never decorative." }
+    },
+    "shadows": [
+      { "name": "floating-nav", "value": "0 10px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.1)", "purpose": "The bottom nav pill only — the one element that's genuinely floating over content." }
+    ],
+    "motion": [
+      { "name": "tail-wag", "value": "rotate(-16deg) to rotate(24deg), 0.45s ease-in-out infinite", "purpose": "Continuous idle wag on the WaggingDog mascot in headers/empty states." },
+      { "name": "chase-spin", "value": "rotate(360deg), 1.1s cubic-bezier(0.6, 0.1, 0.4, 0.9) infinite", "purpose": "Splash-screen loader: the mascot curled into a circle, chasing its own tail." },
+      { "name": "pop-in", "value": "scale(0.6)->scale(1.06)->scale(1), opacity 0->1, 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both", "purpose": "Mascot entrance bounce on the Today header and empty states — the one place a playful overshoot is intentional; not used elsewhere." }
+    ],
+    "breakpoints": []
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ember pill button, the system's default call-to-action.",
+      "html": "<button class=\"ds-btn-primary\">Start Stay</button>",
+      "css": ".ds-btn-primary { background: #ff4514; color: #ffffff; font-family: Gabarito, sans-serif; font-weight: 800; font-size: 15px; padding: 12px 20px; border-radius: 9999px; border: none; transition: background 0.1s, transform 0.1s; } .ds-btn-primary:active { background: #d93a10; transform: scale(0.98); } .ds-btn-primary:focus-visible { outline: 2px solid #d93a10; outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.4; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "White pill button with an Ink border, used alongside a primary Ember action.",
+      "html": "<button class=\"ds-btn-secondary\">Cancel</button>",
+      "css": ".ds-btn-secondary { background: #ffffff; color: #141414; border: 2px solid #141414; font-family: Gabarito, sans-serif; font-weight: 800; font-size: 15px; padding: 10px 18px; border-radius: 9999px; transition: background 0.1s, transform 0.1s; } .ds-btn-secondary:active { background: #f9fafb; transform: scale(0.98); }"
+    },
+    {
+      "name": "Status Chip",
+      "kind": "chip",
+      "refersTo": "chip-status",
+      "description": "Fixed background/text pair per task status; never recolored ad hoc.",
+      "html": "<span class=\"ds-chip-done\">Done</span>",
+      "css": ".ds-chip-done { display: inline-flex; align-items: center; background: #dcfce7; color: #15803d; font-family: Gabarito, sans-serif; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 8px; border-radius: 9999px; }"
+    },
+    {
+      "name": "Dog Card",
+      "kind": "card",
+      "refersTo": "card-dog",
+      "description": "Tappable list row: pastel avatar block, name, breed/owner, next-stay pill.",
+      "html": "<button class=\"ds-card-dog\"><span class=\"ds-card-dog-avatar\">🐾</span><span class=\"ds-card-dog-info\"><span class=\"ds-card-dog-name\">Barkley</span><span class=\"ds-card-dog-meta\">Golden Retriever · Anna</span></span></button>",
+      "css": ".ds-card-dog { width: 100%; background: #f4f4ef; border-radius: 22px; padding: 16px; display: flex; align-items: center; gap: 16px; border: none; text-align: left; transition: transform 0.1s; } .ds-card-dog:active { transform: scale(0.98); } .ds-card-dog-avatar { display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 18px; background: #ffd7c6; font-size: 24px; } .ds-card-dog-name { display: block; font-family: Gabarito, sans-serif; font-weight: 800; font-size: 20px; color: #141414; } .ds-card-dog-meta { display: block; font-family: Gabarito, sans-serif; font-size: 13px; color: #5c5c5c; margin-top: 2px; }"
+    },
+    {
+      "name": "Bottom Nav",
+      "kind": "nav",
+      "refersTo": "bottom-nav",
+      "description": "Floating Ink-black pill nav, the one component in the system that carries a shadow.",
+      "html": "<nav class=\"ds-bottom-nav\"><a class=\"ds-nav-item ds-nav-item-active\">Today</a><a class=\"ds-nav-item\">Dogs</a><a class=\"ds-nav-item\">Calendar</a><a class=\"ds-nav-item\">Settings</a></nav>",
+      "css": ".ds-bottom-nav { background: #141414; border-radius: 9999px; padding: 8px; display: flex; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.1); } .ds-nav-item { flex: 1; text-align: center; padding: 10px; border-radius: 9999px; color: rgba(255,255,255,0.5); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 500; text-decoration: none; transition: background 0.15s, color 0.15s; } .ds-nav-item-active { background: #ff4514; color: #ffffff; font-weight: 700; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Good Boy Standard",
+    "overview": "DogCare is confident, capable, and a little proud of itself — the visual equivalent of a sitter who has three dogs fed, walked, and medicated before 9am and isn't stressed about it. The system reads bold and poppy (Ember coral against a crisp white canvas, pastel accents for pastel dogs), but every playful choice — the wagging-tail mascot, the pill shapes, the chase-spin loader — sits on top of a genuinely fast, glanceable task list. This is a working tool used mid-shift, one-handed, between a leash and a food bowl; it earns its warmth by staying legible under pressure, not by decoration alone. The system explicitly rejects the beige/neutral palette this app shipped with originally — that read as generic and \"AI-built.\" It also rejects both directions a dog-care app could drift toward: clinical SaaS-blue dashboard chrome, and cartoon-kitsch pet-app cuteness that undermines trust in a tool people rely on for medication timing.",
+    "keyCharacteristics": [
+      "One committed accent (Ember coral) carries all emphasis and status meaning — it is never \"just decorative\"",
+      "Flat, color-blocked surfaces; depth comes from scale-press feedback, not shadows",
+      "Pill shapes everywhere load-bearing touch happens: buttons, nav, chips, avatars",
+      "A warm, dog-forward voice (paw prints, a wagging mascot) kept in check by a display font with real gravity"
+    ],
+    "rules": [
+      { "name": "The One Voice Rule", "body": "Ember is the only color that means something (status, action, active state). Pastels (Peach, Lavender, Lemon, Mint) exist purely to differentiate dogs and never carry semantic weight — if a pastel starts meaning \"done\" or \"urgent,\" that's a bug.", "section": "colors" },
+      { "name": "The Avatar Palette Rule", "body": "Peach / Lavender / Lemon / Mint rotate by list index to give a \"deck of cards\" feel to Dog List avatars — assign by position, not by breed or any semantic property, so the rotation stays visually random and low-stakes.", "section": "colors" },
+      { "name": "The Eyebrow Restraint Rule", "body": "Uppercase tracked labels are reserved for section headers and status metadata — never used as decorative kicker text above every block.", "section": "typography" },
+      { "name": "The Flat-Except-Floating Rule", "body": "If an element is genuinely floating over content (like the bottom nav), it gets a shadow. If it's a card or block sitting inline in the flow, it gets a flatter/lighter background color instead — never both a shadow and a background shift for the same depth cue.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use Ember (#ff4514) as the only color that carries meaning — status, emphasis, active state.",
+      "Do keep surfaces flat; express depth with Card vs Studio White layering and active:scale press feedback, not shadows — except the floating bottom nav.",
+      "Do default to full pill shapes (rounded-full) for anything tappable: buttons, chips, nav, avatars.",
+      "Do keep uppercase tracked labels reserved for real section eyebrows and status chips, not decorative kickers.",
+      "Do reserve real, choreographed motion (tail-wag, chase-spin, pop-in) for the mascot and success/loading moments."
+    ],
+    "donts": [
+      "Don't reintroduce a beige/cream/parchment-tinted background — the base surface is Studio White (#fcfcfc), a true near-white.",
+      "Don't drift toward clinical SaaS-dashboard chrome (cold blues/grays, dense data-table density).",
+      "Don't tip into cartoon-kitsch cuteness (mascot dominating a whole screen, baby-talk copy).",
+      "Don't use a pastel avatar color to signal status or urgency — those are identity-only colors.",
+      "Don't add drop shadows to inline cards or buttons — shadow is reserved for the floating bottom nav only."
+    ]
+  }
+}
