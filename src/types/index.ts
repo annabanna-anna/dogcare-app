@@ -41,7 +41,7 @@ export interface Stay {
 
 // ─── Task ────────────────────────────────────────────────────────────────────
 
-export type TaskType = 'walk' | 'meal' | 'medication' | 'potty' | 'play' | 'groom' | 'other'
+export type TaskType = 'walk' | 'meal' | 'medication' | 'potty' | 'other'
 
 export type TaskStatus = 'pending' | 'done' | 'skipped' | 'overdue'
 

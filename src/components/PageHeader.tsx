@@ -24,11 +24,11 @@ export default function PageHeader({ title, subtitle, back = false, right }: Pro
       )}
       <div className="flex-1 min-w-0">
         {subtitle && (
-          <p className="font-gabarito font-bold text-[13px] text-coral uppercase tracking-wide mb-1">
+          <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-wide mb-1">
             {subtitle}
           </p>
         )}
-        <h1 className="font-gabarito font-extrabold text-[40px] leading-none text-text-primary">
+        <h1 className="font-outfit font-bold text-[40px] leading-none text-text-primary">
           {title}
         </h1>
       </div>

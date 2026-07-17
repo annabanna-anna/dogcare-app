@@ -78,7 +78,7 @@ export const mockDogs: Dog[] = [
       { time: '07:00', taskType: 'walk', note: '45 min, let him sniff' },
       { time: '07:45', taskType: 'meal', note: '1.5 cups Hills Science Diet' },
       { time: '12:30', taskType: 'potty', note: 'Quick break' },
-      { time: '17:00', taskType: 'play', note: 'Fetch or tug in yard' },
+      { time: '17:00', taskType: 'other', note: 'Fetch or tug in yard' },
       { time: '18:00', taskType: 'meal', note: '1.5 cups Hills Science Diet' },
       { time: '21:30', taskType: 'potty', note: 'Last outing' },
     ],

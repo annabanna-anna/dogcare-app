@@ -43,8 +43,8 @@ export default {
         'pop-in': 'pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both',
       },
       fontFamily: {
-        gabarito: ['Gabarito', 'sans-serif'],
-        jakarta: ['"Plus Jakarta Sans"', 'sans-serif'],
+        outfit: ['Outfit', 'sans-serif'],
+        dm: ['"DM Sans"', 'sans-serif'],
       },
     },
   },

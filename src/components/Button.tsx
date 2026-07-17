@@ -34,7 +34,7 @@ export default function Button({
   return (
     <button
       className={`
-        inline-flex items-center justify-center gap-2 rounded-full font-gabarito font-extrabold
+        inline-flex items-center justify-center gap-2 rounded-full font-dm font-bold
         transition-all duration-100 select-none
         ${variantClasses[variant]}
         ${sizeClasses[size]}

@@ -5,8 +5,6 @@ const TASK_TITLES: Record<TaskType, string> = {
   meal: 'Meal',
   medication: 'Medication',
   potty: 'Potty break',
-  play: 'Play time',
-  groom: 'Grooming',
   other: 'Care task',
 }
 

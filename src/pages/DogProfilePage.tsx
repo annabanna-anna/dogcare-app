@@ -1,7 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   PawPrint,
-  UtensilsCrossed,
   Pill,
   AlertTriangle,
   Heart,
@@ -9,6 +8,7 @@ import {
   Pencil,
   Clock,
 } from 'lucide-react'
+import DogBowlIcon from '../components/icons/DogBowlIcon'
 import PageHeader from '../components/PageHeader'
 import CareNoteSection from '../components/CareNoteSection'
 import BottomNav from '../components/BottomNav'
@@ -22,8 +22,6 @@ const typeLabel: Record<TaskType, string> = {
   meal: 'Meal',
   medication: 'Medication',
   potty: 'Potty break',
-  play: 'Play time',
-  groom: 'Grooming',
   other: 'Task',
 }
 
@@ -32,8 +30,6 @@ const typeBg: Record<TaskType, string> = {
   meal: '#ff4514',
   medication: '#2486ff',
   potty: '#18ba1d',
-  play: '#f59e0b',
-  groom: '#8b5cf6',
   other: '#6b7280',
 }
 
@@ -46,7 +42,7 @@ export default function DogProfilePage() {
     return (
       <div className="min-h-svh bg-cream flex items-center justify-center px-6">
         <div className="text-center">
-          <p className="font-gabarito font-bold text-[17px] text-text-primary mb-2">Dog not found</p>
+          <p className="font-outfit font-bold text-[17px] text-text-primary mb-2">Dog not found</p>
           <Button onClick={() => navigate('/dogs')} variant="secondary">
             Back to Dogs
           </Button>
@@ -82,14 +78,14 @@ export default function DogProfilePage() {
             )}
           </div>
           <div>
-            <p className="font-gabarito font-extrabold text-[22px] text-text-primary leading-none mb-1">
+            <p className="font-outfit font-bold text-[22px] text-text-primary leading-none mb-1">
               {dog.name}
             </p>
-            <p className="font-gabarito text-[14px] text-text-secondary">{dog.breed}</p>
-            <p className="font-gabarito font-semibold text-[14px] text-text-primary mt-2">
+            <p className="font-dm text-[14px] text-text-secondary">{dog.breed}</p>
+            <p className="font-dm font-semibold text-[14px] text-text-primary mt-2">
               {dog.ownerName}
             </p>
-            <p className="font-gabarito text-[13px] text-text-secondary">{dog.ownerContact}</p>
+            <p className="font-dm text-[13px] text-text-secondary">{dog.ownerContact}</p>
           </div>
         </div>
 
@@ -112,7 +108,7 @@ export default function DogProfilePage() {
         />
         <CareNoteSection
           title="Food"
-          icon={<UtensilsCrossed size={14} />}
+          icon={<DogBowlIcon size={14} />}
           content={dog.foodNotes}
           accentColor="#ff4514"
           emptyText="No food notes."
@@ -145,14 +141,14 @@ export default function DogProfilePage() {
             <div className="size-7 rounded-full flex items-center justify-center bg-[#1f1f1f] shrink-0">
               <Clock size={14} className="text-white" />
             </div>
-            <h3 className="font-gabarito font-extrabold text-[13px] text-text-secondary uppercase tracking-wide">
+            <h3 className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-wide">
               Daily Schedule
             </h3>
           </div>
           <div className="flex flex-col gap-3">
             {dog.careSchedule.map((entry, i) => (
               <div key={i} className="flex items-start gap-3">
-                <span className="font-gabarito font-extrabold text-[13px] text-text-primary w-[68px] shrink-0 pt-0.5">
+                <span className="font-dm font-bold text-[13px] text-text-primary w-[68px] shrink-0 pt-0.5">
                   {formatTime(`2000-01-01T${entry.time}:00`)}
                 </span>
                 <div
@@ -162,11 +158,11 @@ export default function DogProfilePage() {
                   <PawPrint size={12} className="text-white" />
                 </div>
                 <div>
-                  <p className="font-gabarito font-bold text-[14px] text-text-primary leading-none">
+                  <p className="font-dm font-bold text-[14px] text-text-primary leading-none">
                     {typeLabel[entry.taskType]}
                   </p>
                   {entry.note && (
-                    <p className="font-gabarito text-[12px] text-text-secondary mt-0.5">
+                    <p className="font-dm text-[12px] text-text-secondary mt-0.5">
                       {entry.note}
                     </p>
                   )}

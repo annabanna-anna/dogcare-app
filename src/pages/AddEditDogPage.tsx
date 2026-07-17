@@ -40,7 +40,7 @@ const sizeOptions: { value: DogSize; label: string }[] = [
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <label className="block font-gabarito font-bold text-[12px] text-text-secondary uppercase tracking-widest mb-1.5">
+    <label className="block font-dm font-bold text-[12px] text-text-secondary uppercase tracking-widest mb-1.5">
       {children}
     </label>
   )
@@ -63,7 +63,7 @@ function Input({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-gabarito text-[15px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors"
+      className="w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-dm text-[15px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors"
     />
   )
 }
@@ -85,7 +85,7 @@ function Textarea({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       rows={rows}
-      className="w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-gabarito text-[15px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors resize-none"
+      className="w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-dm text-[15px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors resize-none"
     />
   )
 }
@@ -131,7 +131,7 @@ export default function AddEditDogPage() {
       <div className="px-6 mt-4 flex flex-col gap-5">
         {/* Basic Info */}
         <section>
-          <p className="font-gabarito font-extrabold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
+          <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
             Basic Info
           </p>
           <div className="flex flex-col gap-3">
@@ -150,7 +150,7 @@ export default function AddEditDogPage() {
                   <button
                     key={value}
                     onClick={() => set('size')(value)}
-                    className={`flex-1 py-2.5 rounded-[12px] font-gabarito font-bold text-[14px] border transition-colors ${
+                    className={`flex-1 py-2.5 rounded-[12px] font-dm font-bold text-[14px] border transition-colors ${
                       form.size === value
                         ? 'bg-coral border-coral text-white'
                         : 'bg-white border-border-light text-text-secondary'
@@ -166,7 +166,7 @@ export default function AddEditDogPage() {
 
         {/* Owner Info */}
         <section>
-          <p className="font-gabarito font-extrabold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
+          <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
             Owner
           </p>
           <div className="flex flex-col gap-3">
@@ -188,7 +188,7 @@ export default function AddEditDogPage() {
 
         {/* Care Notes */}
         <section>
-          <p className="font-gabarito font-extrabold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
+          <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
             Care Instructions
           </p>
           <div className="flex flex-col gap-3">

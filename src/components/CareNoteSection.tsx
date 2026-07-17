@@ -24,11 +24,11 @@ export default function CareNoteSection({
         >
           <span className="text-white">{icon}</span>
         </div>
-        <h3 className="font-gabarito font-extrabold text-[13px] text-text-secondary uppercase tracking-wide">
+        <h3 className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-wide">
           {title}
         </h3>
       </div>
-      <p className="font-gabarito text-[14px] text-text-primary leading-relaxed">
+      <p className="font-dm text-[14px] text-text-primary leading-relaxed">
         {content || emptyText}
       </p>
     </div>

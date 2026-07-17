@@ -17,17 +17,17 @@ export default function CalendarPage() {
       <PageHeader title="Calendar" />
 
       <div className="px-6 mt-4 flex flex-col gap-4">
-        <p className="font-gabarito font-extrabold text-[13px] text-text-secondary uppercase tracking-widest">
+        <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest">
           Upcoming Stays
         </p>
 
         {upcomingStays.length === 0 && (
           <div className="py-16 flex flex-col items-center gap-3 text-center">
             <CalendarDays size={40} className="text-[#d1d5db]" />
-            <p className="font-gabarito font-bold text-[17px] text-text-primary">
+            <p className="font-outfit font-bold text-[17px] text-text-primary">
               No upcoming stays
             </p>
-            <p className="font-gabarito text-[14px] text-text-secondary">
+            <p className="font-dm text-[14px] text-text-secondary">
               Start a stay from a dog's profile.
             </p>
           </div>
@@ -51,20 +51,20 @@ export default function CalendarPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
-                  <p className="font-gabarito font-semibold text-[17px] text-text-primary leading-none">
+                  <p className="font-outfit font-semibold text-[17px] text-text-primary leading-none">
                     {dog.name}
                   </p>
                   {isActive && (
-                    <span className="text-[11px] font-gabarito font-bold bg-[#dcfce7] text-[#15803d] rounded-full px-2 py-0.5">
+                    <span className="text-[11px] font-dm font-bold bg-[#dcfce7] text-[#15803d] rounded-full px-2 py-0.5">
                       Active
                     </span>
                   )}
                 </div>
-                <p className="font-gabarito text-[13px] text-text-secondary">
+                <p className="font-dm text-[13px] text-text-secondary">
                   {formatShortDate(stay.startDate)} → {formatShortDate(stay.endDate)}
                 </p>
                 {stay.notes && (
-                  <p className="font-gabarito text-[13px] text-text-muted mt-1 truncate">
+                  <p className="font-dm text-[13px] text-text-muted mt-1 truncate">
                     {stay.notes}
                   </p>
                 )}

@@ -15,7 +15,7 @@ export default function StatusChip({ status }: Props) {
   const { label, className } = config[status]
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-gabarito font-bold uppercase tracking-wide ${className}`}
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-dm font-bold uppercase tracking-wide ${className}`}
     >
       {label}
     </span>

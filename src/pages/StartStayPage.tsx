@@ -1,14 +1,187 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { PawPrint, CalendarDays } from 'lucide-react'
+import { PawPrint, CalendarDays, ChevronDown, Check, Search, X } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
 import BottomNav from '../components/BottomNav'
 import { mockDogs } from '../data/mockDogs'
+import type { Dog } from '../types'
 
-function toLocalDatetimeValue(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+function pad(n: number) {
+  return String(n).padStart(2, '0')
+}
+
+function toDateValue(date: Date): string {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+/** Next quarter-hour from the given date, as "HH:mm". */
+function toQuarterTimeValue(date: Date): string {
+  const d = new Date(date)
+  d.setMinutes(Math.ceil(d.getMinutes() / 15) * 15, 0, 0)
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+/** All 96 quarter-hour times of a day: [{ value: "HH:mm", label: "h:mm AM" }] */
+const TIME_OPTIONS = Array.from({ length: 96 }, (_, i) => {
+  const h = Math.floor(i / 4)
+  const m = (i % 4) * 15
+  const ampm = h < 12 ? 'AM' : 'PM'
+  const h12 = h % 12 === 0 ? 12 : h % 12
+  return { value: `${pad(h)}:${pad(m)}`, label: `${h12}:${pad(m)} ${ampm}` }
+})
+
+function DogAvatar({ dog, size }: { dog: Dog; size: number }) {
+  return (
+    <div
+      className="rounded-[10px] overflow-hidden bg-[#f3f4f6] shrink-0 flex items-center justify-center"
+      style={{ width: size, height: size }}
+    >
+      {dog.photoUrl ? (
+        <img src={dog.photoUrl} alt={dog.name} className="size-full object-cover" />
+      ) : (
+        <PawPrint size={size * 0.45} className="text-coral" strokeWidth={2.2} />
+      )}
+    </div>
+  )
+}
+
+function DogPickerSheet({
+  selectedDogId,
+  onSelect,
+  onClose,
+}: {
+  selectedDogId: string
+  onSelect: (id: string) => void
+  onClose: () => void
+}) {
+  const [query, setQuery] = useState('')
+
+  const dogs = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return [...mockDogs]
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .filter((d) => !q || `${d.name} ${d.breed} ${d.ownerName}`.toLowerCase().includes(q))
+  }, [query])
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end justify-center">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative w-full max-w-[430px] bg-cream rounded-t-[22px] pt-5 pb-8 max-h-[75svh] flex flex-col">
+        <div className="px-6 flex items-start justify-between mb-3">
+          <p className="font-outfit font-bold text-[22px] text-text-primary leading-tight">
+            Choose a dog
+          </p>
+          <button
+            onClick={onClose}
+            className="size-8 rounded-full bg-[#f3f4f6] flex items-center justify-center text-text-secondary shrink-0"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="px-6 mb-3">
+          <div className="bg-card rounded-full px-4 py-3 flex items-center gap-2.5">
+            <Search size={18} className="text-text-muted shrink-0" />
+            <input
+              type="search"
+              autoFocus
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search dogs"
+              className="flex-1 min-w-0 bg-transparent font-dm text-[15px] text-text-primary placeholder:text-text-muted focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <div className="px-6 overflow-y-auto flex flex-col gap-2">
+          {dogs.map((dog) => {
+            const isSelected = dog.id === selectedDogId
+            return (
+              <button
+                key={dog.id}
+                onClick={() => onSelect(dog.id)}
+                className={`flex items-center gap-3 p-3 rounded-[14px] border transition-colors text-left shrink-0 ${
+                  isSelected
+                    ? 'border-coral bg-[#fff5f3]'
+                    : 'border-border-light bg-white active:bg-gray-50'
+                }`}
+              >
+                <DogAvatar dog={dog} size={44} />
+                <div className="flex-1 min-w-0">
+                  <p className="font-dm font-semibold text-[15px] text-text-primary leading-none">
+                    {dog.name}
+                  </p>
+                  <p className="font-dm text-[13px] text-text-secondary mt-0.5 truncate">
+                    {dog.breed} · {dog.ownerName}
+                  </p>
+                </div>
+                {isSelected && <Check size={18} className="text-coral shrink-0" strokeWidth={2.5} />}
+              </button>
+            )
+          })}
+          {dogs.length === 0 && (
+            <p className="font-dm text-[14px] text-text-secondary text-center py-8">
+              No dogs match “{query}”.
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function DateTimeField({
+  label,
+  day,
+  time,
+  onDayChange,
+  onTimeChange,
+}: {
+  label: string
+  day: string
+  time: string
+  onDayChange: (v: string) => void
+  onTimeChange: (v: string) => void
+}) {
+  return (
+    <div>
+      <label className="block font-dm font-bold text-[12px] text-text-secondary uppercase tracking-widest mb-1.5">
+        {label}
+      </label>
+      <div className="flex gap-2">
+        <div className="relative flex-1 min-w-0">
+          <input
+            type="date"
+            value={day}
+            onChange={(e) => onDayChange(e.target.value)}
+            className="w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-dm text-[15px] text-text-primary focus:outline-none focus:border-coral transition-colors appearance-none"
+          />
+          <CalendarDays
+            size={18}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
+          />
+        </div>
+        <div className="relative w-[132px] shrink-0">
+          <select
+            value={time}
+            onChange={(e) => onTimeChange(e.target.value)}
+            className="w-full bg-white border border-border-light rounded-[12px] pl-4 pr-8 py-3 font-dm text-[15px] text-text-primary focus:outline-none focus:border-coral transition-colors appearance-none"
+          >
+            {TIME_OPTIONS.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+          <ChevronDown
+            size={16}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
+          />
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default function StartStayPage() {
@@ -22,27 +195,26 @@ export default function StartStayPage() {
   weekLater.setDate(now.getDate() + 7)
 
   const [selectedDogId, setSelectedDogId] = useState(preselectedDogId)
-  const [startDate, setStartDate] = useState(toLocalDatetimeValue(now))
-  const [endDate, setEndDate] = useState(toLocalDatetimeValue(weekLater))
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [startDay, setStartDay] = useState(toDateValue(now))
+  const [startTime, setStartTime] = useState(toQuarterTimeValue(now))
+  const [endDay, setEndDay] = useState(toDateValue(weekLater))
+  const [endTime, setEndTime] = useState(toQuarterTimeValue(weekLater))
   const [notes, setNotes] = useState('')
 
   const selectedDog = mockDogs.find((d) => d.id === selectedDogId)
+  const startDate = `${startDay}T${startTime}`
+  const endDate = `${endDay}T${endTime}`
 
   function handleGenerate() {
-    if (!selectedDogId || !startDate || !endDate) return
-
-    // Navigate to task preview with stay details in state
+    if (!isValid) return
     navigate('/stays/preview', {
-      state: {
-        dogId: selectedDogId,
-        startDate,
-        endDate,
-        notes,
-      },
+      state: { dogId: selectedDogId, startDate, endDate, notes },
     })
   }
 
-  const isValid = selectedDogId && startDate && endDate && new Date(endDate) > new Date(startDate)
+  const isValid =
+    selectedDogId && startDay && endDay && new Date(endDate) > new Date(startDate)
 
   return (
     <div className="min-h-svh bg-cream pb-28">
@@ -51,98 +223,65 @@ export default function StartStayPage() {
       <div className="px-6 mt-4 flex flex-col gap-5">
         {/* Dog selector */}
         <section>
-          <p className="font-gabarito font-extrabold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
+          <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
             Which dog?
           </p>
-          <div className="flex flex-col gap-2">
-            {mockDogs.map((dog) => {
-              const isSelected = dog.id === selectedDogId
-              return (
-                <button
-                  key={dog.id}
-                  onClick={() => setSelectedDogId(dog.id)}
-                  className={`flex items-center gap-3 p-3 rounded-[14px] border transition-colors text-left ${
-                    isSelected
-                      ? 'border-coral bg-[#fff5f3]'
-                      : 'border-border-light bg-white active:bg-gray-50'
-                  }`}
-                >
-                  <div className="size-12 rounded-[10px] overflow-hidden bg-[#f3f4f6] shrink-0 flex items-center justify-center">
-                    {dog.photoUrl ? (
-                      <img src={dog.photoUrl} alt={dog.name} className="size-full object-cover" />
-                    ) : (
-                      <PawPrint size={22} className="text-coral" strokeWidth={2.2} />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-gabarito font-semibold text-[16px] text-text-primary leading-none">
-                      {dog.name}
-                    </p>
-                    <p className="font-gabarito text-[13px] text-text-secondary mt-0.5">
-                      {dog.breed} · {dog.ownerName}
-                    </p>
-                  </div>
-                  <div
-                    className={`size-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-colors ${
-                      isSelected ? 'border-coral bg-coral' : 'border-border-light'
-                    }`}
-                  >
-                    {isSelected && (
-                      <div className="size-2 rounded-full bg-white" />
-                    )}
-                  </div>
-                </button>
-              )
-            })}
-          </div>
+          <button
+            onClick={() => setPickerOpen(true)}
+            className={`w-full flex items-center gap-3 p-3 rounded-[14px] border transition-colors text-left ${
+              selectedDog ? 'border-coral bg-[#fff5f3]' : 'border-border-light bg-white active:bg-gray-50'
+            }`}
+          >
+            {selectedDog ? (
+              <>
+                <DogAvatar dog={selectedDog} size={44} />
+                <div className="flex-1 min-w-0">
+                  <p className="font-dm font-semibold text-[15px] text-text-primary leading-none">
+                    {selectedDog.name}
+                  </p>
+                  <p className="font-dm text-[13px] text-text-secondary mt-0.5 truncate">
+                    {selectedDog.breed} · {selectedDog.ownerName}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="size-11 rounded-[10px] bg-[#f3f4f6] shrink-0 flex items-center justify-center">
+                  <PawPrint size={20} className="text-text-muted" strokeWidth={2.2} />
+                </div>
+                <p className="flex-1 font-dm text-[15px] text-text-secondary">Choose a dog</p>
+              </>
+            )}
+            <ChevronDown size={18} className="text-text-muted shrink-0" />
+          </button>
         </section>
 
         {/* Date range */}
         <section>
-          <p className="font-gabarito font-extrabold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
+          <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
             Stay Dates
           </p>
           <div className="flex flex-col gap-3">
-            <div>
-              <label className="block font-gabarito font-bold text-[12px] text-text-secondary uppercase tracking-widest mb-1.5">
-                Start
-              </label>
-              <div className="relative">
-                <input
-                  type="datetime-local"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-gabarito text-[15px] text-text-primary focus:outline-none focus:border-coral transition-colors appearance-none"
-                />
-                <CalendarDays
-                  size={18}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block font-gabarito font-bold text-[12px] text-text-secondary uppercase tracking-widest mb-1.5">
-                End
-              </label>
-              <div className="relative">
-                <input
-                  type="datetime-local"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-gabarito text-[15px] text-text-primary focus:outline-none focus:border-coral transition-colors appearance-none"
-                />
-                <CalendarDays
-                  size={18}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
-                />
-              </div>
-            </div>
+            <DateTimeField
+              label="Start"
+              day={startDay}
+              time={startTime}
+              onDayChange={setStartDay}
+              onTimeChange={setStartTime}
+            />
+            <DateTimeField
+              label="End"
+              day={endDay}
+              time={endTime}
+              onDayChange={setEndDay}
+              onTimeChange={setEndTime}
+            />
           </div>
         </section>
 
         {/* Stay notes */}
         <section>
-          <label className="block font-gabarito font-extrabold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
+          <label className="block font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
             Notes (optional)
           </label>
           <textarea
@@ -150,7 +289,7 @@ export default function StartStayPage() {
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
             placeholder="Owner travel details, special instructions..."
-            className="w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-gabarito text-[15px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors resize-none"
+            className="w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-dm text-[15px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors resize-none"
           />
         </section>
 
@@ -160,11 +299,22 @@ export default function StartStayPage() {
         </Button>
 
         {selectedDog && (
-          <p className="font-gabarito text-[13px] text-text-secondary text-center">
+          <p className="font-dm text-[13px] text-text-secondary text-center">
             Tasks will be generated from {selectedDog.name}'s care schedule.
           </p>
         )}
       </div>
+
+      {pickerOpen && (
+        <DogPickerSheet
+          selectedDogId={selectedDogId}
+          onSelect={(id) => {
+            setSelectedDogId(id)
+            setPickerOpen(false)
+          }}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
 
       <BottomNav />
     </div>

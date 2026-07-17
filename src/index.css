@@ -6,9 +6,15 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+html {
+  /* Reserve the scrollbar gutter so the layout (and the fixed bottom nav)
+     doesn't shift when a page becomes tall enough to scroll */
+  scrollbar-gutter: stable;
+}
+
 body {
   background-color: #fcfcfc;
-  font-family: 'Gabarito', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 

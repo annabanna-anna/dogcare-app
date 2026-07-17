@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
-import { CheckCircle, PawPrint } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { CheckCircle, PawPrint, CalendarPlus } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import Button from '../components/Button'
 import TaskCard from '../components/TaskCard'
 import BottomNav from '../components/BottomNav'
 import { mockTasks } from '../data/mockTasks'
@@ -10,6 +11,7 @@ import type { Task, TaskStatus } from '../types'
 import { formatTodayHeading, toDateKey } from '../utils/dateUtils'
 
 export default function TodayPage() {
+  const navigate = useNavigate()
   const [tasks, setTasks] = useState<Task[]>(mockTasks)
 
   const todayKey = toDateKey(new Date().toISOString())
@@ -63,10 +65,10 @@ export default function TodayPage() {
       {/* Header */}
       <div className="px-6 pt-8 pb-4 flex items-end justify-between">
         <div>
-          <p className="font-gabarito font-extrabold text-[13px] text-coral uppercase tracking-widest mb-1">
+          <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-1">
             {formatTodayHeading()}
           </p>
-          <h1 className="font-gabarito font-extrabold text-[56px] leading-none text-text-primary tracking-tight">
+          <h1 className="font-outfit font-bold text-[56px] leading-none text-text-primary tracking-tight">
             Today
           </h1>
         </div>
@@ -75,7 +77,7 @@ export default function TodayPage() {
       {/* Active Care */}
       {activeDogs.length > 0 && (
         <section className="px-6 mb-6">
-          <p className="font-gabarito font-extrabold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
+          <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
             Active Care
           </p>
           <div className="flex gap-3 flex-wrap">
@@ -98,10 +100,10 @@ export default function TodayPage() {
                     )}
                   </div>
                   <div>
-                    <p className="font-gabarito font-semibold text-[14px] text-text-primary leading-none">
+                    <p className="font-dm font-semibold text-[14px] text-text-primary leading-none">
                       {dog.name}
                     </p>
-                    <p className="font-gabarito text-[12px] text-text-secondary mt-0.5">
+                    <p className="font-dm text-[12px] text-text-secondary mt-0.5">
                       Until {endDate}
                     </p>
                   </div>
@@ -116,19 +118,19 @@ export default function TodayPage() {
       {total > 0 && (
         <section className="px-6 mb-6">
           <div className="flex items-center gap-3 mb-2">
-            <p className="font-gabarito font-extrabold text-[13px] text-text-secondary uppercase tracking-widest">
+            <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest">
               Reminders
             </p>
             {doneCount === total && (
               <div className="flex items-center gap-1">
                 <CheckCircle size={14} className="text-coral" />
-                <span className="font-gabarito font-bold text-[12px] text-coral">
+                <span className="font-dm font-bold text-[12px] text-coral">
                   All done!
                 </span>
               </div>
             )}
             {doneCount < total && (
-              <span className="font-gabarito font-bold text-[12px] text-text-secondary">
+              <span className="font-dm font-bold text-[12px] text-text-secondary">
                 {doneCount}/{total} done
               </span>
             )}
@@ -147,7 +149,7 @@ export default function TodayPage() {
       {/* Tasks grouped by dog */}
       {Object.entries(tasksByDog).map(([dogName, dogTasks]) => (
         <section key={dogName} className="px-6 mb-4">
-          <p className="font-gabarito font-extrabold text-[12px] text-text-muted uppercase tracking-widest mb-3">
+          <p className="font-dm font-bold text-[12px] text-text-muted uppercase tracking-widest mb-3">
             {dogName}
           </p>
           <div>
@@ -166,21 +168,18 @@ export default function TodayPage() {
 
       {todayTasks.length === 0 && (
         <div className="px-6 py-16 flex flex-col items-center gap-3 text-center">
-          <svg width="120" height="98" viewBox="0 0 120 98" fill="none">
-            <g transform="translate(60 49) scale(0.95)">
-              <ellipse cx="0" cy="22" rx="26" ry="20" fill="#ff4514" />
-              <ellipse cx="-32" cy="-12" rx="12" ry="15" fill="#ff4514" />
-              <ellipse cx="-12" cy="-28" rx="11" ry="14" fill="#ff4514" />
-              <ellipse cx="12" cy="-28" rx="11" ry="14" fill="#ff4514" />
-              <ellipse cx="32" cy="-12" rx="12" ry="15" fill="#ff4514" />
-            </g>
-          </svg>
-          <p className="font-gabarito font-extrabold text-[22px] text-text-primary">
+          <p className="font-outfit font-bold text-[22px] text-text-primary">
             No tasks today
           </p>
-          <p className="font-gabarito text-[14px] text-text-secondary">
+          <p className="font-dm text-[14px] text-text-secondary">
             Start a stay to generate care tasks.
           </p>
+          <div className="mt-3">
+            <Button onClick={() => navigate('/stays/new')}>
+              <CalendarPlus size={18} />
+              Start a Stay
+            </Button>
+          </div>
         </div>
       )}
 

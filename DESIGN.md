@@ -22,33 +22,33 @@ colors:
   nav-inactive: "#78766e"
 typography:
   display:
-    fontFamily: "Gabarito, sans-serif"
+    fontFamily: "Outfit, sans-serif"
     fontSize: "56px"
-    fontWeight: 800
+    fontWeight: 700
     lineHeight: 1
     letterSpacing: "-0.02em"
   headline:
-    fontFamily: "Gabarito, sans-serif"
+    fontFamily: "Outfit, sans-serif"
     fontSize: "40px"
-    fontWeight: 800
+    fontWeight: 700
     lineHeight: 1
     letterSpacing: "normal"
   title:
-    fontFamily: "Gabarito, sans-serif"
+    fontFamily: "Outfit, sans-serif"
     fontSize: "20px"
-    fontWeight: 800
+    fontWeight: 700
     lineHeight: 1.2
     letterSpacing: "normal"
   body:
-    fontFamily: "Gabarito, sans-serif"
+    fontFamily: "DM Sans, sans-serif"
     fontSize: "14px"
     fontWeight: 400
     lineHeight: 1.5
     letterSpacing: "normal"
   label:
-    fontFamily: "Gabarito, sans-serif"
+    fontFamily: "DM Sans, sans-serif"
     fontSize: "12px"
-    fontWeight: 800
+    fontWeight: 700
     lineHeight: 1
     letterSpacing: "0.05em"
 rounded:
@@ -103,7 +103,7 @@ The system explicitly rejects the beige/neutral palette this app shipped with or
 - One committed accent (Ember coral) carries all emphasis and status meaning — it is never "just decorative"
 - Flat, color-blocked surfaces; depth comes from scale-press feedback, not shadows
 - Pill shapes everywhere load-bearing touch happens: buttons, nav, chips, avatars
-- A warm, dog-forward voice (paw prints, a wagging mascot) kept in check by a single extrabold sans with real gravity at display sizes
+- A warm, dog-forward voice (paw prints, a wagging mascot) kept in check by a bold geometric heading face (Outfit) with real gravity at display sizes, over a humanist workhorse (DM Sans)
 
 ## 2. Colors
 
@@ -117,7 +117,7 @@ Ember, White, and a bench of soft pastels used only as dog-identity accents — 
 ### Neutral
 - **Studio White** (#fcfcfc): The base surface for every screen — a true near-white, deliberately not cream/beige, for a cleaner and more modern read.
 - **Card** (#f4f4ef): One step down from Studio White — the resting color for dog cards, chips, and any block that needs to sit "on" the white without a border or shadow.
-- **Ink** (#141414): Primary text, mascot linework, bottom-nav background.
+- **Ink** (#141414): Primary text, mascot linework.
 - **Ink Secondary** (#5c5c5c) / **Ink Muted** (#6b7280): Secondary copy and de-emphasized labels, in that order of emphasis.
 - **Border Light** (#d1d1d1) / **Border Faint** (#e5e7eb): Hairline dividers (Care Note card border, task timeline connector). Used sparingly — most separation comes from color-blocking, not strokes.
 
@@ -133,30 +133,33 @@ Ember, White, and a bench of soft pastels used only as dog-identity accents — 
 
 ## 3. Typography
 
-**Type Family:** Gabarito (with sans-serif fallback), carrying display, headline, title, body, and label — one family in multiple weights rather than a display/body pairing.
-**Label/Nav Font:** Plus Jakarta Sans (bottom nav labels only)
+**Heading Family:** Outfit (with sans-serif fallback) — display, headline, and title tiers: page headings, dog names, card/empty-state titles.
+**Body Family:** DM Sans (with sans-serif fallback) — body copy, labels, chips, buttons, form controls, nav labels, and all standalone numerals (times, counts, dates). Numbers inside a heading stay in Outfit with the heading.
 
-**Character:** Gabarito at extrabold weight gives headings real gravity and a slightly rounded, friendly geometry — it's what keeps the system from tipping into "kids' app" even with a mascot on screen. At regular weight it's the workhorse: legible at small sizes, confident in bold, used for everything from task titles to body copy to all-caps eyebrows. One family, weight and size carry the hierarchy instead of a font switch.
+**Character:** Outfit at bold weight gives headings real gravity with a clean geometric friendliness — it's what keeps the system from tipping into "kids' app" even with a mascot on screen. DM Sans is the workhorse: a humanist counterpart that stays legible at small sizes and renders numerals (task times, medication doses) clearly at a glance. A geometric/humanist pairing — headings switch family, everything else is DM Sans with weight carrying emphasis.
 
 ### Hierarchy
-- **Display** (extrabold 800, 56px, leading-none, -0.02em): "Today" heading — one per app, the single biggest moment on the primary screen.
-- **Headline** (extrabold 800, 40px, leading-none): Page Header title on all secondary screens (Dogs, Dog Profile, Calendar, etc.).
-- **Title** (extrabold 800, 20px, leading-tight): Dog Card name, section-level titles.
-- **Body** (regular 400, 14px, leading-relaxed): Task notes, care-note content, descriptive copy. Kept short — this app is scanned, not read.
-- **Label** (extrabold 800, 11–13px, uppercase, tracking-wide): Section eyebrows ("Active Care", "Reminders"), status chips, badges. Always uppercase, always extrabold — never regular-weight caps.
+- **Display** (Outfit bold 700, 56px, leading-none, -0.02em): "Today" heading — one per app, the single biggest moment on the primary screen.
+- **Headline** (Outfit bold 700, 40px, leading-none): Page Header title on all secondary screens (Dogs, Dog Profile, Calendar, etc.).
+- **Title** (Outfit bold 700, 17–22px, leading-tight): Dog Card name, card and empty-state titles.
+- **Body** (DM Sans regular 400, 14px, leading-relaxed): Task notes, care-note content, descriptive copy. Kept short — this app is scanned, not read.
+- **Label** (DM Sans bold 700, 11–13px, uppercase, tracking-wide): Section eyebrows ("Active Care", "Reminders"), status chips, badges. Always uppercase, always bold — never regular-weight caps.
+
+### Named Rules
+**The Numbers Rule.** Standalone numerals — task times, progress counts, dates in list rows — are always DM Sans, never Outfit. The one exception: a number inside a heading (e.g. a Title that includes a time) inherits the heading's Outfit.
 
 ### Named Rules
 **The Eyebrow Restraint Rule.** Uppercase tracked labels (Label style) are reserved for section headers and status metadata — never used as decorative kicker text above every block. If it's not literally labeling a group of content below it, it doesn't get the eyebrow treatment.
 
 ## 4. Elevation
 
-Flat by default. Depth is communicated through color-blocking (White → Card → Ember, each a discrete flat layer) and interaction feedback (`active:scale-[0.97–0.98]` press states, not hover glows), not through shadows. The one deliberate exception is the bottom navigation, which is a physically floating object over content and earns a real shadow to sell that.
+Fully flat. Depth is communicated through color-blocking (White → Card → Ember, each a discrete flat layer) and interaction feedback (`active:scale-[0.97–0.98]` press states, not hover glows), not through shadows. The bottom nav — formerly the one shadow exception — is now a flat Card-colored pill separated from content by color alone.
 
 ### Shadow Vocabulary
-- **Floating-nav** (`box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.1)` / Tailwind `shadow-lg`): The bottom nav pill only. Nothing else in the system uses a shadow.
+None. No element in the system uses a drop shadow.
 
 ### Named Rules
-**The Flat-Except-Floating Rule.** If an element is genuinely floating over content (like the bottom nav), it gets a shadow. If it's a card or block sitting inline in the flow, it gets a flatter/lighter background color instead — never both a shadow and a background shift for the same depth cue.
+**The Flat Rule.** Depth cues come from a flatter/lighter background color (Card vs Studio White) and press feedback, never from shadows. If a layer needs more separation, step its background color, don't lift it.
 
 ## 5. Components
 
@@ -164,14 +167,14 @@ Tactile and confident: big touch targets, full pill rounding wherever a finger l
 
 ### Buttons
 - **Shape:** Full pill (`rounded-full`).
-- **Primary:** Ember background, white text, extrabold Gabarito, `active:bg-[Ember Deep]`. Padding scales by size (sm 12×6, md 20×12, lg 24×16).
+- **Primary:** Ember background, white text, bold DM Sans, `active:bg-[Ember Deep]`. Padding scales by size (sm 12×6, md 20×12, lg 24×16).
 - **Secondary:** White background, 2px Ink border, Ink text — used when a screen needs a strong action that isn't Ember (e.g., a destructive-adjacent or alternate CTA).
 - **Ghost:** Transparent, Ink Secondary text, `active:bg-gray-100` — lowest-emphasis action.
 - **Danger:** Soft red background/text pairing (#fee2e2 / #b91c1c), same pill shape — kept visually distinct from Ember so "delete" never gets confused with "brand emphasis."
 - **Press feedback:** `transition-all duration-100`, no hover states designed (mobile-first, touch-only).
 
 ### Chips (Status / Badges)
-- **Style:** Full pill, extrabold uppercase Gabarito at 11px, tracked wide.
+- **Style:** Full pill, bold uppercase DM Sans at 11px, tracked wide.
 - **State colors:** Pending (gray #f3f4f6/#6b7280), Done (green #dcfce7/#15803d), Skipped (yellow #fef9c3/#a16207), Overdue (red #fee2e2/#b91c1c) — each state owns a fixed background+text pair; never recolor a state ad hoc.
 
 ### Cards / Containers
@@ -182,17 +185,17 @@ Tactile and confident: big touch targets, full pill rounding wherever a finger l
 - **Press feedback:** `active:scale-[0.97–0.98]` on any card that navigates somewhere.
 
 ### Navigation
-- **Style:** A single floating Ink-black pill spanning the app width, fixed to the bottom, containing 4 icon+label nav items. Active item gets an Ember pill-within-the-pill background and white icon/text; inactive items are white at 50% opacity. Labels use Plus Jakarta Sans (the only place this font appears), 11px, medium/bold by active state.
+- **Style:** A single floating Card-colored pill (#f4f4ef) spanning the app width, fixed to the bottom, containing 4 icon+label nav items. Active item gets an Ember pill-within-the-pill background and white icon/text; inactive items use Nav Inactive (#78766e). Labels use DM Sans, 11px, medium/bold by active state.
 - **Mobile treatment:** This is a mobile-only app frame (max-width 430px); the nav is always fixed-bottom, never a sidebar.
 
 ### Signature Component: WaggingDog / Chase-Spin Mascot
-A blobby, side-view SVG dog with a continuously wagging tail (`WaggingDog`), used in headers and empty states as a warmth/personality anchor. On the splash screen, a variant curls the same dog into a circle chasing its own tail as the loading animation (`chase-spin`). These are the system's signature brand gesture — reserve real personality-driven motion for these two moments rather than spreading generic animation everywhere else.
+A blobby, side-view SVG dog with a continuously wagging tail (`WaggingDog`), used in headers and empty states as a warmth/personality anchor. On the splash screen, a looping Lottie dog animation (`public/splash.lottie`, rendered via `DotLottieReact`) plays on the Studio White canvas — the splash shares the same background as every main screen, with Ink wordmark and secondary tagline. These are the system's signature brand gesture — reserve real personality-driven motion for these two moments rather than spreading generic animation everywhere else.
 
 ## 6. Do's and Don'ts
 
 ### Do:
 - **Do** use Ember (#ff4514) as the only color that carries meaning — status, emphasis, active state. Everything else is identity (pastel avatars) or structure (Ink, Card, White).
-- **Do** keep surfaces flat; express depth with `Card` (#f4f4ef) vs `Studio White` (#fcfcfc) layering and `active:scale` press feedback, not shadows — except the floating bottom nav.
+- **Do** keep surfaces flat; express depth with `Card` (#f4f4ef) vs `Studio White` (#fcfcfc) layering and `active:scale` press feedback, not shadows.
 - **Do** default to full pill shapes (`rounded-full`) for anything tappable: buttons, chips, nav, avatars.
 - **Do** keep uppercase tracked labels reserved for real section eyebrows and status chips, not decorative kickers.
 - **Do** reserve real, choreographed motion (tail-wag, chase-spin, pop-in) for the mascot and success/loading moments — everyday state changes get simple `transition-colors`/`transition-transform`, not a show.
@@ -202,4 +205,4 @@ A blobby, side-view SVG dog with a continuously wagging tail (`WaggingDog`), use
 - **Don't** drift toward clinical SaaS-dashboard chrome (cold blues/grays, dense data-table density) — this is a warm, hands-on tool, not an enterprise console.
 - **Don't** tip into cartoon-kitsch cuteness (mascot dominating a whole screen, baby-talk copy) — the mascot is an accent, and the display font's weight is what keeps the system feeling like a serious tool.
 - **Don't** use a pastel avatar color (Peach/Lavender/Lemon/Mint) to signal status or urgency — those are identity-only colors; Ember and the semantic task-type colors (green/blue/purple) own meaning.
-- **Don't** add drop shadows to inline cards or buttons. Shadow is reserved for the one genuinely floating element, the bottom nav.
+- **Don't** add drop shadows anywhere — the system is fully flat, including the bottom nav.
