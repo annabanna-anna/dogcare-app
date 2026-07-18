@@ -7,6 +7,10 @@ interface Props {
 /**
  * Full-screen brand splash on the app's Studio White canvas,
  * with the Lottie dog loader front and center.
+ *
+ * Animation: "Free dog animation Animation" (public/splash.lottie)
+ * Creator: Waris ahmed
+ * Source: https://lottiefiles.com/ucwbmwf5zwku7fwe
  */
 export default function SplashScreen({ fading }: Props) {
   return (
@@ -24,7 +28,7 @@ export default function SplashScreen({ fading }: Props) {
 
       <div className="flex flex-col items-center gap-2">
         <p className="font-outfit font-bold text-[44px] leading-none text-text-primary tracking-tight">
-          Dog Care
+          GoodPup
         </p>
         <p className="font-dm font-bold text-[14px] text-cobalt uppercase tracking-widest">
           fetching your day…

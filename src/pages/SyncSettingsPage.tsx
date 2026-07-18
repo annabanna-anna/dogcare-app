@@ -6,6 +6,7 @@ import {
   Check,
   RefreshCw,
   Shield,
+  LogOut,
   PawPrint,
   Pill,
   X,
@@ -382,6 +383,20 @@ export default function SyncSettingsPage() {
               label="Privacy Policy"
               right={<ChevronRight size={18} className="text-[#d1d1d1]" />}
             />
+            <button
+              className="w-full text-left"
+              onClick={() => {
+                localStorage.removeItem('dogcare-authed')
+                window.location.assign('/')
+              }}
+            >
+              <SettingRow
+                icon={<LogOut size={18} />}
+                label="Log Out"
+                description="anna@example.com"
+                right={<ChevronRight size={18} className="text-[#d1d1d1]" />}
+              />
+            </button>
           </div>
         </section>
 

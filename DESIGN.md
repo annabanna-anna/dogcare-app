@@ -1,5 +1,5 @@
 ---
-name: DogCare
+name: GoodPup
 description: Task-tracking companion for dog sitters and boarders — bold coral energy on a crisp white canvas
 colors:
   ember: "#ff4514"
@@ -91,13 +91,13 @@ components:
     padding: "2px 8px"
 ---
 
-# Design System: DogCare
+# Design System: GoodPup
 
 ## 1. Overview
 
 **Creative North Star: "The Good Boy Standard"**
 
-DogCare is confident, capable, and a little proud of itself — the visual equivalent of a sitter who has three dogs fed, walked, and medicated before 9am and isn't stressed about it. The system reads bold and poppy (Ember coral against a crisp white canvas, pastel accents for pastel dogs), but every playful choice — the wagging-tail mascot, the pill shapes, the chase-spin loader — sits on top of a genuinely fast, glanceable task list. This is a working tool used mid-shift, one-handed, between a leash and a food bowl; it earns its warmth by staying legible under pressure, not by decoration alone.
+GoodPup is confident, capable, and a little proud of itself — the visual equivalent of a sitter who has three dogs fed, walked, and medicated before 9am and isn't stressed about it. The system reads bold and poppy (Ember coral against a crisp white canvas, pastel accents for pastel dogs), but every playful choice — the wagging-tail mascot, the pill shapes, the chase-spin loader — sits on top of a genuinely fast, glanceable task list. This is a working tool used mid-shift, one-handed, between a leash and a food bowl; it earns its warmth by staying legible under pressure, not by decoration alone.
 
 The system explicitly rejects the beige/neutral palette this app shipped with originally — that read as generic and "AI-built." It also rejects both directions a dog-care app could drift toward: clinical SaaS-blue dashboard chrome (wrong register for a hands-on, physical job), and cartoon-kitsch pet-app cuteness that undermines trust in a tool people rely on for medication timing.
 

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-07-06T00:00:00Z",
-  "title": "Design System: DogCare",
+  "title": "Design System: GoodPup",
   "extensions": {
     "colorMeta": {
       "ember": {
@@ -42,7 +42,7 @@
     "shadows": [],
     "motion": [
       { "name": "tail-wag", "value": "rotate(-16deg) to rotate(24deg), 0.45s ease-in-out infinite", "purpose": "Continuous idle wag on the WaggingDog mascot in headers/empty states." },
-      { "name": "splash-lottie", "value": "public/splash.lottie via DotLottieReact, loop + autoplay, 260px", "purpose": "Splash-screen loader: looping Lottie dog animation on the Studio White canvas (replaced the CSS chase-spin mascot)." },
+      { "name": "splash-lottie", "value": "public/splash.lottie via DotLottieReact, loop + autoplay, 260px", "purpose": "Splash-screen loader: looping Lottie dog animation on the Studio White canvas (replaced the CSS chase-spin mascot). Credit: \"Free dog animation Animation\" by Waris ahmed — https://lottiefiles.com/ucwbmwf5zwku7fwe" },
       { "name": "pop-in", "value": "scale(0.6)->scale(1.06)->scale(1), opacity 0->1, 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both", "purpose": "Mascot entrance bounce on the Today header and empty states — the one place a playful overshoot is intentional; not used elsewhere." }
     ],
     "breakpoints": []
@@ -91,7 +91,7 @@
   ],
   "narrative": {
     "northStar": "The Good Boy Standard",
-    "overview": "DogCare is confident, capable, and a little proud of itself — the visual equivalent of a sitter who has three dogs fed, walked, and medicated before 9am and isn't stressed about it. The system reads bold and poppy (Ember coral against a crisp white canvas, pastel accents for pastel dogs), but every playful choice — the wagging-tail mascot, the pill shapes, the chase-spin loader — sits on top of a genuinely fast, glanceable task list. This is a working tool used mid-shift, one-handed, between a leash and a food bowl; it earns its warmth by staying legible under pressure, not by decoration alone. The system explicitly rejects the beige/neutral palette this app shipped with originally — that read as generic and \"AI-built.\" It also rejects both directions a dog-care app could drift toward: clinical SaaS-blue dashboard chrome, and cartoon-kitsch pet-app cuteness that undermines trust in a tool people rely on for medication timing.",
+    "overview": "GoodPup is confident, capable, and a little proud of itself — the visual equivalent of a sitter who has three dogs fed, walked, and medicated before 9am and isn't stressed about it. The system reads bold and poppy (Ember coral against a crisp white canvas, pastel accents for pastel dogs), but every playful choice — the wagging-tail mascot, the pill shapes, the chase-spin loader — sits on top of a genuinely fast, glanceable task list. This is a working tool used mid-shift, one-handed, between a leash and a food bowl; it earns its warmth by staying legible under pressure, not by decoration alone. The system explicitly rejects the beige/neutral palette this app shipped with originally — that read as generic and \"AI-built.\" It also rejects both directions a dog-care app could drift toward: clinical SaaS-blue dashboard chrome, and cartoon-kitsch pet-app cuteness that undermines trust in a tool people rely on for medication timing.",
     "keyCharacteristics": [
       "One committed accent (Ember coral) carries all emphasis and status meaning — it is never \"just decorative\"",
       "Flat, color-blocked surfaces; depth comes from scale-press feedback, not shadows",

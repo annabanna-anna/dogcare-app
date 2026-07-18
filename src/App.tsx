@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import AuthPage from './pages/AuthPage'
 import TodayPage from './pages/TodayPage'
 import DogListPage from './pages/DogListPage'
 import DogProfilePage from './pages/DogProfilePage'
@@ -12,6 +13,9 @@ import SplashScreen from './components/SplashScreen'
 
 export default function App() {
   const [splash, setSplash] = useState<'visible' | 'fading' | 'gone'>('visible')
+  const [authed, setAuthed] = useState(
+    () => localStorage.getItem('dogcare-authed') === '1',
+  )
 
   useEffect(() => {
     const fade = setTimeout(() => setSplash('fading'), 1600)
@@ -21,6 +25,15 @@ export default function App() {
       clearTimeout(gone)
     }
   }, [])
+
+  if (!authed) {
+    return (
+      <>
+        {splash !== 'gone' && <SplashScreen fading={splash === 'fading'} />}
+        <AuthPage onAuth={() => setAuthed(true)} />
+      </>
+    )
+  }
 
   return (
     <BrowserRouter>

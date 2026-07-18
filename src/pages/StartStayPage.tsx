@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { CalendarDays, ChevronDown, Check, Search, X } from 'lucide-react'
 import DogIcon from '../components/icons/DogIcon'
-import { TIME_OPTIONS } from '../utils/timeOptions'
+import { TimePickerButton } from '../components/TimePicker'
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
 import BottomNav from '../components/BottomNav'
@@ -155,23 +155,11 @@ function DateTimeField({
             className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
           />
         </div>
-        <div className="relative w-[132px] shrink-0">
-          <select
-            value={time}
-            onChange={(e) => onTimeChange(e.target.value)}
-            className="w-full bg-white border border-border-light rounded-[12px] pl-4 pr-8 py-3 font-dm text-[15px] text-text-primary focus:outline-none focus:border-coral transition-colors appearance-none"
-          >
-            {TIME_OPTIONS.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-          <ChevronDown
-            size={16}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
-          />
-        </div>
+        <TimePickerButton
+          value={time}
+          onChange={onTimeChange}
+          className="w-[132px] shrink-0 bg-white border border-border-light rounded-[12px] pl-4 pr-8 py-3 font-dm text-[15px] text-text-primary"
+        />
       </div>
     </div>
   )

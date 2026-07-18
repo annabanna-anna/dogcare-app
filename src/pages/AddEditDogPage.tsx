@@ -4,7 +4,7 @@ import { ImagePlus, RefreshCw, Trash2, Plus, ChevronDown, X } from 'lucide-react
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
 import { mockDogs } from '../data/mockDogs'
-import { TIME_OPTIONS } from '../utils/timeOptions'
+import { TimePickerButton } from '../components/TimePicker'
 import type { CareScheduleEntry, DogSize, TaskType } from '../types'
 
 const scheduleTypeOptions: { value: TaskType; label: string }[] = [
@@ -319,7 +319,18 @@ export default function AddEditDogPage() {
     return canvas.toDataURL('image/jpeg', 0.85)
   }
 
-  async function handleSubmit() {
+  const [showScheduleConfirm, setShowScheduleConfirm] = useState(false)
+  const scheduleSectionRef = useRef<HTMLElement>(null)
+
+  function handleSubmit() {
+    if (schedule.length === 0) {
+      setShowScheduleConfirm(true)
+      return
+    }
+    void doSave()
+  }
+
+  async function doSave() {
     const photoUrl = await bakePhoto()
     const nowIso = new Date().toISOString()
     const careSchedule = [...schedule].sort((a, b) => a.time.localeCompare(b.time))
@@ -487,7 +498,7 @@ export default function AddEditDogPage() {
         </section>
 
         {/* Daily Schedule */}
-        <section>
+        <section ref={scheduleSectionRef} className="scroll-mt-4">
           <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-1">
             Daily Schedule
           </p>
@@ -498,27 +509,15 @@ export default function AddEditDogPage() {
             {schedule.map((entry, i) => (
               <div key={i} className="bg-white border border-border-light rounded-[12px] p-3 flex flex-col gap-2">
                 <div className="flex gap-2 items-center">
-                  <div className="relative w-[118px] shrink-0">
-                    <select
-                      value={entry.time}
-                      onChange={(e) =>
-                        setSchedule((prev) =>
-                          prev.map((en, j) => (j === i ? { ...en, time: e.target.value } : en)),
-                        )
-                      }
-                      className="w-full bg-white border border-border-light rounded-[10px] pl-3 pr-7 py-2 font-dm font-bold text-[13px] text-text-primary focus:outline-none focus:border-coral transition-colors appearance-none"
-                    >
-                      {TIME_OPTIONS.map((t) => (
-                        <option key={t.value} value={t.value}>
-                          {t.label}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown
-                      size={14}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
-                    />
-                  </div>
+                  <TimePickerButton
+                    value={entry.time}
+                    onChange={(v) =>
+                      setSchedule((prev) =>
+                        prev.map((en, j) => (j === i ? { ...en, time: v } : en)),
+                      )
+                    }
+                    className="w-[118px] shrink-0 bg-white border border-border-light rounded-[10px] pl-3 pr-7 py-2 font-dm font-bold text-[13px] text-text-primary"
+                  />
                   <div className="relative flex-1 min-w-0">
                     <select
                       value={entry.taskType}
@@ -579,6 +578,49 @@ export default function AddEditDogPage() {
           {isEdit ? 'Save Changes' : 'Add Dog'}
         </Button>
       </div>
+
+      {/* Empty-schedule confirmation */}
+      {showScheduleConfirm && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center px-6">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setShowScheduleConfirm(false)}
+          />
+          <div className="relative w-full max-w-[380px] bg-cream rounded-[22px] p-6">
+            <p className="font-outfit font-bold text-[20px] text-text-primary leading-tight mb-2">
+              No daily schedule yet
+            </p>
+            <p className="font-dm text-[14px] text-text-secondary leading-relaxed mb-5">
+              Confirm how often {form.name.trim() || 'this dog'} should be taken outside, fed,
+              or given medication — care tasks during stays are generated from this schedule.
+            </p>
+            <div className="flex flex-col gap-2">
+              <Button
+                fullWidth
+                onClick={() => {
+                  setShowScheduleConfirm(false)
+                  setSchedule((prev) =>
+                    prev.length ? prev : [{ time: '08:00', taskType: 'walk', note: '' }],
+                  )
+                  scheduleSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }}
+              >
+                Set the schedule
+              </Button>
+              <Button
+                fullWidth
+                variant="ghost"
+                onClick={() => {
+                  setShowScheduleConfirm(false)
+                  void doSave()
+                }}
+              >
+                Save without schedule
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
