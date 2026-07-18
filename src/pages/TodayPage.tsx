@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
-import { CheckCircle, PawPrint, CalendarPlus } from 'lucide-react'
+import { CheckCircle, CalendarPlus } from 'lucide-react'
+import DogIcon from '../components/icons/DogIcon'
 import { Link, useNavigate } from 'react-router-dom'
 import Button from '../components/Button'
 import TaskCard from '../components/TaskCard'
@@ -68,7 +69,7 @@ export default function TodayPage() {
           <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-1">
             {formatTodayHeading()}
           </p>
-          <h1 className="font-outfit font-bold text-[56px] leading-none text-text-primary tracking-tight">
+          <h1 className="font-outfit font-bold text-[56px] leading-none text-cobalt tracking-tight">
             Today
           </h1>
         </div>
@@ -90,13 +91,13 @@ export default function TodayPage() {
                 <Link
                   key={dog.id}
                   to={`/dogs/${dog.id}`}
-                  className="flex items-center gap-3 rounded-full pl-1.5 pr-4 py-1.5 bg-card active:scale-[0.97] transition-transform"
+                  className="flex items-center gap-3 rounded-full pl-1.5 pr-4 py-1.5 bg-cream border border-border-light active:scale-[0.97] transition-transform"
                 >
-                  <div className="size-9 rounded-full overflow-hidden bg-peach flex items-center justify-center shrink-0">
+                  <div className="size-9 rounded-full overflow-hidden bg-[#f3f4f6] flex items-center justify-center shrink-0">
                     {dog.photoUrl ? (
                       <img src={dog.photoUrl} alt={dog.name} className="size-full object-cover" />
                     ) : (
-                      <PawPrint size={17} className="text-coral" strokeWidth={2.2} />
+                      <DogIcon size={17} className="text-text-muted" />
                     )}
                   </div>
                   <div>

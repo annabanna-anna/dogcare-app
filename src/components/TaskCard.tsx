@@ -44,7 +44,7 @@ export default function TaskCard({ task, onDone, onSkip }: Props) {
       <div className="flex flex-col items-center w-8 shrink-0">
         <div
           className={`size-8 rounded-full flex items-center justify-center shrink-0 ${bg} ${
-            isMedication ? 'ring-2 ring-[#2486ff] ring-offset-2 ring-offset-cream' : ''
+            isMedication ? 'ring-2 ring-[#2344dd] ring-offset-2 ring-offset-cream' : ''
           }`}
         >
           <Icon size={17} className="text-white" />

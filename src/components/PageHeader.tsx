@@ -28,7 +28,7 @@ export default function PageHeader({ title, subtitle, back = false, right }: Pro
             {subtitle}
           </p>
         )}
-        <h1 className="font-outfit font-bold text-[40px] leading-none text-text-primary">
+        <h1 className="font-outfit font-bold text-[40px] leading-none text-cobalt">
           {title}
         </h1>
       </div>

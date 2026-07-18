@@ -9,6 +9,7 @@ import {
   Clock,
 } from 'lucide-react'
 import DogBowlIcon from '../components/icons/DogBowlIcon'
+import DogIcon from '../components/icons/DogIcon'
 import PageHeader from '../components/PageHeader'
 import CareNoteSection from '../components/CareNoteSection'
 import BottomNav from '../components/BottomNav'
@@ -28,9 +29,17 @@ const typeLabel: Record<TaskType, string> = {
 const typeBg: Record<TaskType, string> = {
   walk: '#18ba1d',
   meal: '#ff4514',
-  medication: '#2486ff',
+  medication: '#2344dd',
   potty: '#18ba1d',
   other: '#6b7280',
+}
+
+const typeIcon: Record<TaskType, React.ComponentType<{ size?: string | number; className?: string }>> = {
+  walk: PawPrint,
+  meal: DogBowlIcon,
+  medication: Pill,
+  potty: PawPrint,
+  other: PawPrint,
 }
 
 export default function DogProfilePage() {
@@ -74,7 +83,7 @@ export default function DogProfilePage() {
             {dog.photoUrl ? (
               <img src={dog.photoUrl} alt={dog.name} className="size-full object-cover" />
             ) : (
-              <div className="size-full flex items-center justify-center text-4xl">🐶</div>
+              <div className="size-full flex items-center justify-center text-text-muted"><DogIcon size={36} /></div>
             )}
           </div>
           <div>
@@ -117,7 +126,7 @@ export default function DogProfilePage() {
           title="Medication"
           icon={<Pill size={14} />}
           content={dog.medicationNotes}
-          accentColor="#2486ff"
+          accentColor="#2344dd"
           emptyText="No medications."
         />
         <CareNoteSection
@@ -138,7 +147,7 @@ export default function DogProfilePage() {
         {/* Daily Schedule */}
         <div className="bg-white border border-border-light rounded-[16px] p-4">
           <div className="flex items-center gap-2 mb-4">
-            <div className="size-7 rounded-full flex items-center justify-center bg-[#1f1f1f] shrink-0">
+            <div className="size-7 rounded-full flex items-center justify-center bg-cobalt shrink-0">
               <Clock size={14} className="text-white" />
             </div>
             <h3 className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-wide">
@@ -146,7 +155,9 @@ export default function DogProfilePage() {
             </h3>
           </div>
           <div className="flex flex-col gap-3">
-            {dog.careSchedule.map((entry, i) => (
+            {dog.careSchedule.map((entry, i) => {
+              const Icon = typeIcon[entry.taskType] ?? PawPrint
+              return (
               <div key={i} className="flex items-start gap-3">
                 <span className="font-dm font-bold text-[13px] text-text-primary w-[68px] shrink-0 pt-0.5">
                   {formatTime(`2000-01-01T${entry.time}:00`)}
@@ -155,7 +166,7 @@ export default function DogProfilePage() {
                   className="size-6 rounded-full flex items-center justify-center shrink-0 mt-0.5"
                   style={{ backgroundColor: typeBg[entry.taskType] ?? '#6b7280' }}
                 >
-                  <PawPrint size={12} className="text-white" />
+                  <Icon size={12} className="text-white" />
                 </div>
                 <div>
                   <p className="font-dm font-bold text-[14px] text-text-primary leading-none">
@@ -168,7 +179,7 @@ export default function DogProfilePage() {
                   )}
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         </div>
       </div>

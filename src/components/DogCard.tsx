@@ -1,16 +1,9 @@
 import { useState } from 'react'
-import { PawPrint, ChevronRight } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import DogIcon from './icons/DogIcon'
 import type { Dog, Stay } from '../types'
 import { formatShortDate } from '../utils/dateUtils'
-
-// rotating pastel blocks so the list feels like a deck of color cards
-const avatarPalettes = [
-  { bg: 'bg-peach', icon: 'text-coral' },
-  { bg: 'bg-lavender', icon: 'text-text-primary' },
-  { bg: 'bg-lemon', icon: 'text-text-primary' },
-  { bg: 'bg-mint', icon: 'text-green-vivid' },
-]
 
 interface Props {
   dog: Dog
@@ -18,21 +11,18 @@ interface Props {
   index?: number
 }
 
-export default function DogCard({ dog, nextStay, index = 0 }: Props) {
+export default function DogCard({ dog, nextStay }: Props) {
   const navigate = useNavigate()
   const [imgFailed, setImgFailed] = useState(false)
-  const palette = avatarPalettes[index % avatarPalettes.length]
   const showPhoto = dog.photoUrl && !imgFailed
 
   return (
     <button
       onClick={() => navigate(`/dogs/${dog.id}`)}
-      className="w-full bg-card rounded-[22px] p-4 flex items-center gap-4 active:scale-[0.98] transition-transform text-left"
+      className="w-full bg-cream border border-border-light rounded-[22px] p-4 flex items-center gap-4 active:scale-[0.98] transition-transform text-left"
     >
       {/* Avatar */}
-      <div
-        className={`shrink-0 size-16 rounded-[18px] overflow-hidden ${palette.bg} flex items-center justify-center`}
-      >
+      <div className="shrink-0 size-16 rounded-[18px] overflow-hidden bg-[#f3f4f6] flex items-center justify-center">
         {showPhoto ? (
           <img
             src={dog.photoUrl}
@@ -41,7 +31,7 @@ export default function DogCard({ dog, nextStay, index = 0 }: Props) {
             onError={() => setImgFailed(true)}
           />
         ) : (
-          <PawPrint size={30} className={palette.icon} strokeWidth={2.2} />
+          <DogIcon size={30} className="text-text-muted" />
         )}
       </div>
 

@@ -26,7 +26,7 @@ export default function SplashScreen({ fading }: Props) {
         <p className="font-outfit font-bold text-[44px] leading-none text-text-primary tracking-tight">
           Dog Care
         </p>
-        <p className="font-dm font-bold text-[14px] text-text-secondary uppercase tracking-widest">
+        <p className="font-dm font-bold text-[14px] text-cobalt uppercase tracking-widest">
           fetching your day…
         </p>
       </div>

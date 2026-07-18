@@ -146,7 +146,7 @@ export default function DogListPage() {
                 onClick={() => enabled && jumpTo(letter)}
                 disabled={!enabled}
                 className={`font-dm font-bold text-[10px] leading-[15px] w-4 text-center ${
-                  enabled ? 'text-coral' : 'text-text-muted/40'
+                  enabled ? 'text-cobalt' : 'text-text-muted/40'
                 }`}
               >
                 {letter}

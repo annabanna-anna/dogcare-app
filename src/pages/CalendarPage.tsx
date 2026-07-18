@@ -1,4 +1,5 @@
 import { CalendarDays } from 'lucide-react'
+import DogIcon from '../components/icons/DogIcon'
 import PageHeader from '../components/PageHeader'
 import BottomNav from '../components/BottomNav'
 import { mockStays } from '../data/mockStays'
@@ -46,7 +47,7 @@ export default function CalendarPage() {
                 {dog.photoUrl ? (
                   <img src={dog.photoUrl} alt={dog.name} className="size-full object-cover" />
                 ) : (
-                  <span className="text-2xl">🐶</span>
+                  <DogIcon size={22} className="text-text-muted" />
                 )}
               </div>
               <div className="flex-1 min-w-0">

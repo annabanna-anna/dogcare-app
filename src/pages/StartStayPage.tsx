@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { PawPrint, CalendarDays, ChevronDown, Check, Search, X } from 'lucide-react'
+import { CalendarDays, ChevronDown, Check, Search, X } from 'lucide-react'
+import DogIcon from '../components/icons/DogIcon'
+import { TIME_OPTIONS } from '../utils/timeOptions'
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
 import BottomNav from '../components/BottomNav'
@@ -22,15 +24,6 @@ function toQuarterTimeValue(date: Date): string {
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-/** All 96 quarter-hour times of a day: [{ value: "HH:mm", label: "h:mm AM" }] */
-const TIME_OPTIONS = Array.from({ length: 96 }, (_, i) => {
-  const h = Math.floor(i / 4)
-  const m = (i % 4) * 15
-  const ampm = h < 12 ? 'AM' : 'PM'
-  const h12 = h % 12 === 0 ? 12 : h % 12
-  return { value: `${pad(h)}:${pad(m)}`, label: `${h12}:${pad(m)} ${ampm}` }
-})
-
 function DogAvatar({ dog, size }: { dog: Dog; size: number }) {
   return (
     <div
@@ -40,7 +33,7 @@ function DogAvatar({ dog, size }: { dog: Dog; size: number }) {
       {dog.photoUrl ? (
         <img src={dog.photoUrl} alt={dog.name} className="size-full object-cover" />
       ) : (
-        <PawPrint size={size * 0.45} className="text-coral" strokeWidth={2.2} />
+        <DogIcon size={size * 0.5} className="text-text-muted" />
       )}
     </div>
   )
@@ -247,7 +240,7 @@ export default function StartStayPage() {
             ) : (
               <>
                 <div className="size-11 rounded-[10px] bg-[#f3f4f6] shrink-0 flex items-center justify-center">
-                  <PawPrint size={20} className="text-text-muted" strokeWidth={2.2} />
+                  <DogIcon size={20} className="text-text-muted" />
                 </div>
                 <p className="flex-1 font-dm text-[15px] text-text-secondary">Choose a dog</p>
               </>

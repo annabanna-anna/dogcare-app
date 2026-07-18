@@ -19,7 +19,7 @@ export default function BottomNav() {
             end={to === '/'}
             className={({ isActive }) =>
               `flex flex-col items-center gap-1 py-2.5 rounded-full transition-colors duration-150 ${
-                isActive ? 'bg-coral text-white' : 'text-nav-inactive'
+                isActive ? 'bg-cobalt text-white' : 'text-nav-inactive'
               }`
             }
           >

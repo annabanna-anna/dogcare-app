@@ -27,7 +27,8 @@
       "lemon": { "role": "accent", "displayName": "Lemon", "canonical": "oklch(92% 0.14 100)" },
       "mint": { "role": "accent", "displayName": "Mint", "canonical": "oklch(90% 0.08 155)" },
       "green-vivid": { "role": "semantic", "displayName": "Walk Green", "canonical": "oklch(63% 0.19 138)" },
-      "blue-task": { "role": "semantic", "displayName": "Medication Blue", "canonical": "oklch(61% 0.19 255)" },
+      "cobalt": { "role": "accent", "displayName": "Cobalt", "canonical": "oklch(47% 0.24 268)" },
+      "blue-task": { "role": "semantic", "displayName": "Medication Blue (= Cobalt)", "canonical": "oklch(47% 0.24 268)" },
       "purple-task": { "role": "semantic", "displayName": "Groom Purple", "canonical": "oklch(48% 0.22 302)" },
       "ink": { "role": "neutral", "displayName": "Ink", "canonical": "oklch(20% 0 0)" }
     },
@@ -77,7 +78,7 @@
       "refersTo": "card-dog",
       "description": "Tappable list row: pastel avatar block, name, breed/owner, next-stay pill.",
       "html": "<button class=\"ds-card-dog\"><span class=\"ds-card-dog-avatar\">🐾</span><span class=\"ds-card-dog-info\"><span class=\"ds-card-dog-name\">Barkley</span><span class=\"ds-card-dog-meta\">Golden Retriever · Anna</span></span></button>",
-      "css": ".ds-card-dog { width: 100%; background: #f4f4ef; border-radius: 22px; padding: 16px; display: flex; align-items: center; gap: 16px; border: none; text-align: left; transition: transform 0.1s; } .ds-card-dog:active { transform: scale(0.98); } .ds-card-dog-avatar { display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 18px; background: #ffd7c6; font-size: 24px; } .ds-card-dog-name { display: block; font-family: Outfit, sans-serif; font-weight: 700; font-size: 20px; color: #141414; } .ds-card-dog-meta { display: block; font-family: 'DM Sans', sans-serif; font-size: 13px; color: #5c5c5c; margin-top: 2px; }"
+      "css": ".ds-card-dog { width: 100%; background: #fcfcfc; border: 1px solid #d1d1d1; border-radius: 22px; padding: 16px; display: flex; align-items: center; gap: 16px; text-align: left; transition: transform 0.1s; } .ds-card-dog:active { transform: scale(0.98); } .ds-card-dog-avatar { display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 18px; background: #f3f4f6; font-size: 24px; } .ds-card-dog-name { display: block; font-family: Outfit, sans-serif; font-weight: 700; font-size: 20px; color: #141414; } .ds-card-dog-meta { display: block; font-family: 'DM Sans', sans-serif; font-size: 13px; color: #5c5c5c; margin-top: 2px; }"
     },
     {
       "name": "Bottom Nav",
@@ -85,7 +86,7 @@
       "refersTo": "bottom-nav",
       "description": "Flat Card-colored pill nav fixed to the bottom, separated from content by color alone.",
       "html": "<nav class=\"ds-bottom-nav\"><a class=\"ds-nav-item ds-nav-item-active\">Today</a><a class=\"ds-nav-item\">Dogs</a><a class=\"ds-nav-item\">Calendar</a><a class=\"ds-nav-item\">Settings</a></nav>",
-      "css": ".ds-bottom-nav { background: #f4f4ef; border-radius: 9999px; padding: 8px; display: grid; grid-template-columns: repeat(4, 1fr); } .ds-nav-item { flex: 1; text-align: center; padding: 10px; border-radius: 9999px; color: #78766e; font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500; text-decoration: none; transition: background 0.15s, color 0.15s; } .ds-nav-item-active { background: #ff4514; color: #ffffff; font-weight: 700; }"
+      "css": ".ds-bottom-nav { background: #f4f4ef; border-radius: 9999px; padding: 8px; display: grid; grid-template-columns: repeat(4, 1fr); } .ds-nav-item { flex: 1; text-align: center; padding: 10px; border-radius: 9999px; color: #78766e; font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500; text-decoration: none; transition: background 0.15s, color 0.15s; } .ds-nav-item-active { background: #2344dd; color: #ffffff; font-weight: 700; }"
     }
   ],
   "narrative": {
@@ -99,7 +100,7 @@
     ],
     "rules": [
       { "name": "The One Voice Rule", "body": "Ember is the only color that means something (status, action, active state). Pastels (Peach, Lavender, Lemon, Mint) exist purely to differentiate dogs and never carry semantic weight — if a pastel starts meaning \"done\" or \"urgent,\" that's a bug.", "section": "colors" },
-      { "name": "The Avatar Palette Rule", "body": "Peach / Lavender / Lemon / Mint rotate by list index to give a \"deck of cards\" feel to Dog List avatars — assign by position, not by breed or any semantic property, so the rotation stays visually random and low-stakes.", "section": "colors" },
+      { "name": "The Avatar Rule", "body": "Photo-less dog avatars are neutral: light gray (#f3f4f6) blocks with the Icon/dog face glyph in Ink Muted — never the paw icon, never a pastel. The earlier pastel rotation is retired.", "section": "colors" },
       { "name": "The Eyebrow Restraint Rule", "body": "Uppercase tracked labels are reserved for section headers and status metadata — never used as decorative kicker text above every block.", "section": "typography" },
       { "name": "The Flat Rule", "body": "Depth cues come from a flatter/lighter background color (Card vs Studio White) and press feedback, never from shadows. No element in the system — including the bottom nav — carries a drop shadow.", "section": "elevation" }
     ],

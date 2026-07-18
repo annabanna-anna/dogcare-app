@@ -12,7 +12,8 @@ colors:
   lemon: "#f4ec6a"
   mint: "#c9f0d5"
   green-vivid: "#18ba1d"
-  blue-task: "#2486ff"
+  cobalt: "#2344dd"
+  blue-task: "#2344dd"
   purple-task: "#9333ea"
   ink: "#141414"
   ink-secondary: "#5c5c5c"
@@ -78,7 +79,8 @@ components:
     rounded: "{rounded.full}"
     padding: "12px 20px"
   card-dog:
-    backgroundColor: "{colors.card}"
+    backgroundColor: "{colors.studio-white}"
+    borderColor: "{colors.border-light}"
     textColor: "{colors.ink}"
     rounded: "{rounded.lg}"
     padding: "16px"
@@ -107,12 +109,15 @@ The system explicitly rejects the beige/neutral palette this app shipped with or
 
 ## 2. Colors
 
-Ember, White, and a bench of soft pastels used only as dog-identity accents — the palette reads bold in small, deliberate doses rather than saturating every surface.
+Four roles: Ember orange as the brand color, Cobalt blue as the secondary accent, and two neutrals — Studio White and warm Card gray — as the canvas. A bench of soft pastels exists only as dog-identity accents. The palette reads bold in small, deliberate doses rather than saturating every surface.
 
-### Primary
-- **Ember** (#ff4514): The system's one voice for meaning — active nav tab, progress bar fill, primary buttons, "done" states, overdue emphasis, header eyebrows. If it's coral, it's important.
+### Brand
+- **Ember** (#ff4514): The brand color and the system's voice for action, status, and metadata emphasis — progress bar fill, primary buttons, "done" states, overdue emphasis, selection states, and the uppercase eyebrows/subheads above headings (dates like "Saturday, July 4", breed lines like "Golden Retriever · Large", the "Active" label). If it's coral, it's important.
 - **Ember Deep** (#d93a10): Pressed/active state of Ember (buttons, active nav).
 - **Ember Soft** (#ffe4da): Faint tint for subtle emphasis backgrounds (belly-patch mascot detail, soft highlights).
+
+### Accent
+- **Cobalt** (#2344dd): The secondary accent — a vivid royal blue lifted straight from the splash Lottie animation (orange-and-cobalt pairing, café-signage energy). Its jobs: **page headings** (the Display/Headline tier — "Today", "Dogs", dog names in headers — renders in Cobalt over an Ember eyebrow, the system's signature orange-on-blue pairing), **wayfinding** (the active bottom-nav tab — "where you are" — plus the Dogs A–Z index and the Daily Schedule clock chip), the **medication semantic** (badge, ring highlight), the splash tagline, and brand-illustration linework. Never status or action — Ember owns those.
 
 ### Neutral
 - **Studio White** (#fcfcfc): The base surface for every screen — a true near-white, deliberately not cream/beige, for a cleaner and more modern read.
@@ -124,11 +129,11 @@ Ember, White, and a bench of soft pastels used only as dog-identity accents — 
 ### Named Rules
 **The One Voice Rule.** Ember is the only color that means something (status, action, active state). Pastels (Peach, Lavender, Lemon, Mint) exist purely to differentiate dogs and never carry semantic weight — if a pastel starts meaning "done" or "urgent," that's a bug.
 
-**The Avatar Palette Rule.** Peach (#ffd7c6) / Lavender (#c9c6f2) / Lemon (#f4ec6a) / Mint (#c9f0d5) rotate by list index to give a "deck of cards" feel to Dog List avatars — assign by position, not by breed or any semantic property, so the rotation stays visually random and low-stakes.
+**The Avatar Rule.** Photo-less dog avatars are neutral: a light gray block (#f3f4f6) with the `Icon/dog` face glyph in Ink Muted — never the paw icon, never a pastel. (The earlier pastel deck-of-cards rotation is retired; Peach/Lavender/Lemon/Mint remain available as identity accents but are unused in the current screens.)
 
 ### Semantic accents (status & task type only)
 - **Green Vivid** (#18ba1d): Walk/potty task icons, "done" pills, positive toggles.
-- **Blue Task** (#2486ff): Medication — the one task type that gets a ring-highlight treatment, because missing it matters more than missing a walk.
+- **Blue Task** (= Cobalt #2344dd): Medication — the one task type that gets a ring-highlight treatment, because missing it matters more than missing a walk. Shares the Cobalt accent value so the system has exactly one blue.
 - **Purple Task** (#9333ea): Reserved task-type accent (grooming and similar).
 
 ## 3. Typography
@@ -139,8 +144,8 @@ Ember, White, and a bench of soft pastels used only as dog-identity accents — 
 **Character:** Outfit at bold weight gives headings real gravity with a clean geometric friendliness — it's what keeps the system from tipping into "kids' app" even with a mascot on screen. DM Sans is the workhorse: a humanist counterpart that stays legible at small sizes and renders numerals (task times, medication doses) clearly at a glance. A geometric/humanist pairing — headings switch family, everything else is DM Sans with weight carrying emphasis.
 
 ### Hierarchy
-- **Display** (Outfit bold 700, 56px, leading-none, -0.02em): "Today" heading — one per app, the single biggest moment on the primary screen.
-- **Headline** (Outfit bold 700, 40px, leading-none): Page Header title on all secondary screens (Dogs, Dog Profile, Calendar, etc.).
+- **Display** (Outfit bold 700, 56px, leading-none, -0.02em, **Cobalt**): "Today" heading — one per app, the single biggest moment on the primary screen.
+- **Headline** (Outfit bold 700, 40px, leading-none, **Cobalt**): Page Header title on all secondary screens (Dogs, Dog Profile, Calendar, etc.) — always paired with an Ember eyebrow above it.
 - **Title** (Outfit bold 700, 17–22px, leading-tight): Dog Card name, card and empty-state titles.
 - **Body** (DM Sans regular 400, 14px, leading-relaxed): Task notes, care-note content, descriptive copy. Kept short — this app is scanned, not read.
 - **Label** (DM Sans bold 700, 11–13px, uppercase, tracking-wide): Section eyebrows ("Active Care", "Reminders"), status chips, badges. Always uppercase, always bold — never regular-weight caps.
@@ -179,13 +184,13 @@ Tactile and confident: big touch targets, full pill rounding wherever a finger l
 
 ### Cards / Containers
 - **Corner Style:** Large rounding (22px) for primary content cards (Dog Card); medium (16px) for secondary containers (Care Note).
-- **Background:** Card gray (#f4f4ef) on White for list items; White with a Border Light hairline for content blocks (Care Note) that need to feel more like a form section than a tappable item.
-- **Shadow Strategy:** None — see Elevation. Depth is the Card-vs-White contrast alone.
+- **Background:** Dog cards and active-care chips sit on the app background color (`bg/app` #fcfcfc) and separate with a Border Light hairline; content blocks (Care Note, Behavior/Food sections) are pure White (#ffffff) with the same hairline. Card gray (#f4f4ef) is reserved for utility surfaces: the search pill, the bottom-nav pill, and inline input chips.
+- **Shadow Strategy:** None — see Elevation. Separation comes from hairline borders and the white-vs-near-white step.
 - **Internal Padding:** 16px standard.
 - **Press feedback:** `active:scale-[0.97–0.98]` on any card that navigates somewhere.
 
 ### Navigation
-- **Style:** A single floating Card-colored pill (#f4f4ef) spanning the app width, fixed to the bottom, containing 4 icon+label nav items. Active item gets an Ember pill-within-the-pill background and white icon/text; inactive items use Nav Inactive (#78766e). Labels use DM Sans, 11px, medium/bold by active state.
+- **Style:** A single flat Card-colored pill (#f4f4ef) spanning the app width, fixed to the bottom, containing 4 icon+label nav items in a strict 4-column grid. Active item gets a Cobalt pill-within-the-pill background and white icon/text — the one place the accent marks "where you are" (location, not action); inactive items use Nav Inactive (#78766e). Labels use DM Sans, 11px, medium/bold by active state.
 - **Mobile treatment:** This is a mobile-only app frame (max-width 430px); the nav is always fixed-bottom, never a sidebar.
 
 ### Signature Component: WaggingDog / Chase-Spin Mascot
