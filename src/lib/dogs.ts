@@ -109,6 +109,15 @@ export async function updateDog(id: string, input: DogInput): Promise<Dog> {
   return mapRow(data)
 }
 
+/** Deletes the dog row (stays/tasks cascade via FK) and its photo, if any. */
+export async function deleteDog(id: string): Promise<void> {
+  const ownerId = await currentUserId()
+  const { error } = await supabase.from('dogs').delete().eq('id', id)
+  if (error) throw error
+  // Best-effort cleanup — a missing/already-gone object shouldn't fail the delete.
+  await supabase.storage.from('dog-photos').remove([`${ownerId}/${id}.jpg`])
+}
+
 /** Uploads to the owner-scoped `dog-photos` bucket and returns a cache-busted public URL. */
 export async function uploadDogPhoto(dogId: string, blob: Blob): Promise<string> {
   const ownerId = await currentUserId()

@@ -48,10 +48,11 @@ const sizeOptions: { value: DogSize; label: string }[] = [
   { value: 'extra-large', label: 'XL' },
 ]
 
-function FieldLabel({ children }: { children: React.ReactNode }) {
+function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
     <label className="block font-dm font-bold text-[12px] text-text-secondary uppercase tracking-widest mb-1.5">
       {children}
+      {required && <span className="text-coral"> *</span>}
     </label>
   )
 }
@@ -350,9 +351,14 @@ export default function AddEditDogPage() {
   }
 
   const [showScheduleConfirm, setShowScheduleConfirm] = useState(false)
+  const [nameTouched, setNameTouched] = useState(false)
   const scheduleSectionRef = useRef<HTMLElement>(null)
 
   function handleSubmit() {
+    if (!form.name.trim()) {
+      setNameTouched(true)
+      return
+    }
     if (schedule.length === 0) {
       setShowScheduleConfirm(true)
       return
@@ -464,8 +470,11 @@ export default function AddEditDogPage() {
           </p>
           <div className="flex flex-col gap-3">
             <div>
-              <FieldLabel>Dog's Name</FieldLabel>
+              <FieldLabel required>Dog's Name</FieldLabel>
               <Input value={form.name} onChange={set('name')} placeholder="e.g. Ollie" />
+              {nameTouched && !form.name.trim() && (
+                <p className="font-dm text-[12px] text-[#b91c1c] mt-1">Dog's name is required.</p>
+              )}
             </div>
             <div>
               <FieldLabel>Breed</FieldLabel>

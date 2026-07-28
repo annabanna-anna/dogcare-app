@@ -8,6 +8,7 @@ import {
   CalendarPlus,
   Pencil,
   Clock,
+  Trash2,
 } from 'lucide-react'
 import DogBowlIcon from '../components/icons/DogBowlIcon'
 import DogIcon from '../components/icons/DogIcon'
@@ -15,7 +16,7 @@ import PageHeader from '../components/PageHeader'
 import CareNoteSection from '../components/CareNoteSection'
 import BottomNav from '../components/BottomNav'
 import Button from '../components/Button'
-import { getDog } from '../lib/dogs'
+import { getDog, deleteDog } from '../lib/dogs'
 import { formatTime } from '../utils/dateUtils'
 import type { Dog, TaskType } from '../types'
 
@@ -47,6 +48,9 @@ export default function DogProfilePage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [dog, setDog] = useState<Dog | null | undefined>(undefined)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!id) return
@@ -202,7 +206,58 @@ export default function DogProfilePage() {
             )})}
           </div>
         </div>
+        {/* Delete */}
+        <Button fullWidth variant="danger" onClick={() => setShowDeleteConfirm(true)}>
+          <Trash2 size={18} />
+          Delete Dog
+        </Button>
       </div>
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center px-6">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => !deleting && setShowDeleteConfirm(false)}
+          />
+          <div className="relative w-full max-w-[380px] bg-cream rounded-[22px] p-6">
+            <p className="font-outfit font-bold text-[20px] text-text-primary leading-tight mb-2">
+              Delete {dog.name}?
+            </p>
+            <p className="font-dm text-[14px] text-text-secondary leading-relaxed mb-5">
+              This removes {dog.name}'s profile, care instructions, and every stay and task
+              linked to them. This can't be undone.
+            </p>
+            {deleteError && (
+              <div className="bg-[#fee2e2] rounded-[12px] px-4 py-3 mb-3">
+                <p className="font-dm text-[13px] text-[#b91c1c]">{deleteError}</p>
+              </div>
+            )}
+            <div className="flex flex-col gap-2">
+              <Button
+                fullWidth
+                variant="danger"
+                disabled={deleting}
+                onClick={async () => {
+                  setDeleting(true)
+                  setDeleteError(null)
+                  try {
+                    await deleteDog(dog.id)
+                    navigate('/dogs')
+                  } catch (e) {
+                    setDeleteError(e instanceof Error ? e.message : 'Could not delete. Please try again.')
+                    setDeleting(false)
+                  }
+                }}
+              >
+                {deleting ? 'Deleting…' : 'Delete Dog'}
+              </Button>
+              <Button fullWidth variant="ghost" disabled={deleting} onClick={() => setShowDeleteConfirm(false)}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <BottomNav />
     </div>
