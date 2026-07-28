@@ -1,15 +1,36 @@
+import { useEffect, useState } from 'react'
 import { CalendarDays } from 'lucide-react'
 import DogIcon from '../components/icons/DogIcon'
 import PageHeader from '../components/PageHeader'
 import BottomNav from '../components/BottomNav'
-import { mockStays } from '../data/mockStays'
-import { mockDogs } from '../data/mockDogs'
+import { listStays } from '../lib/stays'
+import { listDogs } from '../lib/dogs'
 import { formatShortDate } from '../utils/dateUtils'
+import type { Dog, Stay } from '../types'
 
 export default function CalendarPage() {
   const now = new Date()
+  const [stays, setStays] = useState<Stay[]>([])
+  const [dogs, setDogs] = useState<Dog[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const upcomingStays = mockStays
+  useEffect(() => {
+    let cancelled = false
+    Promise.all([listStays(), listDogs()])
+      .then(([stayRows, dogRows]) => {
+        if (cancelled) return
+        setStays(stayRows)
+        setDogs(dogRows)
+      })
+      .catch((e) => !cancelled && setError(e instanceof Error ? e.message : 'Could not load.'))
+      .finally(() => !cancelled && setLoading(false))
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const upcomingStays = stays
     .filter((s) => new Date(s.endDate) >= now)
     .sort((a, b) => a.startDate.localeCompare(b.startDate))
 
@@ -22,7 +43,15 @@ export default function CalendarPage() {
           Upcoming Stays
         </p>
 
-        {upcomingStays.length === 0 && (
+        {error && (
+          <div className="bg-[#fee2e2] rounded-[12px] px-4 py-3">
+            <p className="font-dm text-[13px] text-[#b91c1c]">{error}</p>
+          </div>
+        )}
+
+        {loading && <p className="font-dm text-[14px] text-text-secondary">Loading…</p>}
+
+        {!loading && upcomingStays.length === 0 && (
           <div className="py-16 flex flex-col items-center gap-3 text-center">
             <CalendarDays size={40} className="text-[#d1d5db]" />
             <p className="font-outfit font-bold text-[17px] text-text-primary">
@@ -35,7 +64,7 @@ export default function CalendarPage() {
         )}
 
         {upcomingStays.map((stay) => {
-          const dog = mockDogs.find((d) => d.id === stay.dogId)
+          const dog = dogs.find((d) => d.id === stay.dogId)
           if (!dog) return null
           const isActive = new Date(stay.startDate) <= now && new Date(stay.endDate) >= now
           return (

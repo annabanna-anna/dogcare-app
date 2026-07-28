@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { CalendarDays, ChevronDown, Check, Search, X } from 'lucide-react'
 import DogIcon from '../components/icons/DogIcon'
@@ -6,7 +6,7 @@ import { TimePickerButton } from '../components/TimePicker'
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
 import BottomNav from '../components/BottomNav'
-import { mockDogs } from '../data/mockDogs'
+import { listDogs } from '../lib/dogs'
 import type { Dog } from '../types'
 
 function pad(n: number) {
@@ -40,22 +40,24 @@ function DogAvatar({ dog, size }: { dog: Dog; size: number }) {
 }
 
 function DogPickerSheet({
+  dogs,
   selectedDogId,
   onSelect,
   onClose,
 }: {
+  dogs: Dog[]
   selectedDogId: string
   onSelect: (id: string) => void
   onClose: () => void
 }) {
   const [query, setQuery] = useState('')
 
-  const dogs = useMemo(() => {
+  const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return [...mockDogs]
+    return [...dogs]
       .sort((a, b) => a.name.localeCompare(b.name))
       .filter((d) => !q || `${d.name} ${d.breed} ${d.ownerName}`.toLowerCase().includes(q))
-  }, [query])
+  }, [query, dogs])
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center">
@@ -88,7 +90,7 @@ function DogPickerSheet({
         </div>
 
         <div className="px-6 overflow-y-auto flex flex-col gap-2">
-          {dogs.map((dog) => {
+          {filtered.map((dog) => {
             const isSelected = dog.id === selectedDogId
             return (
               <button
@@ -113,7 +115,7 @@ function DogPickerSheet({
               </button>
             )
           })}
-          {dogs.length === 0 && (
+          {filtered.length === 0 && (
             <p className="font-dm text-[14px] text-text-secondary text-center py-8">
               No dogs match “{query}”.
             </p>
@@ -175,6 +177,8 @@ export default function StartStayPage() {
   const weekLater = new Date(now)
   weekLater.setDate(now.getDate() + 7)
 
+  const [dogs, setDogs] = useState<Dog[]>([])
+  const [loading, setLoading] = useState(true)
   const [selectedDogId, setSelectedDogId] = useState(preselectedDogId)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [startDay, setStartDay] = useState(toDateValue(now))
@@ -183,7 +187,13 @@ export default function StartStayPage() {
   const [endTime, setEndTime] = useState(toQuarterTimeValue(weekLater))
   const [notes, setNotes] = useState('')
 
-  const selectedDog = mockDogs.find((d) => d.id === selectedDogId)
+  useEffect(() => {
+    listDogs()
+      .then(setDogs)
+      .finally(() => setLoading(false))
+  }, [])
+
+  const selectedDog = dogs.find((d) => d.id === selectedDogId)
   const startDate = `${startDay}T${startTime}`
   const endDate = `${endDay}T${endTime}`
 
@@ -208,7 +218,8 @@ export default function StartStayPage() {
             Which dog?
           </p>
           <button
-            onClick={() => setPickerOpen(true)}
+            onClick={() => !loading && setPickerOpen(true)}
+            disabled={loading}
             className={`w-full flex items-center gap-3 p-3 rounded-[14px] border transition-colors text-left ${
               selectedDog ? 'border-coral bg-[#fff5f3]' : 'border-border-light bg-white active:bg-gray-50'
             }`}
@@ -230,7 +241,9 @@ export default function StartStayPage() {
                 <div className="size-11 rounded-[10px] bg-[#f3f4f6] shrink-0 flex items-center justify-center">
                   <DogIcon size={20} className="text-text-muted" />
                 </div>
-                <p className="flex-1 font-dm text-[15px] text-text-secondary">Choose a dog</p>
+                <p className="flex-1 font-dm text-[15px] text-text-secondary">
+                  {loading ? 'Loading dogs…' : 'Choose a dog'}
+                </p>
               </>
             )}
             <ChevronDown size={18} className="text-text-muted shrink-0" />
@@ -288,6 +301,7 @@ export default function StartStayPage() {
 
       {pickerOpen && (
         <DogPickerSheet
+          dogs={dogs}
           selectedDogId={selectedDogId}
           onSelect={(id) => {
             setSelectedDogId(id)

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   PawPrint,
@@ -14,9 +15,9 @@ import PageHeader from '../components/PageHeader'
 import CareNoteSection from '../components/CareNoteSection'
 import BottomNav from '../components/BottomNav'
 import Button from '../components/Button'
-import { mockDogs } from '../data/mockDogs'
+import { getDog } from '../lib/dogs'
 import { formatTime } from '../utils/dateUtils'
-import type { TaskType } from '../types'
+import type { Dog, TaskType } from '../types'
 
 const typeLabel: Record<TaskType, string> = {
   walk: 'Walk',
@@ -45,7 +46,26 @@ const typeIcon: Record<TaskType, React.ComponentType<{ size?: string | number; c
 export default function DogProfilePage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const dog = mockDogs.find((d) => d.id === id)
+  const [dog, setDog] = useState<Dog | null | undefined>(undefined)
+
+  useEffect(() => {
+    if (!id) return
+    let cancelled = false
+    getDog(id)
+      .then((d) => !cancelled && setDog(d))
+      .catch(() => !cancelled && setDog(null))
+    return () => {
+      cancelled = true
+    }
+  }, [id])
+
+  if (dog === undefined) {
+    return (
+      <div className="min-h-svh bg-cream flex items-center justify-center px-6">
+        <p className="font-dm text-[14px] text-text-secondary">Loading…</p>
+      </div>
+    )
+  }
 
   if (!dog) {
     return (

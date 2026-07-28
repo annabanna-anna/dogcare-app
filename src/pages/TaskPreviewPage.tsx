@@ -1,13 +1,15 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { PawPrint, Pill } from 'lucide-react'
 import DogBowlIcon from '../components/icons/DogBowlIcon'
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
-import { mockDogs } from '../data/mockDogs'
+import { getDog } from '../lib/dogs'
+import { createStay } from '../lib/stays'
+import { createTasks } from '../lib/tasks'
 import { generateTasksForStay } from '../utils/taskGenerator'
 import { formatDayHeading, formatTime, toDateKey } from '../utils/dateUtils'
-import type { Task, TaskType } from '../types'
+import type { Dog, Task, TaskType } from '../types'
 
 const typeIcon: Record<TaskType, React.ComponentType<{ size?: string | number; className?: string }>> = {
   walk: PawPrint,
@@ -37,7 +39,24 @@ export default function TaskPreviewPage() {
   const location = useLocation()
   const state = location.state as LocationState | null
 
-  const dog = state?.dogId ? mockDogs.find((d) => d.id === state.dogId) : undefined
+  const [dog, setDog] = useState<Dog | null | undefined>(undefined)
+  const [confirming, setConfirming] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!state?.dogId) {
+      setDog(null)
+      return
+    }
+    let cancelled = false
+    getDog(state.dogId)
+      .then((d) => !cancelled && setDog(d))
+      .catch(() => !cancelled && setDog(null))
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.dogId])
 
   const tasks = useMemo<Task[]>(() => {
     if (!dog || !state) return []
@@ -63,6 +82,14 @@ export default function TaskPreviewPage() {
     return map
   }, [tasks])
 
+  if (dog === undefined) {
+    return (
+      <div className="min-h-svh bg-cream flex items-center justify-center px-6">
+        <p className="font-dm text-[14px] text-text-secondary">Loading…</p>
+      </div>
+    )
+  }
+
   if (!state || !dog) {
     return (
       <div className="min-h-svh bg-cream flex items-center justify-center px-6">
@@ -78,10 +105,24 @@ export default function TaskPreviewPage() {
     )
   }
 
-  function handleConfirm() {
-    // In a real app: save stay + tasks to Supabase
-    alert(`Stay confirmed with ${tasks.length} tasks! (mock — data not persisted yet)`)
-    navigate('/')
+  async function handleConfirm() {
+    if (!dog || !state) return
+    setConfirming(true)
+    setError(null)
+    try {
+      const stay = await createStay({
+        dogId: dog.id,
+        startDate: state.startDate,
+        endDate: state.endDate,
+        notes: state.notes,
+      })
+      const finalTasks = generateTasksForStay(dog, stay)
+      await createTasks(finalTasks)
+      navigate('/')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not save this stay. Please try again.')
+      setConfirming(false)
+    }
   }
 
   return (
@@ -93,6 +134,12 @@ export default function TaskPreviewPage() {
       />
 
       <div className="px-6 mt-4 flex flex-col gap-6">
+        {error && (
+          <div className="bg-[#fee2e2] rounded-[12px] px-4 py-3">
+            <p className="font-dm text-[13px] text-[#b91c1c]">{error}</p>
+          </div>
+        )}
+
         {tasks.length === 0 && (
           <div className="text-center py-12">
             <p className="font-outfit font-bold text-[17px] text-text-primary mb-2">
@@ -142,8 +189,8 @@ export default function TaskPreviewPage() {
 
         {tasks.length > 0 && (
           <div className="flex flex-col gap-3">
-            <Button fullWidth size="lg" onClick={handleConfirm}>
-              Confirm Stay
+            <Button fullWidth size="lg" onClick={handleConfirm} disabled={confirming}>
+              {confirming ? 'Saving…' : 'Confirm Stay'}
             </Button>
             <Button fullWidth size="lg" variant="secondary" onClick={() => navigate(-1)}>
               Back to Edit

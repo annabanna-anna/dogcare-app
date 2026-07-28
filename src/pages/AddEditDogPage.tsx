@@ -1,9 +1,9 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ImagePlus, RefreshCw, Trash2, Plus, ChevronDown, X } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
-import { mockDogs } from '../data/mockDogs'
+import { getDog, createDog, updateDog, uploadDogPhoto } from '../lib/dogs'
 import { TimePickerButton } from '../components/TimePicker'
 import type { CareScheduleEntry, DogSize, TaskType } from '../types'
 
@@ -214,6 +214,7 @@ function PhotoCropField({
             <img
               src={src}
               draggable={false}
+              crossOrigin="anonymous"
               onLoad={(e) => {
                 const img = e.currentTarget
                 onNatural({ w: img.naturalWidth, h: img.naturalHeight })
@@ -268,55 +269,84 @@ function PhotoCropField({
 export default function AddEditDogPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const isEdit = id && id !== 'new'
-  const existing = isEdit ? mockDogs.find((d) => d.id === id) : undefined
+  const isEdit = Boolean(id && id !== 'new')
 
-  const [form, setForm] = useState<FormState>(
-    existing
-      ? {
-          name: existing.name,
-          breed: existing.breed,
-          size: existing.size,
-          ownerName: existing.ownerName,
-          ownerContact: existing.ownerContact,
-          behaviorNotes: existing.behaviorNotes,
-          foodNotes: existing.foodNotes,
-          medicationNotes: existing.medicationNotes,
-          walkNotes: existing.walkNotes,
-          emergencyNotes: existing.emergencyNotes,
-        }
-      : defaultForm,
-  )
+  const [form, setForm] = useState<FormState>(defaultForm)
+  const [schedule, setSchedule] = useState<CareScheduleEntry[]>([])
+  const [photoSrc, setPhotoSrc] = useState<string | null>(null)
+  const [existingId, setExistingId] = useState<string | null>(null)
+  const [existingName, setExistingName] = useState('Dog')
+  const [loadingExisting, setLoadingExisting] = useState(isEdit)
+  const [notFound, setNotFound] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const [schedule, setSchedule] = useState<CareScheduleEntry[]>(
-    existing ? existing.careSchedule.map((e) => ({ ...e })) : [],
-  )
-  const [photoSrc, setPhotoSrc] = useState<string | null>(existing?.photoUrl ?? null)
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [natural, setNatural] = useState<{ w: number; h: number } | null>(null)
   const boxRef = useRef<HTMLDivElement>(null)
 
+  useEffect(() => {
+    if (!isEdit || !id) return
+    let cancelled = false
+    getDog(id)
+      .then((d) => {
+        if (cancelled) return
+        if (!d) {
+          setNotFound(true)
+          return
+        }
+        setForm({
+          name: d.name,
+          breed: d.breed,
+          size: d.size,
+          ownerName: d.ownerName,
+          ownerContact: d.ownerContact,
+          behaviorNotes: d.behaviorNotes,
+          foodNotes: d.foodNotes,
+          medicationNotes: d.medicationNotes,
+          walkNotes: d.walkNotes,
+          emergencyNotes: d.emergencyNotes,
+        })
+        setSchedule(d.careSchedule.map((e) => ({ ...e })))
+        setPhotoSrc(d.photoUrl ?? null)
+        setExistingId(d.id)
+        setExistingName(d.name)
+      })
+      .catch(() => !cancelled && setNotFound(true))
+      .finally(() => !cancelled && setLoadingExisting(false))
+    return () => {
+      cancelled = true
+    }
+  }, [id, isEdit])
+
   function set<K extends keyof FormState>(key: K) {
     return (value: FormState[K]) => setForm((prev) => ({ ...prev, [key]: value }))
   }
 
-  /** Render the visible crop rectangle to a canvas and return it as a JPEG data URL. */
-  async function bakePhoto(): Promise<string | undefined> {
-    if (!photoSrc) return undefined
-    if (!natural || !boxRef.current) return photoSrc
+  /** Renders the visible crop rectangle to a JPEG Blob. Returns undefined if the
+   *  source image can't be read into a canvas (e.g. a remote photo without CORS). */
+  async function bakePhotoBlob(): Promise<Blob | undefined> {
+    if (!photoSrc || !natural || !boxRef.current) return undefined
     const box = boxRef.current.getBoundingClientRect()
     const s = Math.max(box.width / natural.w, box.height / natural.h) * zoom
-    const img = new Image()
-    img.src = photoSrc
-    await img.decode()
-    const canvas = document.createElement('canvas')
-    canvas.width = 880
-    canvas.height = 660
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return photoSrc
-    ctx.drawImage(img, -pan.x / s, -pan.y / s, box.width / s, box.height / s, 0, 0, 880, 660)
-    return canvas.toDataURL('image/jpeg', 0.85)
+    try {
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      img.src = photoSrc
+      await img.decode()
+      const canvas = document.createElement('canvas')
+      canvas.width = 880
+      canvas.height = 660
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return undefined
+      ctx.drawImage(img, -pan.x / s, -pan.y / s, box.width / s, box.height / s, 0, 0, 880, 660)
+      return await new Promise<Blob | undefined>((resolve) =>
+        canvas.toBlob((blob) => resolve(blob ?? undefined), 'image/jpeg', 0.85),
+      )
+    } catch {
+      return undefined
+    }
   }
 
   const [showScheduleConfirm, setShowScheduleConfirm] = useState(false)
@@ -331,30 +361,67 @@ export default function AddEditDogPage() {
   }
 
   async function doSave() {
-    const photoUrl = await bakePhoto()
-    const nowIso = new Date().toISOString()
-    const careSchedule = [...schedule].sort((a, b) => a.time.localeCompare(b.time))
-    if (isEdit && existing) {
-      Object.assign(existing, form, { photoUrl, careSchedule, updatedAt: nowIso })
-    } else {
-      mockDogs.push({
-        id: `dog-${Date.now()}`,
-        ...form,
-        photoUrl,
-        careSchedule,
-        createdAt: nowIso,
-        updatedAt: nowIso,
-      })
+    setSaving(true)
+    setError(null)
+    try {
+      const dogId = existingId ?? crypto.randomUUID()
+
+      let photoUrl: string | null
+      if (photoSrc === null) {
+        photoUrl = null
+      } else {
+        const blob = await bakePhotoBlob()
+        photoUrl = blob ? await uploadDogPhoto(dogId, blob) : photoSrc
+      }
+
+      const careSchedule = [...schedule].sort((a, b) => a.time.localeCompare(b.time))
+      const input = { ...form, photoUrl, careSchedule }
+
+      if (isEdit && existingId) {
+        await updateDog(existingId, input)
+      } else {
+        await createDog(dogId, input)
+      }
+      navigate(isEdit ? `/dogs/${dogId}` : '/dogs')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not save. Please try again.')
+    } finally {
+      setSaving(false)
     }
-    alert(isEdit ? `${form.name}'s profile updated! (mock)` : `${form.name} added! (mock)`)
-    navigate(isEdit ? `/dogs/${id}` : '/dogs')
+  }
+
+  if (loadingExisting) {
+    return (
+      <div className="min-h-svh bg-cream flex items-center justify-center px-6">
+        <p className="font-dm text-[14px] text-text-secondary">Loading…</p>
+      </div>
+    )
+  }
+
+  if (notFound) {
+    return (
+      <div className="min-h-svh bg-cream flex items-center justify-center px-6">
+        <div className="text-center">
+          <p className="font-outfit font-bold text-[17px] text-text-primary mb-2">Dog not found</p>
+          <Button onClick={() => navigate('/dogs')} variant="secondary">
+            Back to Dogs
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="min-h-svh bg-cream pb-28">
-      <PageHeader back title={isEdit ? `Edit ${existing?.name ?? 'Dog'}` : 'Add Dog'} />
+      <PageHeader back title={isEdit ? `Edit ${existingName}` : 'Add Dog'} />
 
       <div className="px-6 mt-4 flex flex-col gap-5">
+        {error && (
+          <div className="bg-[#fee2e2] rounded-[12px] px-4 py-3">
+            <p className="font-dm text-[13px] text-[#b91c1c]">{error}</p>
+          </div>
+        )}
+
         {/* Photo */}
         <section>
           <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-3">
@@ -574,8 +641,8 @@ export default function AddEditDogPage() {
           </div>
         </section>
 
-        <Button fullWidth size="lg" onClick={handleSubmit} disabled={!form.name.trim()}>
-          {isEdit ? 'Save Changes' : 'Add Dog'}
+        <Button fullWidth size="lg" onClick={handleSubmit} disabled={!form.name.trim() || saving}>
+          {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Dog'}
         </Button>
       </div>
 

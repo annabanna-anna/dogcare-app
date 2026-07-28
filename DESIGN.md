@@ -193,8 +193,8 @@ Tactile and confident: big touch targets, full pill rounding wherever a finger l
 - **Style:** A single flat Card-colored pill (#f4f4ef) spanning the app width, fixed to the bottom, containing 4 icon+label nav items in a strict 4-column grid. Active item gets a Cobalt pill-within-the-pill background and white icon/text — the one place the accent marks "where you are" (location, not action); inactive items use Nav Inactive (#78766e). Labels use DM Sans, 11px, medium/bold by active state.
 - **Mobile treatment:** This is a mobile-only app frame (max-width 430px); the nav is always fixed-bottom, never a sidebar.
 
-### Signature Component: WaggingDog / Chase-Spin Mascot
-A blobby, side-view SVG dog with a continuously wagging tail (`WaggingDog`), used in headers and empty states as a warmth/personality anchor. On the splash screen, a looping Lottie dog animation (`public/splash.lottie`, rendered via `DotLottieReact`) plays on the Studio White canvas — the splash shares the same background as every main screen, with Ink wordmark and secondary tagline. These are the system's signature brand gesture — reserve real personality-driven motion for these two moments rather than spreading generic animation everywhere else.
+### Signature Component: Lottie Dog Mascot
+A single looping Lottie dog animation (`public/splash.lottie`, rendered via `DotLottieReact`) is the system's one mascot moment, reused at two sizes: large (150–260px) on the splash and auth screens, small (140px) in empty states like "No dogs yet." It always sits on the Studio White canvas — the same background as every main screen. This is the system's signature brand gesture — reserve it for these loading/empty moments rather than spreading generic animation everywhere else.
 
 ## 6. Do's and Don'ts
 
@@ -203,7 +203,7 @@ A blobby, side-view SVG dog with a continuously wagging tail (`WaggingDog`), use
 - **Do** keep surfaces flat; express depth with `Card` (#f4f4ef) vs `Studio White` (#fcfcfc) layering and `active:scale` press feedback, not shadows.
 - **Do** default to full pill shapes (`rounded-full`) for anything tappable: buttons, chips, nav, avatars.
 - **Do** keep uppercase tracked labels reserved for real section eyebrows and status chips, not decorative kickers.
-- **Do** reserve real, choreographed motion (tail-wag, chase-spin, pop-in) for the mascot and success/loading moments — everyday state changes get simple `transition-colors`/`transition-transform`, not a show.
+- **Do** reserve the Lottie dog mascot for loading/empty moments — everyday state changes get simple `transition-colors`/`transition-transform`, not a show.
 
 ### Don't:
 - **Don't** reintroduce a beige/cream/parchment-tinted background. The base surface is Studio White (#fcfcfc) — a true near-white, chosen explicitly because cream/beige read as generic and "AI-built."

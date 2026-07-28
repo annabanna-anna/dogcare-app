@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react'
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import Button from '../components/Button'
+import { supabase } from '../lib/supabase'
 
 // Dog animation (public/splash.lottie): "Free dog animation Animation"
 // by Waris ahmed — https://lottiefiles.com/ucwbmwf5zwku7fwe
@@ -29,21 +30,109 @@ function GoogleLogo({ size = 18 }: { size?: number }) {
   )
 }
 
-export default function AuthPage({ onAuth }: { onAuth: () => void }) {
-  const [mode, setMode] = useState<'login' | 'signup'>('signup')
+export default function AuthPage() {
+  const [mode, setMode] = useState<'login' | 'signup' | 'reset'>('signup')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [checkEmail, setCheckEmail] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
   const passwordValid = password.length >= 8
-  const isValid = emailValid && passwordValid
   const isLogin = mode === 'login'
+  const isReset = mode === 'reset'
+  const isValid = isReset ? emailValid : emailValid && passwordValid
 
-  function authenticate() {
-    // In a real app: Supabase auth (email/password or Google OAuth)
-    localStorage.setItem('dogcare-authed', '1')
-    onAuth()
+  async function authenticate() {
+    if (!isValid || loading) return
+    setLoading(true)
+    setError(null)
+
+    if (isReset) {
+      const { error: authError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: window.location.origin,
+      })
+      setLoading(false)
+      if (authError) {
+        setError(authError.message)
+        return
+      }
+      setResetSent(true)
+      return
+    }
+
+    const { error: authError, data } = isLogin
+      ? await supabase.auth.signInWithPassword({ email: email.trim(), password })
+      : await supabase.auth.signUp({ email: email.trim(), password })
+
+    setLoading(false)
+    if (authError) {
+      setError(authError.message)
+      return
+    }
+    // Email confirmation is on by default in Supabase — a fresh sign-up with
+    // no session yet means "check your inbox" rather than "you're in."
+    if (!isLogin && data.user && !data.session) {
+      setCheckEmail(true)
+    }
+    // Otherwise App.tsx's onAuthStateChange listener picks up the new session.
+  }
+
+  async function continueWithGoogle() {
+    setError(null)
+    const { error: authError } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    })
+    if (authError) setError(authError.message)
+  }
+
+  if (checkEmail) {
+    return (
+      <div className="min-h-svh bg-cream flex flex-col items-center justify-center px-6 text-center gap-4">
+        <DotLottieReact src="/splash.lottie" loop autoplay style={{ width: 150, height: 150 }} />
+        <p className="font-outfit font-bold text-[26px] text-cobalt leading-tight">
+          Check your email
+        </p>
+        <p className="font-dm text-[14px] text-text-secondary max-w-[280px]">
+          We sent a confirmation link to <span className="font-bold">{email}</span>. Open it to
+          finish creating your account.
+        </p>
+        <button
+          onClick={() => setCheckEmail(false)}
+          className="font-dm font-bold text-[13px] text-coral mt-2"
+        >
+          Back to sign up
+        </button>
+      </div>
+    )
+  }
+
+  if (resetSent) {
+    return (
+      <div className="min-h-svh bg-cream flex flex-col items-center justify-center px-6 text-center gap-4">
+        <DotLottieReact src="/splash.lottie" loop autoplay style={{ width: 150, height: 150 }} />
+        <p className="font-outfit font-bold text-[26px] text-cobalt leading-tight">
+          Check your email
+        </p>
+        <p className="font-dm text-[14px] text-text-secondary max-w-[280px]">
+          If an account exists for <span className="font-bold">{email}</span>, we sent a link to
+          reset your password.
+        </p>
+        <button
+          onClick={() => {
+            setResetSent(false)
+            setMode('login')
+          }}
+          className="font-dm font-bold text-[13px] text-coral mt-2"
+        >
+          Back to log in
+        </button>
+      </div>
+    )
   }
 
   return (
@@ -54,14 +143,26 @@ export default function AuthPage({ onAuth }: { onAuth: () => void }) {
 
       <div className="mt-2 mb-6">
         <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-1">
-          {isLogin ? 'Welcome back' : 'Get started'}
+          {isReset ? 'Reset password' : isLogin ? 'Welcome back' : 'Get started'}
         </p>
         <h1 className="font-outfit font-bold text-[40px] leading-none text-cobalt">
-          {isLogin ? 'Log In' : 'Sign Up'}
+          {isReset ? 'Forgot Password' : isLogin ? 'Log In' : 'Sign Up'}
         </h1>
+        {isReset && (
+          <p className="font-dm text-[14px] text-text-secondary mt-2">
+            Enter your email and we'll send you a link to reset your password.
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col gap-3">
+        {error && (
+          <div className="flex items-start gap-2 bg-[#fee2e2] rounded-[12px] px-4 py-3">
+            <AlertCircle size={16} className="text-[#b91c1c] shrink-0 mt-0.5" />
+            <p className="font-dm text-[13px] text-[#b91c1c]">{error}</p>
+          </div>
+        )}
+
         <div className="relative">
           <Mail
             size={18}
@@ -76,69 +177,98 @@ export default function AuthPage({ onAuth }: { onAuth: () => void }) {
             className="w-full bg-white border border-border-light rounded-[12px] pl-11 pr-4 py-3.5 font-dm text-[15px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-coral transition-colors"
           />
         </div>
-        <div className="relative">
-          <Lock
-            size={18}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
-          />
-          <input
-            type={showPassword ? 'text' : 'password'}
-            autoComplete={isLogin ? 'current-password' : 'new-password'}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder={isLogin ? 'Password' : 'Password (8+ characters)'}
-            className="w-full bg-white border border-border-light rounded-[12px] pl-11 pr-12 py-3.5 font-dm text-[15px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-coral transition-colors"
-          />
-          <button
-            onClick={() => setShowPassword((v) => !v)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 size-8 flex items-center justify-center text-text-muted"
-            aria-label={showPassword ? 'Hide password' : 'Show password'}
-          >
-            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-          </button>
-        </div>
+        {!isReset && (
+          <div className="relative">
+            <Lock
+              size={18}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
+            />
+            <input
+              type={showPassword ? 'text' : 'password'}
+              autoComplete={isLogin ? 'current-password' : 'new-password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder={isLogin ? 'Password' : 'Password (8+ characters)'}
+              className="w-full bg-white border border-border-light rounded-[12px] pl-11 pr-12 py-3.5 font-dm text-[15px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-coral transition-colors"
+            />
+            <button
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 size-8 flex items-center justify-center text-text-muted"
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+        )}
 
-        <Button fullWidth size="lg" onClick={authenticate} disabled={!isValid}>
-          {isLogin ? 'Log In' : 'Create Account'}
+        <Button fullWidth size="lg" onClick={authenticate} disabled={!isValid || loading}>
+          {loading ? 'Please wait…' : isReset ? 'Send Reset Link' : isLogin ? 'Log In' : 'Create Account'}
         </Button>
 
         {isLogin && (
-          <button className="font-dm font-bold text-[13px] text-text-secondary text-center py-1">
+          <button
+            onClick={() => {
+              setMode('reset')
+              setError(null)
+            }}
+            className="font-dm font-bold text-[13px] text-text-secondary text-center py-1"
+          >
             Forgot password?
           </button>
         )}
 
-        {/* Divider */}
-        <div className="flex items-center gap-3 my-1">
-          <div className="flex-1 h-px bg-border-faint" />
-          <span className="font-dm text-[12px] text-text-muted uppercase tracking-wide">or</span>
-          <div className="flex-1 h-px bg-border-faint" />
-        </div>
+        {isReset && (
+          <button
+            onClick={() => {
+              setMode('login')
+              setError(null)
+            }}
+            className="font-dm font-bold text-[13px] text-text-secondary text-center py-1"
+          >
+            Back to log in
+          </button>
+        )}
 
-        <button
-          onClick={authenticate}
-          className="w-full flex items-center justify-center gap-2.5 rounded-full bg-white border-2 border-text-primary px-5 py-3 font-dm font-bold text-[15px] text-text-primary active:bg-gray-50 active:scale-[0.98] transition-all duration-100"
-        >
-          <GoogleLogo />
-          Continue with Google
-        </button>
+        {!isReset && (
+          <>
+            {/* Divider */}
+            <div className="flex items-center gap-3 my-1">
+              <div className="flex-1 h-px bg-border-faint" />
+              <span className="font-dm text-[12px] text-text-muted uppercase tracking-wide">or</span>
+              <div className="flex-1 h-px bg-border-faint" />
+            </div>
+
+            <button
+              onClick={continueWithGoogle}
+              className="w-full flex items-center justify-center gap-2.5 rounded-full bg-white border-2 border-text-primary px-5 py-3 font-dm font-bold text-[15px] text-text-primary active:bg-gray-50 active:scale-[0.98] transition-all duration-100"
+            >
+              <GoogleLogo />
+              Continue with Google
+            </button>
+          </>
+        )}
       </div>
 
       <div className="mt-auto pt-8 flex flex-col items-center gap-3">
-        {!isLogin && (
+        {!isLogin && !isReset && (
           <p className="font-dm text-[12px] text-text-muted text-center leading-relaxed px-4">
             By signing up you agree to our Terms of Service and Privacy Policy.
           </p>
         )}
-        <p className="font-dm text-[14px] text-text-secondary">
-          {isLogin ? 'New here?' : 'Already have an account?'}{' '}
-          <button
-            onClick={() => setMode(isLogin ? 'signup' : 'login')}
-            className="font-bold text-coral"
-          >
-            {isLogin ? 'Sign up' : 'Log in'}
-          </button>
-        </p>
+        {!isReset && (
+          <p className="font-dm text-[14px] text-text-secondary">
+            {isLogin ? 'New here?' : 'Already have an account?'}{' '}
+            <button
+              onClick={() => {
+                setMode(isLogin ? 'signup' : 'login')
+                setError(null)
+              }}
+              className="font-bold text-coral"
+            >
+              {isLogin ? 'Sign up' : 'Log in'}
+            </button>
+          </p>
+        )}
       </div>
     </div>
   )

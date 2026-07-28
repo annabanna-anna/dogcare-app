@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { supabase } from '../lib/supabase'
 import {
   CalendarDays,
   Bell,
@@ -254,6 +255,11 @@ export default function SyncSettingsPage() {
   const [syncMode, setSyncMode] = useState<SyncMode>('events')
   const [typeMap, setTypeMap] = useState<Record<TaskType, SyncStyle>>(DEFAULT_TYPE_MAP)
   const [showSyncPrompt, setShowSyncPrompt] = useState(false)
+  const [userEmail, setUserEmail] = useState<string | null>(null)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email ?? null))
+  }, [])
 
   const reminderOptions = [5, 10, 15, 30, 60]
 
@@ -385,15 +391,12 @@ export default function SyncSettingsPage() {
             />
             <button
               className="w-full text-left"
-              onClick={() => {
-                localStorage.removeItem('dogcare-authed')
-                window.location.assign('/')
-              }}
+              onClick={() => void supabase.auth.signOut()}
             >
               <SettingRow
                 icon={<LogOut size={18} />}
                 label="Log Out"
-                description="anna@example.com"
+                description={userEmail ?? undefined}
                 right={<ChevronRight size={18} className="text-[#d1d1d1]" />}
               />
             </button>
