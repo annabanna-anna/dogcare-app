@@ -107,7 +107,7 @@ export default function TaskPreviewPage() {
   }
 
   async function handleConfirm() {
-    if (!dog || !state) return
+    if (!dog || !state || confirming) return
     setConfirming(true)
     setError(null)
     try {

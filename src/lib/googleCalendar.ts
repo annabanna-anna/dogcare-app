@@ -284,7 +284,21 @@ export function parseRoverStyleTitle(title: string): { dogName: string; ownerNam
  *  events and from the Rover-synced calendar used for pulling. */
 async function resolveGoodPupCalendarId(accessToken: string): Promise<string> {
   const cached = localStorage.getItem(PUSH_CALENDAR_CACHE_KEY)
-  if (cached) return cached
+  if (cached) {
+    // Verify it still exists — the user may have deleted the calendar
+    // itself, not just its events, which would otherwise silently fail
+    // every push using this stale id.
+    const check = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cached)}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    )
+    if (check.ok) return cached
+    if (check.status === 401 || check.status === 403) {
+      disconnectGoogleCalendar()
+      throw new Error('EXPIRED')
+    }
+    localStorage.removeItem(PUSH_CALENDAR_CACHE_KEY)
+  }
 
   const calendars = await listGoogleCalendars(accessToken)
   const existing = calendars.find((c) => c.summary.toLowerCase() === PUSH_CALENDAR_NAME.toLowerCase())
@@ -315,7 +329,20 @@ async function resolveGoodPupCalendarId(accessToken: string): Promise<string> {
  *  list that tasks pushed as to-dos (rather than calendar events) go into. */
 async function resolveGoodPupTaskListId(accessToken: string): Promise<string> {
   const cached = localStorage.getItem(PUSH_TASKLIST_CACHE_KEY)
-  if (cached) return cached
+  if (cached) {
+    // Same self-healing check as the calendar side — the user may have
+    // deleted the whole "GoodPup" list, not just the tasks inside it.
+    const check = await fetch(
+      `https://tasks.googleapis.com/tasks/v1/users/@me/lists/${encodeURIComponent(cached)}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    )
+    if (check.ok) return cached
+    if (check.status === 401 || check.status === 403) {
+      disconnectGoogleCalendar()
+      throw new Error('EXPIRED')
+    }
+    localStorage.removeItem(PUSH_TASKLIST_CACHE_KEY)
+  }
 
   const res = await fetch('https://tasks.googleapis.com/tasks/v1/users/@me/lists', {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -434,10 +461,16 @@ async function upsertGoogleTask(tasklistId: string, accessToken: string, task: T
   // discarded by Google's own apps no matter what we send. Putting the time
   // in the title is the only way it actually shows up anywhere.
   const time = scheduledTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+  // Build the date from LOCAL date parts, not scheduledTime.toISOString() —
+  // that converts to UTC first, which rolls evening local times (e.g. a
+  // 6pm task in a timezone behind UTC) into the next UTC calendar day, so
+  // Google Tasks would show it due a day late.
+  const pad2 = (n: number) => String(n).padStart(2, '0')
+  const localDate = `${scheduledTime.getFullYear()}-${pad2(scheduledTime.getMonth() + 1)}-${pad2(scheduledTime.getDate())}`
   const body = JSON.stringify({
     title: `${time} — ${task.title} — ${task.dogName}`,
     notes: task.note || undefined,
-    due: scheduledTime.toISOString(),
+    due: `${localDate}T00:00:00.000Z`,
   })
   const headers = { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }
 

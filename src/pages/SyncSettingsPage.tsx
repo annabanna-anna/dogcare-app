@@ -9,6 +9,7 @@ import {
   Shield,
   LogOut,
   AlertCircle,
+  Pencil,
 } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import BottomNav from '../components/BottomNav'
@@ -112,6 +113,8 @@ export default function SyncSettingsPage() {
   const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false)
   const [pushEnabled, setPushEnabledState] = useState(true)
   const [pushFormats, setPushFormatsState] = useState<Record<TaskType, PushFormat>>(() => getPushFormats())
+  const [editingFormats, setEditingFormats] = useState(false)
+  const [draftFormats, setDraftFormats] = useState<Record<TaskType, PushFormat>>(() => getPushFormats())
   const [pushError, setPushError] = useState<string | null>(null)
   const [reminders, setReminders] = useState(true)
   const [reminderMinutes, setReminderMinutes] = useState(15)
@@ -129,9 +132,21 @@ export default function SyncSettingsPage() {
     setPushEnabledState(on)
   }
 
-  function changePushFormat(type: TaskType, format: PushFormat) {
-    setPushFormat(type, format)
-    setPushFormatsState((prev) => ({ ...prev, [type]: format }))
+  function startEditingFormats() {
+    setDraftFormats(pushFormats)
+    setEditingFormats(true)
+  }
+
+  function cancelEditingFormats() {
+    setEditingFormats(false)
+  }
+
+  function saveFormats() {
+    for (const type of Object.keys(draftFormats) as TaskType[]) {
+      if (draftFormats[type] !== pushFormats[type]) setPushFormat(type, draftFormats[type])
+    }
+    setPushFormatsState(draftFormats)
+    setEditingFormats(false)
   }
 
   const reminderOptions = [5, 10, 15, 30, 60]
@@ -211,34 +226,70 @@ export default function SyncSettingsPage() {
 
               {calendarConnected && pushEnabled && (
                 <div className="pt-3 border-t border-border-faint flex flex-col gap-2.5">
-                  <p className="font-dm font-bold text-[11px] text-text-muted uppercase tracking-wide">
-                    Add As
-                  </p>
-                  {taskTypeLabels.map(({ value, label }) => (
-                    <div key={value} className="flex items-center justify-between gap-3">
-                      <p className="font-dm text-[13px] text-text-primary">{label}</p>
-                      <div className="flex rounded-full border border-border-light bg-white p-1">
-                        {(['event', 'task'] as const).map((format) => (
-                          <button
-                            key={format}
-                            onClick={() => changePushFormat(value, format)}
-                            className={`px-3 py-1.5 rounded-full font-dm font-bold text-[12px] transition-colors ${
-                              pushFormats[value] === format
-                                ? 'bg-coral text-white'
-                                : 'text-text-primary'
-                            }`}
-                          >
-                            {format === 'event' ? 'Event' : 'Task'}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+                  <div className="flex items-center justify-between">
+                    <p className="font-dm font-bold text-[11px] text-text-muted uppercase tracking-wide">
+                      Add As
+                    </p>
+                    {!editingFormats && (
+                      <button
+                        onClick={startEditingFormats}
+                        className="flex items-center gap-1 font-dm font-bold text-[12px] text-coral"
+                      >
+                        <Pencil size={12} />
+                        Edit
+                      </button>
+                    )}
+                  </div>
+
                   <p className="font-dm text-[11px] text-text-muted leading-relaxed">
                     Events show as timed blocks on your calendar. Tasks show as checkable to-dos
-                    in Google Tasks, with the time included in the title since Google Tasks
-                    doesn't show a time on its own.
+                    in Google Tasks.
                   </p>
+
+                  {taskTypeLabels.map(({ value, label }) => {
+                    const selected = editingFormats ? draftFormats[value] : pushFormats[value]
+                    return (
+                      <div key={value} className="flex items-center justify-between gap-3">
+                        <p className="font-dm text-[13px] text-text-primary">{label}</p>
+                        <div
+                          className={`relative flex w-[92px] rounded-full border border-border-light bg-white p-0.5 ${
+                            editingFormats ? '' : 'opacity-60'
+                          }`}
+                        >
+                          <div
+                            className={`absolute top-0.5 bottom-0.5 left-0.5 w-[44px] rounded-full bg-coral transition-transform duration-200 ease-out ${
+                              selected === 'task' ? 'translate-x-[44px]' : 'translate-x-0'
+                            }`}
+                          />
+                          {(['event', 'task'] as const).map((format) => (
+                            <button
+                              key={format}
+                              onClick={() =>
+                                editingFormats &&
+                                setDraftFormats((prev) => ({ ...prev, [value]: format }))
+                              }
+                              className={`relative z-10 w-[44px] py-1 rounded-full font-dm font-bold text-[10px] transition-colors duration-200 ${
+                                selected === format ? 'text-white' : 'text-text-primary'
+                              } ${editingFormats ? '' : 'cursor-default'}`}
+                            >
+                              {format === 'event' ? 'Event' : 'Task'}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })}
+
+                  {editingFormats && (
+                    <div className="flex gap-2 mt-1">
+                      <Button size="sm" onClick={saveFormats}>
+                        Save
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={cancelEditingFormats}>
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

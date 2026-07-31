@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CalendarDays, ExternalLink, AlertCircle, UploadCloud, Check } from 'lucide-react'
+import { CalendarDays, ExternalLink, AlertCircle } from 'lucide-react'
 import DogIcon from '../components/icons/DogIcon'
 import PageHeader from '../components/PageHeader'
 import BottomNav from '../components/BottomNav'
@@ -14,6 +14,7 @@ import {
   isPushEnabled,
   listUpcomingGoogleEvents,
   pushTasksToGoogleCalendar,
+  getLastPushError,
   type GoogleCalendarEvent,
 } from '../lib/googleCalendar'
 import { formatShortDate, formatTime } from '../utils/dateUtils'
@@ -44,24 +45,21 @@ export default function CalendarPage() {
   const [googleError, setGoogleError] = useState<string | null>(null)
   const [connecting, setConnecting] = useState(false)
   const [isRover, setIsRover] = useState(false)
-  const [pushingStayId, setPushingStayId] = useState<string | null>(null)
-  const [pushResults, setPushResults] = useState<Record<string, 'ok' | 'error'>>({})
+  const [retrying, setRetrying] = useState(false)
+  const [lastPushError, setLastPushError] = useState<string | null>(getLastPushError)
 
-  async function retryPush(stayId: string) {
-    setPushingStayId(stayId)
-    setPushResults((prev) => {
-      const next = { ...prev }
-      delete next[stayId]
-      return next
-    })
+  async function retryAllPushes() {
+    setRetrying(true)
     try {
-      const stayTasks = await listTasksByStay(stayId)
-      await pushTasksToGoogleCalendar(stayTasks)
-      setPushResults((prev) => ({ ...prev, [stayId]: 'ok' }))
+      for (const stay of upcomingStays) {
+        const stayTasks = await listTasksByStay(stay.id)
+        await pushTasksToGoogleCalendar(stayTasks)
+      }
+      setLastPushError(null)
     } catch {
-      setPushResults((prev) => ({ ...prev, [stayId]: 'error' }))
+      setLastPushError(getLastPushError())
     } finally {
-      setPushingStayId(null)
+      setRetrying(false)
     }
   }
 
@@ -154,6 +152,24 @@ export default function CalendarPage() {
           </div>
         )}
 
+        {googleConnected && isPushEnabled() && lastPushError && (
+          <div className="flex items-start gap-2 bg-[#fee2e2] rounded-[12px] px-4 py-3">
+            <AlertCircle size={16} className="text-[#b91c1c] shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="font-dm text-[13px] text-[#b91c1c] leading-snug">
+                A push to Google didn't go through: {lastPushError}
+              </p>
+              <button
+                onClick={() => void retryAllPushes()}
+                disabled={retrying}
+                className="font-dm font-bold text-[12px] text-[#b91c1c] underline mt-1 disabled:opacity-60"
+              >
+                {retrying ? 'Retrying…' : 'Retry now'}
+              </button>
+            </div>
+          </div>
+        )}
+
         {loading && <p className="font-dm text-[14px] text-text-secondary">Loading…</p>}
 
         {!loading && upcomingStays.length === 0 && (
@@ -204,25 +220,6 @@ export default function CalendarPage() {
                   </p>
                 )}
               </div>
-              {googleConnected && isPushEnabled() && (
-                <button
-                  onClick={() => void retryPush(stay.id)}
-                  disabled={pushingStayId === stay.id}
-                  aria-label="Push tasks to Google Calendar"
-                  className="size-9 rounded-full bg-[#f3f4f6] flex items-center justify-center shrink-0 active:bg-[#e5e7eb] transition-colors disabled:opacity-50"
-                >
-                  {pushResults[stay.id] === 'ok' ? (
-                    <Check size={16} className="text-[#15803d]" />
-                  ) : pushResults[stay.id] === 'error' ? (
-                    <AlertCircle size={16} className="text-[#b91c1c]" />
-                  ) : (
-                    <UploadCloud
-                      size={16}
-                      className={`text-text-secondary ${pushingStayId === stay.id ? 'animate-pulse' : ''}`}
-                    />
-                  )}
-                </button>
-              )}
             </div>
           )
         })}
