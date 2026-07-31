@@ -84,6 +84,8 @@ export interface Database {
           note: string | null
           status: TaskStatus
           completed_at: string | null
+          google_ext_id: string | null
+          google_ext_kind: string | null
         }
         Insert: {
           id?: string
@@ -97,6 +99,8 @@ export interface Database {
           note?: string | null
           status?: TaskStatus
           completed_at?: string | null
+          google_ext_id?: string | null
+          google_ext_kind?: string | null
         }
         Update: Partial<Database['public']['Tables']['tasks']['Insert']>
       }

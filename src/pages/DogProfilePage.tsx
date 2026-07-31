@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   Heart,
   CalendarPlus,
+  CalendarDays,
   Pencil,
   Clock,
   Trash2,
@@ -17,8 +18,9 @@ import CareNoteSection from '../components/CareNoteSection'
 import BottomNav from '../components/BottomNav'
 import Button from '../components/Button'
 import { getDog, deleteDog } from '../lib/dogs'
-import { formatTime } from '../utils/dateUtils'
-import type { Dog, TaskType } from '../types'
+import { listStays } from '../lib/stays'
+import { formatTime, formatShortDate } from '../utils/dateUtils'
+import type { Dog, Stay, TaskType } from '../types'
 
 const typeLabel: Record<TaskType, string> = {
   walk: 'Walk',
@@ -48,6 +50,7 @@ export default function DogProfilePage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [dog, setDog] = useState<Dog | null | undefined>(undefined)
+  const [currentStay, setCurrentStay] = useState<Stay | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -58,6 +61,24 @@ export default function DogProfilePage() {
     getDog(id)
       .then((d) => !cancelled && setDog(d))
       .catch(() => !cancelled && setDog(null))
+    return () => {
+      cancelled = true
+    }
+  }, [id])
+
+  useEffect(() => {
+    if (!id) return
+    let cancelled = false
+    const now = new Date()
+    listStays()
+      .then((stays) => {
+        if (cancelled) return
+        const upcoming = stays
+          .filter((s) => s.dogId === id && new Date(s.endDate) >= now)
+          .sort((a, b) => a.startDate.localeCompare(b.startDate))
+        setCurrentStay(upcoming[0] ?? null)
+      })
+      .catch(() => {})
     return () => {
       cancelled = true
     }
@@ -122,58 +143,91 @@ export default function DogProfilePage() {
           </div>
         </div>
 
-        {/* Start stay CTA */}
-        <Button
-          fullWidth
-          onClick={() => navigate(`/stays/new?dog=${dog.id}`)}
-        >
-          <CalendarPlus size={18} />
-          Start a Stay
-        </Button>
+        {/* Current stay info + Edit Stay CTA, grouped in one card */}
+        {currentStay ? (
+          <div className="bg-white border border-border-light rounded-[16px] p-4 flex flex-col gap-4">
+            <div className="flex gap-3 items-center">
+              <div className="size-9 rounded-[10px] bg-[#eef1fd] flex items-center justify-center shrink-0">
+                <CalendarDays size={18} className="text-cobalt" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <p className="font-dm font-bold text-[14px] text-text-primary leading-none">
+                    {new Date(currentStay.startDate) <= new Date() &&
+                    new Date(currentStay.endDate) >= new Date()
+                      ? 'Staying now'
+                      : 'Upcoming stay'}
+                  </p>
+                  {new Date(currentStay.startDate) <= new Date() &&
+                    new Date(currentStay.endDate) >= new Date() && (
+                      <span className="text-[11px] font-dm font-bold bg-[#dcfce7] text-[#15803d] rounded-full px-2 py-0.5">
+                        Active
+                      </span>
+                    )}
+                </div>
+                <p className="font-dm text-[13px] text-text-secondary">
+                  {formatShortDate(currentStay.startDate)} {formatTime(currentStay.startDate)} →{' '}
+                  {formatShortDate(currentStay.endDate)} {formatTime(currentStay.endDate)}
+                </p>
+                {currentStay.notes && (
+                  <p className="font-dm text-[13px] text-text-muted mt-1">{currentStay.notes}</p>
+                )}
+              </div>
+            </div>
+            <Button
+              fullWidth
+              onClick={() => navigate(`/stays/${currentStay.id}/edit`)}
+            >
+              <Pencil size={18} />
+              Edit Stay
+            </Button>
+          </div>
+        ) : (
+          <Button
+            fullWidth
+            onClick={() => navigate(`/stays/new?dog=${dog.id}`)}
+          >
+            <CalendarPlus size={18} />
+            Start a Stay
+          </Button>
+        )}
 
         {/* Care Notes */}
         <CareNoteSection
           title="Behavior"
-          icon={<Heart size={14} />}
+          icon={<Heart size={16} />}
           content={dog.behaviorNotes}
-          accentColor="#ff4514"
           emptyText="No behavior notes."
         />
         <CareNoteSection
           title="Food"
-          icon={<DogBowlIcon size={14} />}
+          icon={<DogBowlIcon size={16} />}
           content={dog.foodNotes}
-          accentColor="#ff4514"
           emptyText="No food notes."
         />
         <CareNoteSection
           title="Medication"
-          icon={<Pill size={14} />}
+          icon={<Pill size={16} />}
           content={dog.medicationNotes}
-          accentColor="#2344dd"
           emptyText="No medications."
         />
         <CareNoteSection
           title="Walks"
-          icon={<PawPrint size={14} />}
+          icon={<PawPrint size={16} />}
           content={dog.walkNotes}
-          accentColor="#18ba1d"
           emptyText="No walk notes."
         />
         <CareNoteSection
           title="Emergency Notes"
-          icon={<AlertTriangle size={14} />}
+          icon={<AlertTriangle size={16} />}
           content={dog.emergencyNotes}
-          accentColor="#dc2626"
           emptyText="No emergency notes."
         />
 
         {/* Daily Schedule */}
         <div className="bg-white border border-border-light rounded-[16px] p-4">
           <div className="flex items-center gap-2 mb-4">
-            <div className="size-7 rounded-full flex items-center justify-center bg-cobalt shrink-0">
-              <Clock size={14} className="text-white" />
-            </div>
+            <Clock size={16} className="text-coral shrink-0" />
             <h3 className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-wide">
               Daily Schedule
             </h3>
@@ -182,12 +236,18 @@ export default function DogProfilePage() {
             {dog.careSchedule.map((entry, i) => {
               const Icon = typeIcon[entry.taskType] ?? PawPrint
               return (
-              <div key={i} className="flex items-start gap-3">
-                <span className="font-dm font-bold text-[13px] text-text-primary w-[68px] shrink-0 pt-0.5">
+              <div key={i} className={`flex gap-3 ${entry.note ? 'items-start' : 'items-center'}`}>
+                <span
+                  className={`font-dm font-bold text-[13px] text-text-primary w-[68px] shrink-0 ${
+                    entry.note ? 'pt-0.5' : ''
+                  }`}
+                >
                   {formatTime(`2000-01-01T${entry.time}:00`)}
                 </span>
                 <div
-                  className="size-6 rounded-full flex items-center justify-center shrink-0 mt-0.5"
+                  className={`size-6 rounded-full flex items-center justify-center shrink-0 ${
+                    entry.note ? 'mt-0.5' : ''
+                  }`}
                   style={{ backgroundColor: typeBg[entry.taskType] ?? '#6b7280' }}
                 >
                   <Icon size={12} className="text-white" />

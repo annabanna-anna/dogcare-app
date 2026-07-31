@@ -4,7 +4,7 @@ import Button from './Button'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
-const HOURS = ['12', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
+const HOURS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']
 const MINUTES = ['00', '15', '30', '45']
 const MERIDIEMS = ['am', 'pm']
 
@@ -18,38 +18,63 @@ export function formatTimeValue(value: string): string {
 const ROW = 40
 const VISIBLE = 5
 const PAD_ROWS = Math.floor(VISIBLE / 2)
+// Odd number of repeated cycles so there's always a clear "middle" copy to
+// silently recenter back into — the illusion of infinite scroll is just
+// scrolling through a long repeated list and jumping, unseen, once you
+// drift too close to either end of it.
+const LOOP_COPIES = 9
+const MIDDLE_CYCLE = Math.floor(LOOP_COPIES / 2)
 
 function Wheel({
   options,
   value,
   onChange,
   width,
+  loop = false,
 }: {
   options: string[]
   value: string
   onChange: (v: string) => void
   width: string
+  loop?: boolean
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const settleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const cycleLen = options.length
+  const rendered = loop ? Array.from({ length: LOOP_COPIES }, () => options).flat() : options
 
   useEffect(() => {
-    const idx = Math.max(0, options.indexOf(value))
+    const baseIdx = Math.max(0, options.indexOf(value))
+    const idx = loop ? MIDDLE_CYCLE * cycleLen + baseIdx : baseIdx
     ref.current?.scrollTo({ top: idx * ROW })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  function clampedIndex(el: HTMLDivElement) {
+    return Math.min(rendered.length - 1, Math.max(0, Math.round(el.scrollTop / ROW)))
+  }
+
   function handleScroll() {
     const el = ref.current
     if (!el) return
-    const idx = Math.min(options.length - 1, Math.max(0, Math.round(el.scrollTop / ROW)))
-    if (options[idx] !== value) onChange(options[idx])
+    const idx = clampedIndex(el)
+    if (rendered[idx] !== value) onChange(rendered[idx])
     // settle exactly onto a row after scrolling stops (for browsers where
     // snap doesn't fire on programmatic/momentum scroll)
     if (settleTimer.current) clearTimeout(settleTimer.current)
     settleTimer.current = setTimeout(() => {
-      const target = Math.min(options.length - 1, Math.max(0, Math.round(el.scrollTop / ROW))) * ROW
-      if (Math.abs(el.scrollTop - target) > 1) el.scrollTo({ top: target, behavior: 'smooth' })
+      const settledIdx = clampedIndex(el)
+      const target = settledIdx * ROW
+      if (Math.abs(el.scrollTop - target) > 1) {
+        el.scrollTo({ top: target, behavior: 'smooth' })
+      }
+      if (loop) {
+        const cycle = Math.floor(settledIdx / cycleLen)
+        if (cycle <= 1 || cycle >= LOOP_COPIES - 2) {
+          const offset = settledIdx % cycleLen
+          el.scrollTo({ top: (MIDDLE_CYCLE * cycleLen + offset) * ROW })
+        }
+      }
     }, 120)
   }
 
@@ -61,9 +86,9 @@ function Wheel({
       style={{ height: ROW * VISIBLE }}
     >
       <div style={{ height: ROW * PAD_ROWS }} />
-      {options.map((o, i) => (
+      {rendered.map((o, i) => (
         <button
-          key={o}
+          key={i}
           onClick={() => ref.current?.scrollTo({ top: i * ROW, behavior: 'smooth' })}
           className={`w-full snap-center flex items-center justify-center font-dm transition-colors ${
             o === value
@@ -95,6 +120,16 @@ export function TimeWheelSheet({
   const [minute, setMinute] = useState(MINUTES.includes(snappedMin) ? snappedMin : '00')
   const [meridiem, setMeridiem] = useState(h24 < 12 ? 'am' : 'pm')
 
+  // Scrolling past the 11↔12 boundary crosses into the next half of the
+  // day (11am → 12pm, or 11pm → 12am) — flip am/pm to match, same as a
+  // real clock, instead of leaving the two wheels fully independent.
+  function handleHourChange(nextHour: string) {
+    const crossedBoundary =
+      (hour === '11' && nextHour === '12') || (hour === '12' && nextHour === '11')
+    if (crossedBoundary) setMeridiem((m) => (m === 'am' ? 'pm' : 'am'))
+    setHour(nextHour)
+  }
+
   function handleDone() {
     let h = Number(hour) % 12
     if (meridiem === 'pm') h += 12
@@ -115,14 +150,14 @@ export function TimeWheelSheet({
             style={{ height: ROW + 8 }}
           />
           <div className="relative flex items-stretch justify-center">
-            <Wheel options={HOURS} value={hour} onChange={setHour} width="w-[72px]" />
+            <Wheel options={HOURS} value={hour} onChange={handleHourChange} width="w-[72px]" loop />
             <div
               className="flex items-center justify-center font-dm font-bold text-[24px] text-text-primary w-6"
               style={{ height: ROW * VISIBLE }}
             >
               :
             </div>
-            <Wheel options={MINUTES} value={minute} onChange={setMinute} width="w-[72px]" />
+            <Wheel options={MINUTES} value={minute} onChange={setMinute} width="w-[72px]" loop />
             <Wheel options={MERIDIEMS} value={meridiem} onChange={setMeridiem} width="w-[80px]" />
           </div>
         </div>

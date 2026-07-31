@@ -48,3 +48,27 @@ export async function createStay(input: {
   if (error) throw error
   return mapRow(data)
 }
+
+export async function getStay(id: string): Promise<Stay | null> {
+  const { data, error } = await supabase.from('stays').select('*').eq('id', id).maybeSingle()
+  if (error) throw error
+  return data ? mapRow(data) : null
+}
+
+export async function updateStay(
+  id: string,
+  input: { startDate: string; endDate: string; notes?: string },
+): Promise<Stay> {
+  const { data, error } = await supabase
+    .from('stays')
+    .update({
+      start_date: input.startDate,
+      end_date: input.endDate,
+      notes: input.notes || null,
+    })
+    .eq('id', id)
+    .select('*')
+    .single()
+  if (error) throw error
+  return mapRow(data)
+}

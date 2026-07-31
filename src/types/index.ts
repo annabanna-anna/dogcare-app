@@ -56,4 +56,8 @@ export interface Task {
   note?: string
   status: TaskStatus
   completedAt?: string
+  // What this task was last pushed to Google as — lets a re-push update the
+  // same event/task instead of creating a duplicate.
+  googleExtId?: string
+  googleExtKind?: 'event' | 'task'
 }

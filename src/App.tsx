@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase'
+import { captureProviderTokenIfRequested } from './lib/googleCalendar'
 import AuthPage from './pages/AuthPage'
 import UpdatePasswordPage from './pages/UpdatePasswordPage'
 import TodayPage from './pages/TodayPage'
@@ -34,6 +35,7 @@ export default function App() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, newSession) => {
       if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true)
+      captureProviderTokenIfRequested(newSession?.provider_token)
       setSession(newSession)
     })
     return () => subscription.unsubscribe()
@@ -77,6 +79,7 @@ export default function App() {
         <Route path="/dogs/:id" element={<DogProfilePage />} />
         <Route path="/dogs/:id/edit" element={<AddEditDogPage />} />
         <Route path="/stays/new" element={<StartStayPage />} />
+        <Route path="/stays/:stayId/edit" element={<StartStayPage />} />
         <Route path="/stays/preview" element={<TaskPreviewPage />} />
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/settings" element={<SyncSettingsPage />} />

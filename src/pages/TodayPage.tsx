@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { CheckCircle, CalendarPlus } from 'lucide-react'
+import { CheckCircle, CalendarPlus, UserPlus } from 'lucide-react'
 import DogIcon from '../components/icons/DogIcon'
 import { Link, useNavigate } from 'react-router-dom'
 import Button from '../components/Button'
@@ -8,15 +8,35 @@ import BottomNav from '../components/BottomNav'
 import { listTasksBetween, updateTaskStatus } from '../lib/tasks'
 import { listStays } from '../lib/stays'
 import { listDogs } from '../lib/dogs'
+import {
+  isGoogleCalendarConnected,
+  listUpcomingGoogleEvents,
+  parseRoverStyleTitle,
+  type GoogleCalendarEvent,
+} from '../lib/googleCalendar'
 import type { Dog, Stay, Task, TaskStatus } from '../types'
-import { formatTodayHeading } from '../utils/dateUtils'
+import { formatTodayHeading, toLocalDateKey } from '../utils/dateUtils'
+
+const DISMISSED_KEY = 'goodpup-dismissed-stay-suggestions'
 
 export default function TodayPage() {
   const navigate = useNavigate()
   const [tasks, setTasks] = useState<Task[]>([])
+  const [dogs, setDogs] = useState<Dog[]>([])
   const [activeDogs, setActiveDogs] = useState<{ dog: Dog; stay: Stay }[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [suggestions, setSuggestions] = useState<{ dog: Dog; event: GoogleCalendarEvent }[]>([])
+  const [newDogSuggestions, setNewDogSuggestions] = useState<
+    { dogName: string; ownerName: string; event: GoogleCalendarEvent }[]
+  >([])
+  const [dismissedIds, setDismissedIds] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(DISMISSED_KEY) ?? '[]')
+    } catch {
+      return []
+    }
+  })
 
   useEffect(() => {
     let cancelled = false
@@ -33,6 +53,7 @@ export default function TodayPage() {
       .then(([taskRows, dogRows, stayRows]) => {
         if (cancelled) return
         setTasks(taskRows)
+        setDogs(dogRows)
         const now = new Date()
         const active = stayRows
           .filter((s) => new Date(s.startDate) <= now && new Date(s.endDate) >= now)
@@ -49,6 +70,46 @@ export default function TodayPage() {
       cancelled = true
     }
   }, [])
+
+  // Suggest starting a stay when today's Google/Rover events name a dog we
+  // already know, and that dog isn't already under active care.
+  useEffect(() => {
+    if (!isGoogleCalendarConnected() || dogs.length === 0) return
+    let cancelled = false
+    const todayKey = toLocalDateKey(new Date())
+    const activeDogIds = new Set(activeDogs.map((a) => a.dog.id))
+
+    listUpcomingGoogleEvents(20)
+      .then((events) => {
+        if (cancelled) return
+        const matches: { dog: Dog; event: GoogleCalendarEvent }[] = []
+        const unmatched: { dogName: string; ownerName: string; event: GoogleCalendarEvent }[] = []
+        for (const event of events) {
+          if (event.start.slice(0, 10) !== todayKey) continue
+          if (dismissedIds.includes(event.id)) continue
+          const parsed = parseRoverStyleTitle(event.title)
+          if (!parsed) continue
+          const dog = dogs.find((d) => d.name.toLowerCase() === parsed.dogName.toLowerCase())
+          if (dog) {
+            if (!activeDogIds.has(dog.id)) matches.push({ dog, event })
+          } else {
+            unmatched.push({ dogName: parsed.dogName, ownerName: parsed.ownerName, event })
+          }
+        }
+        setSuggestions(matches)
+        setNewDogSuggestions(unmatched)
+      })
+      .catch(() => {}) // best-effort nudge, not worth surfacing as an error
+    return () => {
+      cancelled = true
+    }
+  }, [dogs, activeDogs, dismissedIds])
+
+  function dismissSuggestion(eventId: string) {
+    const next = [...dismissedIds, eventId]
+    setDismissedIds(next)
+    localStorage.setItem(DISMISSED_KEY, JSON.stringify(next))
+  }
 
   const todayTasks = useMemo(
     () => [...tasks].sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime)),
@@ -103,6 +164,88 @@ export default function TodayPage() {
         <p className="px-6 font-dm text-[14px] text-text-secondary">Loading your day…</p>
       ) : (
         <>
+          {/* Suggested stays, from today's Google/Rover events */}
+          {suggestions.length > 0 && (
+            <div className="px-6 mb-6 flex flex-col gap-3">
+              {suggestions.map(({ dog, event }) => (
+                <div
+                  key={event.id}
+                  className="bg-[#eef1fd] border border-[#d3daf8] rounded-[16px] p-4"
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="size-10 rounded-full overflow-hidden bg-white flex items-center justify-center shrink-0">
+                      {dog.photoUrl ? (
+                        <img src={dog.photoUrl} alt={dog.name} className="size-full object-cover" />
+                      ) : (
+                        <DogIcon size={18} className="text-text-muted" />
+                      )}
+                    </div>
+                    <p className="font-dm font-bold text-[15px] text-text-primary leading-snug">
+                      Are you taking care of {dog.name} starting today?
+                    </p>
+                  </div>
+                  <p className="font-dm text-[12px] text-text-secondary mb-3">
+                    Found on your calendar — start a stay to generate {dog.name}'s care tasks.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        navigate(
+                          `/stays/new?dog=${dog.id}&start=${encodeURIComponent(event.start)}&end=${encodeURIComponent(event.end)}`,
+                        )
+                      }
+                    >
+                      Start a Stay
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => dismissSuggestion(event.id)}>
+                      Not now
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* New dogs found on the calendar that aren't in the app yet */}
+          {newDogSuggestions.length > 0 && (
+            <div className="px-6 mb-6 flex flex-col gap-3">
+              {newDogSuggestions.map(({ dogName, ownerName, event }) => (
+                <div
+                  key={event.id}
+                  className="bg-[#eef1fd] border border-[#d3daf8] rounded-[16px] p-4"
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="size-10 rounded-full overflow-hidden bg-white flex items-center justify-center shrink-0">
+                      <UserPlus size={18} className="text-cobalt" />
+                    </div>
+                    <p className="font-dm font-bold text-[15px] text-text-primary leading-snug">
+                      {dogName} isn't in your dog list yet
+                    </p>
+                  </div>
+                  <p className="font-dm text-[12px] text-text-secondary mb-3">
+                    Found on your calendar for today — add {dogName} to set up their care schedule.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        navigate(
+                          `/dogs/new?name=${encodeURIComponent(dogName)}&owner=${encodeURIComponent(ownerName)}`,
+                        )
+                      }
+                    >
+                      Add Dog
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => dismissSuggestion(event.id)}>
+                      Not now
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Active Care */}
           {activeDogs.length > 0 && (
             <section className="px-6 mb-6">

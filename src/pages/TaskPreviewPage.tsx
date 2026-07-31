@@ -8,6 +8,7 @@ import { getDog } from '../lib/dogs'
 import { createStay } from '../lib/stays'
 import { createTasks } from '../lib/tasks'
 import { generateTasksForStay } from '../utils/taskGenerator'
+import { isGoogleCalendarConnected, pushTasksToGoogleCalendar } from '../lib/googleCalendar'
 import { formatDayHeading, formatTime, toDateKey } from '../utils/dateUtils'
 import type { Dog, Task, TaskType } from '../types'
 
@@ -118,6 +119,11 @@ export default function TaskPreviewPage() {
       })
       const finalTasks = generateTasksForStay(dog, stay)
       await createTasks(finalTasks)
+      if (isGoogleCalendarConnected()) {
+        // Best-effort: a stay is already saved by this point, so a push
+        // failure (expired token, API hiccup) shouldn't block the user.
+        pushTasksToGoogleCalendar(finalTasks).catch(() => {})
+      }
       navigate('/')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save this stay. Please try again.')

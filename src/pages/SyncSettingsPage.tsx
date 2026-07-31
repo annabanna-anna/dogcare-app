@@ -4,50 +4,73 @@ import {
   CalendarDays,
   Bell,
   ChevronRight,
-  Check,
-  RefreshCw,
+  CheckCircle2,
+  Circle,
   Shield,
   LogOut,
-  PawPrint,
-  Pill,
-  X,
+  AlertCircle,
 } from 'lucide-react'
-import DogBowlIcon from '../components/icons/DogBowlIcon'
 import PageHeader from '../components/PageHeader'
 import BottomNav from '../components/BottomNav'
 import Button from '../components/Button'
+import {
+  connectGoogleCalendar,
+  disconnectGoogleCalendar,
+  isGoogleCalendarConnected,
+  isPushEnabled,
+  setPushEnabled,
+  getPushFormats,
+  setPushFormat,
+  getLastPushError,
+  type PushFormat,
+} from '../lib/googleCalendar'
 import type { TaskType } from '../types'
 
-type SyncStyle = 'event' | 'reminder'
-type SyncMode = 'events' | 'reminders' | 'custom'
-
-const SYNC_TYPES: { type: TaskType; label: string; Icon: React.ComponentType<{ size?: string | number; className?: string }> }[] = [
-  { type: 'walk', label: 'Walks', Icon: PawPrint },
-  { type: 'meal', label: 'Meals', Icon: DogBowlIcon },
-  { type: 'medication', label: 'Medication', Icon: Pill },
-  { type: 'potty', label: 'Potty breaks', Icon: PawPrint },
+const taskTypeLabels: { value: TaskType; label: string }[] = [
+  { value: 'walk', label: 'Walks' },
+  { value: 'meal', label: 'Meals' },
+  { value: 'medication', label: 'Medication' },
+  { value: 'potty', label: 'Potty breaks' },
+  { value: 'other', label: 'Other' },
 ]
 
-const DEFAULT_TYPE_MAP: Record<TaskType, SyncStyle> = {
-  walk: 'event',
-  meal: 'reminder',
-  medication: 'reminder',
-  potty: 'event',
-  other: 'event',
+function PurposeRow({ done, label, soon }: { done: boolean; label: string; soon?: boolean }) {
+  return (
+    <div className="flex items-center gap-2.5">
+      {done ? (
+        <CheckCircle2 size={16} className="text-[#15803d] shrink-0" />
+      ) : (
+        <Circle size={16} className="text-[#d1d5db] shrink-0" />
+      )}
+      <p className="font-dm text-[13px] text-text-secondary">
+        {label}
+        {soon && <span className="text-text-muted"> (soon)</span>}
+      </p>
+    </div>
+  )
 }
 
-function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
+function Toggle({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: boolean
+  onChange: (v: boolean) => void
+  disabled?: boolean
+}) {
   return (
     <button
-      onClick={() => onChange(!value)}
+      onClick={() => !disabled && onChange(!value)}
+      disabled={disabled}
       className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${
-        value ? 'bg-green-vivid' : 'bg-[#d1d5db]'
+        disabled ? 'bg-[#e5e7eb] cursor-not-allowed' : value ? 'bg-green-vivid' : 'bg-[#d1d5db]'
       }`}
     >
       <div
-        className={`absolute top-1 size-4 rounded-full bg-white transition-transform duration-200 ${
-          value ? 'translate-x-7' : 'translate-x-1'
-        }`}
+        className={`absolute top-1 size-4 rounded-full transition-transform duration-200 ${
+          disabled ? 'bg-[#f9fafb]' : 'bg-white'
+        } ${value ? 'translate-x-7' : 'translate-x-1'}`}
       />
     </button>
   )
@@ -82,204 +105,58 @@ function SettingRow({
   )
 }
 
-function ModeCard({
-  selected,
-  title,
-  description,
-  onSelect,
-}: {
-  selected: boolean
-  title: string
-  description: string
-  onSelect: () => void
-}) {
-  return (
-    <button
-      onClick={onSelect}
-      className={`w-full text-left rounded-[12px] border p-3.5 flex items-start gap-3 transition-colors ${
-        selected ? 'border-coral bg-[#fff5f3]' : 'border-border-light bg-white'
-      }`}
-    >
-      <div
-        className={`size-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
-          selected ? 'border-coral bg-coral' : 'border-[#d1d5db] bg-white'
-        }`}
-      >
-        {selected && <Check size={12} strokeWidth={3} className="text-white" />}
-      </div>
-      <div>
-        <p className="font-dm font-bold text-[14px] text-text-primary leading-none">
-          {title}
-        </p>
-        <p className="font-dm text-[12px] text-text-secondary mt-1 leading-snug">
-          {description}
-        </p>
-      </div>
-    </button>
-  )
-}
-
-function StylePills({
-  value,
-  onChange,
-}: {
-  value: SyncStyle
-  onChange: (v: SyncStyle) => void
-}) {
-  return (
-    <div className="flex gap-1.5 shrink-0">
-      {(['event', 'reminder'] as SyncStyle[]).map((style) => (
-        <button
-          key={style}
-          onClick={() => onChange(style)}
-          className={`px-3 py-1.5 rounded-full font-dm font-bold text-[12px] border transition-colors ${
-            value === style
-              ? 'bg-coral border-coral text-white'
-              : 'bg-white border-border-light text-text-secondary'
-          }`}
-        >
-          {style === 'event' ? 'Event' : 'Reminder'}
-        </button>
-      ))}
-    </div>
-  )
-}
-
-function SyncAsChooser({
-  mode,
-  onModeChange,
-  typeMap,
-  onTypeMapChange,
-}: {
-  mode: SyncMode
-  onModeChange: (m: SyncMode) => void
-  typeMap: Record<TaskType, SyncStyle>
-  onTypeMapChange: (m: Record<TaskType, SyncStyle>) => void
-}) {
-  return (
-    <div className="flex flex-col gap-2">
-      <ModeCard
-        selected={mode === 'events'}
-        title="Calendar events"
-        description="Every task blocks time on your Google / iOS calendar."
-        onSelect={() => onModeChange('events')}
-      />
-      <ModeCard
-        selected={mode === 'reminders'}
-        title="Reminders"
-        description="Every task goes to Google Tasks / iOS Reminders with an alert."
-        onSelect={() => onModeChange('reminders')}
-      />
-      <ModeCard
-        selected={mode === 'custom'}
-        title="Choose per task type"
-        description="Mix both — e.g. walks as events, meals as reminders."
-        onSelect={() => onModeChange('custom')}
-      />
-      {mode === 'custom' && (
-        <div className="bg-white border border-border-light rounded-[12px] px-4 divide-y divide-border-faint mt-1">
-          {SYNC_TYPES.map(({ type, label, Icon }) => (
-            <div key={type} className="flex items-center gap-3 py-3">
-              <div className="size-8 rounded-full bg-[#f3f4f6] flex items-center justify-center shrink-0 text-text-secondary">
-                <Icon size={15} />
-              </div>
-              <p className="flex-1 font-dm font-bold text-[14px] text-text-primary">
-                {label}
-              </p>
-              <StylePills
-                value={typeMap[type]}
-                onChange={(style) => onTypeMapChange({ ...typeMap, [type]: style })}
-              />
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function SyncPromptSheet({
-  mode,
-  onModeChange,
-  typeMap,
-  onTypeMapChange,
-  onConfirm,
-  onCancel,
-}: {
-  mode: SyncMode
-  onModeChange: (m: SyncMode) => void
-  typeMap: Record<TaskType, SyncStyle>
-  onTypeMapChange: (m: Record<TaskType, SyncStyle>) => void
-  onConfirm: () => void
-  onCancel: () => void
-}) {
-  return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center">
-      <div className="absolute inset-0 bg-black/40" onClick={onCancel} />
-      <div className="relative w-full max-w-[430px] bg-cream rounded-t-[22px] px-6 pt-5 pb-8 max-h-[85svh] overflow-y-auto">
-        <div className="flex items-start justify-between mb-1">
-          <p className="font-outfit font-bold text-[22px] text-text-primary leading-tight">
-            How should tasks sync?
-          </p>
-          <button
-            onClick={onCancel}
-            className="size-8 rounded-full bg-[#f3f4f6] flex items-center justify-center text-text-secondary shrink-0"
-          >
-            <X size={16} />
-          </button>
-        </div>
-        <p className="font-dm text-[13px] text-text-secondary mb-4">
-          Pick how care tasks appear in your calendar app. You can change this anytime in
-          Settings.
-        </p>
-        <SyncAsChooser
-          mode={mode}
-          onModeChange={onModeChange}
-          typeMap={typeMap}
-          onTypeMapChange={onTypeMapChange}
-        />
-        <div className="mt-5">
-          <Button fullWidth onClick={onConfirm}>
-            Save & Sync
-          </Button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export default function SyncSettingsPage() {
-  const [calendarSync, setCalendarSync] = useState(true)
+  const [calendarConnected, setCalendarConnected] = useState(false)
+  const [connecting, setConnecting] = useState(false)
+  const [connectError, setConnectError] = useState<string | null>(null)
+  const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false)
+  const [pushEnabled, setPushEnabledState] = useState(true)
+  const [pushFormats, setPushFormatsState] = useState<Record<TaskType, PushFormat>>(() => getPushFormats())
+  const [pushError, setPushError] = useState<string | null>(null)
   const [reminders, setReminders] = useState(true)
   const [reminderMinutes, setReminderMinutes] = useState(15)
-  const [syncMode, setSyncMode] = useState<SyncMode>('events')
-  const [typeMap, setTypeMap] = useState<Record<TaskType, SyncStyle>>(DEFAULT_TYPE_MAP)
-  const [showSyncPrompt, setShowSyncPrompt] = useState(false)
   const [userEmail, setUserEmail] = useState<string | null>(null)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email ?? null))
+    setCalendarConnected(isGoogleCalendarConnected())
+    setPushEnabledState(isPushEnabled())
+    setPushError(getLastPushError())
   }, [])
+
+  function togglePush(on: boolean) {
+    setPushEnabled(on)
+    setPushEnabledState(on)
+  }
+
+  function changePushFormat(type: TaskType, format: PushFormat) {
+    setPushFormat(type, format)
+    setPushFormatsState((prev) => ({ ...prev, [type]: format }))
+  }
 
   const reminderOptions = [5, 10, 15, 30, 60]
 
-  const syncSummary =
-    syncMode === 'events'
-      ? 'All tasks as calendar events'
-      : syncMode === 'reminders'
-        ? 'All tasks as reminders'
-        : 'Custom per task type'
-
-  function requestConnect() {
-    setShowSyncPrompt(true)
+  async function handleCalendarToggle(on: boolean) {
+    if (!on) {
+      setShowDisconnectConfirm(true)
+      return
+    }
+    setConnecting(true)
+    setConnectError(null)
+    try {
+      await connectGoogleCalendar()
+      // Browser navigates away to Google here; nothing after this runs
+      // unless the request itself failed before redirecting.
+    } catch (e) {
+      setConnectError(e instanceof Error ? e.message : 'Could not connect Google Calendar.')
+      setConnecting(false)
+    }
   }
 
-  function handleCalendarToggle(on: boolean) {
-    if (on) {
-      requestConnect()
-    } else {
-      setCalendarSync(false)
-    }
+  function confirmDisconnect() {
+    disconnectGoogleCalendar()
+    setCalendarConnected(false)
+    setShowDisconnectConfirm(false)
   }
 
   return (
@@ -292,54 +169,81 @@ export default function SyncSettingsPage() {
           <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
             Calendar Sync
           </p>
-          <div className="bg-white border border-border-light rounded-[16px] px-4 divide-y divide-border-faint">
+          {connectError && (
+            <div className="flex items-start gap-2 bg-[#fee2e2] rounded-[12px] px-4 py-3 mb-3">
+              <AlertCircle size={16} className="text-[#b91c1c] shrink-0 mt-0.5" />
+              <p className="font-dm text-[13px] text-[#b91c1c]">{connectError}</p>
+            </div>
+          )}
+          <div className="bg-white border border-border-light rounded-[16px] px-4">
             <SettingRow
               icon={<CalendarDays size={18} />}
               label="Google Calendar"
-              description={calendarSync ? `Synced · ${syncSummary}` : 'Not connected'}
-              right={<Toggle value={calendarSync} onChange={handleCalendarToggle} />}
+              description={
+                connecting ? 'Connecting…' : calendarConnected ? userEmail ?? 'Connected' : 'Not connected'
+              }
+              right={
+                <Toggle
+                  value={calendarConnected}
+                  onChange={(on) => void handleCalendarToggle(on)}
+                />
+              }
             />
-            {calendarSync && (
-              <div className="py-4 flex items-center gap-3">
-                <div className="size-9 rounded-[10px] bg-[#dcfce7] flex items-center justify-center shrink-0">
-                  <Check size={16} className="text-[#15803d]" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-dm font-bold text-[15px] text-[#15803d] leading-none">
-                    Connected
-                  </p>
-                  <p className="font-dm text-[13px] text-text-secondary mt-0.5">
-                    anna@example.com
-                  </p>
-                </div>
-                <button className="text-text-muted">
-                  <RefreshCw size={16} />
-                </button>
+            <div className="pb-4 flex flex-col gap-3">
+              <PurposeRow done={calendarConnected} label="Shows your Rover bookings" />
+              <div className="flex items-center justify-between gap-3">
+                <PurposeRow done={calendarConnected && pushEnabled} label="Adds tasks to your Google calendar" />
+                <Toggle
+                  value={pushEnabled}
+                  onChange={togglePush}
+                  disabled={!calendarConnected}
+                />
               </div>
-            )}
-            <SettingRow
-              icon={<ChevronRight size={18} />}
-              label="Apple Calendar"
-              description="Not connected"
-              right={<ChevronRight size={18} className="text-[#d1d1d1]" />}
-            />
+
+              {calendarConnected && pushEnabled && pushError && (
+                <div className="flex items-start gap-2 bg-[#fee2e2] rounded-[12px] px-3 py-2.5">
+                  <AlertCircle size={15} className="text-[#b91c1c] shrink-0 mt-0.5" />
+                  <p className="font-dm text-[12px] text-[#b91c1c] leading-snug">
+                    Last push didn't go through: {pushError}
+                  </p>
+                </div>
+              )}
+
+              {calendarConnected && pushEnabled && (
+                <div className="pt-3 border-t border-border-faint flex flex-col gap-2.5">
+                  <p className="font-dm font-bold text-[11px] text-text-muted uppercase tracking-wide">
+                    Add As
+                  </p>
+                  {taskTypeLabels.map(({ value, label }) => (
+                    <div key={value} className="flex items-center justify-between gap-3">
+                      <p className="font-dm text-[13px] text-text-primary">{label}</p>
+                      <div className="flex rounded-full border border-border-light bg-white p-1">
+                        {(['event', 'task'] as const).map((format) => (
+                          <button
+                            key={format}
+                            onClick={() => changePushFormat(value, format)}
+                            className={`px-3 py-1.5 rounded-full font-dm font-bold text-[12px] transition-colors ${
+                              pushFormats[value] === format
+                                ? 'bg-coral text-white'
+                                : 'text-text-primary'
+                            }`}
+                          >
+                            {format === 'event' ? 'Event' : 'Task'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                  <p className="font-dm text-[11px] text-text-muted leading-relaxed">
+                    Events show as timed blocks on your calendar. Tasks show as checkable to-dos
+                    in Google Tasks, with the time included in the title since Google Tasks
+                    doesn't show a time on its own.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </section>
-
-        {/* Sync style section */}
-        {calendarSync && (
-          <section>
-            <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
-              Sync Tasks As
-            </p>
-            <SyncAsChooser
-              mode={syncMode}
-              onModeChange={setSyncMode}
-              typeMap={typeMap}
-              onTypeMapChange={setTypeMap}
-            />
-          </section>
-        )}
 
         {/* Reminders section */}
         <section>
@@ -403,36 +307,42 @@ export default function SyncSettingsPage() {
           </div>
         </section>
 
-        {/* Placeholder CTA */}
-        <div className="bg-[#fff5f3] border border-[#fcd5cc] rounded-[16px] p-4">
-          <p className="font-dm font-bold text-[14px] text-coral mb-1">
-            Coming soon
-          </p>
-          <p className="font-dm text-[13px] text-text-secondary">
-            Live calendar sync and push notifications will be available once you connect a
-            backend.
-          </p>
-        </div>
-
-        {!calendarSync && (
-          <Button fullWidth variant="secondary" onClick={requestConnect}>
-            Connect Google Calendar
+        {!calendarConnected && (
+          <Button
+            fullWidth
+            variant="secondary"
+            disabled={connecting}
+            onClick={() => void handleCalendarToggle(true)}
+          >
+            {connecting ? 'Connecting…' : 'Connect Google Calendar'}
           </Button>
         )}
       </div>
 
-      {showSyncPrompt && (
-        <SyncPromptSheet
-          mode={syncMode}
-          onModeChange={setSyncMode}
-          typeMap={typeMap}
-          onTypeMapChange={setTypeMap}
-          onConfirm={() => {
-            setCalendarSync(true)
-            setShowSyncPrompt(false)
-          }}
-          onCancel={() => setShowSyncPrompt(false)}
-        />
+      {showDisconnectConfirm && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center px-6">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setShowDisconnectConfirm(false)}
+          />
+          <div className="relative w-full max-w-[380px] bg-cream rounded-[22px] p-6">
+            <p className="font-outfit font-bold text-[20px] text-text-primary leading-tight mb-2">
+              Disconnect Google Calendar?
+            </p>
+            <p className="font-dm text-[14px] text-text-secondary leading-relaxed mb-5">
+              You'll stop seeing Rover bookings and Google Calendar events in the Calendar
+              tab until you reconnect.
+            </p>
+            <div className="flex flex-col gap-2">
+              <Button fullWidth variant="danger" onClick={confirmDisconnect}>
+                Disconnect
+              </Button>
+              <Button fullWidth variant="ghost" onClick={() => setShowDisconnectConfirm(false)}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
 
       <BottomNav />

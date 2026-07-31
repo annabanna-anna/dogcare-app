@@ -60,8 +60,21 @@ create table if not exists tasks (
   scheduled_time  timestamptz not null,
   note            text,
   status          task_status not null default 'pending',
-  completed_at    timestamptz
+  completed_at    timestamptz,
+  -- Tracks what this task was last pushed to Google as, so a re-push can
+  -- update that same event/task instead of creating a duplicate.
+  google_ext_id   text,
+  google_ext_kind text check (google_ext_kind in ('event', 'task'))
 );
+
+-- Patches an existing tasks table (created before the Google push-tracking
+-- columns existed) — no-ops on a fresh install where the columns above
+-- already cover this.
+alter table tasks add column if not exists google_ext_id text;
+alter table tasks add column if not exists google_ext_kind text;
+do $$ begin
+  alter table tasks add constraint tasks_google_ext_kind_check check (google_ext_kind in ('event', 'task'));
+exception when duplicate_object then null; end $$;
 
 create index if not exists dogs_owner_idx on dogs(owner_id);
 create index if not exists stays_owner_idx on stays(owner_id);

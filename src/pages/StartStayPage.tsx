@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { CalendarDays, ChevronDown, Check, Search, X } from 'lucide-react'
 import DogIcon from '../components/icons/DogIcon'
 import { TimePickerButton } from '../components/TimePicker'
@@ -7,6 +7,15 @@ import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
 import BottomNav from '../components/BottomNav'
 import { listDogs } from '../lib/dogs'
+import { getStay, updateStay } from '../lib/stays'
+import { createTasks, deleteTasksByStay, listTasksByStay } from '../lib/tasks'
+import { generateTasksForStay } from '../utils/taskGenerator'
+import { combineLocalDateTime } from '../utils/dateUtils'
+import {
+  isGoogleCalendarConnected,
+  pushTasksToGoogleCalendar,
+  deletePushedTasksFromGoogle,
+} from '../lib/googleCalendar'
 import type { Dog } from '../types'
 
 function pad(n: number) {
@@ -150,7 +159,11 @@ function DateTimeField({
             type="date"
             value={day}
             onChange={(e) => onDayChange(e.target.value)}
-            className="w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-dm text-[15px] text-text-primary focus:outline-none focus:border-coral transition-colors appearance-none"
+            onClick={(e) => {
+              const input = e.currentTarget
+              if (typeof input.showPicker === 'function') input.showPicker()
+            }}
+            className="w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-dm text-[15px] text-text-primary focus:outline-none focus:border-coral transition-colors appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0"
           />
           <CalendarDays
             size={18}
@@ -167,9 +180,20 @@ function DateTimeField({
   )
 }
 
+/** Parses an optional ISO date/datetime query param into day+time fields,
+ *  falling back to the given default when absent or unparseable. */
+function parseDateParam(param: string | null, fallback: Date): { day: string; time: string } {
+  if (!param) return { day: toDateValue(fallback), time: toQuarterTimeValue(fallback) }
+  const parsed = new Date(param.length === 10 ? `${param}T00:00:00` : param)
+  if (Number.isNaN(parsed.getTime())) return { day: toDateValue(fallback), time: toQuarterTimeValue(fallback) }
+  return { day: toDateValue(parsed), time: toQuarterTimeValue(parsed) }
+}
+
 export default function StartStayPage() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
+  const { stayId } = useParams<{ stayId: string }>()
+  const isEditMode = Boolean(stayId)
 
   const preselectedDogId = params.get('dog') ?? ''
 
@@ -177,14 +201,20 @@ export default function StartStayPage() {
   const weekLater = new Date(now)
   weekLater.setDate(now.getDate() + 7)
 
+  const startParam = parseDateParam(params.get('start'), now)
+  const endParam = parseDateParam(params.get('end'), weekLater)
+
   const [dogs, setDogs] = useState<Dog[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingStay, setLoadingStay] = useState(isEditMode)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [selectedDogId, setSelectedDogId] = useState(preselectedDogId)
   const [pickerOpen, setPickerOpen] = useState(false)
-  const [startDay, setStartDay] = useState(toDateValue(now))
-  const [startTime, setStartTime] = useState(toQuarterTimeValue(now))
-  const [endDay, setEndDay] = useState(toDateValue(weekLater))
-  const [endTime, setEndTime] = useState(toQuarterTimeValue(weekLater))
+  const [startDay, setStartDay] = useState(startParam.day)
+  const [startTime, setStartTime] = useState(startParam.time)
+  const [endDay, setEndDay] = useState(endParam.day)
+  const [endTime, setEndTime] = useState(endParam.time)
   const [notes, setNotes] = useState('')
 
   useEffect(() => {
@@ -193,9 +223,31 @@ export default function StartStayPage() {
       .finally(() => setLoading(false))
   }, [])
 
+  useEffect(() => {
+    if (!isEditMode || !stayId) return
+    let cancelled = false
+    getStay(stayId)
+      .then((stay) => {
+        if (cancelled || !stay) return
+        setSelectedDogId(stay.dogId)
+        const start = parseDateParam(stay.startDate, now)
+        const end = parseDateParam(stay.endDate, now)
+        setStartDay(start.day)
+        setStartTime(start.time)
+        setEndDay(end.day)
+        setEndTime(end.time)
+        setNotes(stay.notes ?? '')
+      })
+      .finally(() => !cancelled && setLoadingStay(false))
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode, stayId])
+
   const selectedDog = dogs.find((d) => d.id === selectedDogId)
-  const startDate = `${startDay}T${startTime}`
-  const endDate = `${endDay}T${endTime}`
+  const startDate = combineLocalDateTime(startDay, startTime)
+  const endDate = combineLocalDateTime(endDay, endTime)
 
   function handleGenerate() {
     if (!isValid) return
@@ -204,25 +256,64 @@ export default function StartStayPage() {
     })
   }
 
+  async function handleSaveEdit() {
+    if (!isValid || !stayId || !selectedDog || saving) return
+    setSaving(true)
+    setError(null)
+    try {
+      const stay = await updateStay(stayId, { startDate, endDate, notes })
+      const oldTasks = await listTasksByStay(stayId)
+      if (isGoogleCalendarConnected()) {
+        // Clean up whatever these were pushed as before regenerating, so
+        // editing a stay doesn't leave stale duplicates behind in Google.
+        await deletePushedTasksFromGoogle(oldTasks).catch(() => {})
+      }
+      await deleteTasksByStay(stayId)
+      const newTasks = generateTasksForStay(selectedDog, stay)
+      await createTasks(newTasks)
+      if (isGoogleCalendarConnected()) {
+        pushTasksToGoogleCalendar(newTasks).catch(() => {})
+      }
+      navigate(`/dogs/${selectedDog.id}`)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not save changes. Please try again.')
+      setSaving(false)
+    }
+  }
+
   const isValid =
     selectedDogId && startDay && endDay && new Date(endDate) > new Date(startDate)
 
+  if (loadingStay) {
+    return (
+      <div className="min-h-svh bg-cream flex items-center justify-center px-6">
+        <p className="font-dm text-[14px] text-text-secondary">Loading…</p>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-svh bg-cream pb-28">
-      <PageHeader back title="Start Stay" />
+      <PageHeader back title={isEditMode ? 'Edit Stay' : 'Start Stay'} />
 
       <div className="px-6 mt-4 flex flex-col gap-5">
+        {error && (
+          <div className="bg-[#fee2e2] rounded-[12px] px-4 py-3">
+            <p className="font-dm text-[13px] text-[#b91c1c]">{error}</p>
+          </div>
+        )}
+
         {/* Dog selector */}
         <section>
           <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
             Which dog?
           </p>
           <button
-            onClick={() => !loading && setPickerOpen(true)}
-            disabled={loading}
+            onClick={() => !loading && !isEditMode && setPickerOpen(true)}
+            disabled={loading || isEditMode}
             className={`w-full flex items-center gap-3 p-3 rounded-[14px] border transition-colors text-left ${
               selectedDog ? 'border-coral bg-[#fff5f3]' : 'border-border-light bg-white active:bg-gray-50'
-            }`}
+            } ${isEditMode ? 'opacity-70' : ''}`}
           >
             {selectedDog ? (
               <>
@@ -246,7 +337,7 @@ export default function StartStayPage() {
                 </p>
               </>
             )}
-            <ChevronDown size={18} className="text-text-muted shrink-0" />
+            {!isEditMode && <ChevronDown size={18} className="text-text-muted shrink-0" />}
           </button>
         </section>
 
@@ -288,13 +379,20 @@ export default function StartStayPage() {
         </section>
 
         {/* CTA */}
-        <Button fullWidth size="lg" onClick={handleGenerate} disabled={!isValid}>
-          Generate Care Tasks
+        <Button
+          fullWidth
+          size="lg"
+          onClick={isEditMode ? () => void handleSaveEdit() : handleGenerate}
+          disabled={!isValid || saving}
+        >
+          {isEditMode ? (saving ? 'Saving…' : 'Save Changes') : 'Generate Care Tasks'}
         </Button>
 
         {selectedDog && (
           <p className="font-dm text-[13px] text-text-secondary text-center">
-            Tasks will be generated from {selectedDog.name}'s care schedule.
+            {isEditMode
+              ? `Care tasks will be regenerated from ${selectedDog.name}'s care schedule for the new dates.`
+              : `Tasks will be generated from ${selectedDog.name}'s care schedule.`}
           </p>
         )}
       </div>
