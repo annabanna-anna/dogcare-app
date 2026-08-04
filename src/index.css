@@ -18,6 +18,46 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Paw prints bursting out of the Done button when a task is completed */
+@keyframes paw-burst {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.2) rotate(var(--rot));
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(1) rotate(var(--rot));
+  }
+}
+.paw-burst {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin: -8px 0 0 -8px;
+  pointer-events: none;
+  color: #ff4514;
+  animation: paw-burst 0.65s cubic-bezier(0.2, 0.7, 0.4, 1) var(--delay, 0s) both;
+}
+
+/* Little squash-and-stretch pop on the button itself */
+@keyframes done-pop {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.18, 0.85); }
+  65% { transform: scale(0.94, 1.08); }
+  100% { transform: scale(1); }
+}
+.done-pop {
+  animation: done-pop 0.4s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paw-burst { animation: none; opacity: 0; }
+  .done-pop { animation: none; }
+}
+
 /* Hide scrollbars on wheel pickers */
 .no-scrollbar {
   scrollbar-width: none;
@@ -32,6 +72,8 @@ body {
   min-height: 100svh;
   margin: 0 auto;
   position: relative;
-  overflow-x: hidden;
+  /* `clip` (not `hidden`) — hidden would make #root a scroll container,
+     which silently breaks position: sticky for the page headers */
+  overflow-x: clip;
   background-color: #fcfcfc;
 }

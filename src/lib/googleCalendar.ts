@@ -18,18 +18,18 @@ import type { Task, TaskType } from '../types'
 // - Push: care tasks for a confirmed stay are written to a dedicated
 //   "GoodPup" calendar (created on first push if it doesn't exist yet), kept
 //   separate from the user's own events and from the Rover-synced one. Push
-//   is opt-out (on by default once connected) and, per task type, can go to
-//   Calendar as a timed event or to Google Tasks as a checkable to-do —
-//   Google's own "Tasks" product (visible in Google Calendar's sidebar and
-//   the Google Tasks app), not Apple's Reminders app, which Google doesn't
-//   expose an API to sync into directly.
+//   is opt-out (on by default once connected). Everything is pushed as a
+//   timed Calendar event — an earlier per-type option to push as Google
+//   Tasks to-dos was removed because the Tasks API can't carry a
+//   time-of-day, only a due date. The Tasks scope and cleanup helpers are
+//   kept so to-dos pushed before the removal still get deleted when their
+//   task is re-pushed (converting it to an event) or discarded.
 const TOKEN_KEY = 'goodpup-google-calendar-token'
 const REQUEST_MARKER = 'goodpup-requesting-calendar-scope'
 const ROVER_CACHE_KEY = 'goodpup-google-calendar-rover-cache'
 const PUSH_CALENDAR_CACHE_KEY = 'goodpup-google-calendar-push-id'
 const PUSH_TASKLIST_CACHE_KEY = 'goodpup-google-tasklist-push-id'
 const PUSH_ENABLED_KEY = 'goodpup-google-calendar-push-enabled'
-const PUSH_FORMAT_KEY = 'goodpup-google-calendar-push-format'
 const PUSH_ERROR_KEY = 'goodpup-google-calendar-push-error'
 const PUSH_CALENDAR_NAME = 'GoodPup'
 const CALENDAR_SCOPE =
@@ -42,8 +42,6 @@ const EVENT_DURATION_MS: Record<TaskType, number> = {
   potty: 15 * 60 * 1000,
   other: 15 * 60 * 1000,
 }
-
-export type PushFormat = 'event' | 'task'
 
 interface StoredToken {
   accessToken: string
@@ -123,35 +121,6 @@ export function isPushEnabled(): boolean {
 
 export function setPushEnabled(enabled: boolean): void {
   localStorage.setItem(PUSH_ENABLED_KEY, enabled ? '1' : '0')
-}
-
-const defaultPushFormats: Record<TaskType, PushFormat> = {
-  walk: 'event',
-  meal: 'event',
-  medication: 'event',
-  potty: 'event',
-  other: 'event',
-}
-
-function readPushFormats(): Record<TaskType, PushFormat> {
-  const raw = localStorage.getItem(PUSH_FORMAT_KEY)
-  if (!raw) return { ...defaultPushFormats }
-  try {
-    return { ...defaultPushFormats, ...(JSON.parse(raw) as Partial<Record<TaskType, PushFormat>>) }
-  } catch {
-    return { ...defaultPushFormats }
-  }
-}
-
-/** How each task type should be pushed — as a timed Calendar event, or as a
- *  checkable Google Task. Defaults to "event" for every type. */
-export function getPushFormats(): Record<TaskType, PushFormat> {
-  return readPushFormats()
-}
-
-export function setPushFormat(type: TaskType, format: PushFormat): void {
-  const next = { ...readPushFormats(), [type]: format }
-  localStorage.setItem(PUSH_FORMAT_KEY, JSON.stringify(next))
 }
 
 /** Reason the most recent push attempt failed, if it did — pushes are
@@ -325,8 +294,9 @@ async function resolveGoodPupCalendarId(accessToken: string): Promise<string> {
   return created.id
 }
 
-/** Finds (or creates, on first push) the dedicated "GoodPup" Google Tasks
- *  list that tasks pushed as to-dos (rather than calendar events) go into. */
+/** Finds the dedicated "GoodPup" Google Tasks list — only used to clean up
+ *  to-dos pushed back when the per-type Tasks format still existed. Never
+ *  creates new to-dos anymore. */
 async function resolveGoodPupTaskListId(accessToken: string): Promise<string> {
   const cached = localStorage.getItem(PUSH_TASKLIST_CACHE_KEY)
   if (cached) {
@@ -437,9 +407,11 @@ async function upsertCalendarEvent(calendarId: string, accessToken: string, task
     if (res.status !== 404) throw new Error('Could not push tasks to Google Calendar.')
     // 404 — the event was deleted on Google's side since; fall through and recreate it.
   } else if (task.googleExtId && task.googleExtKind === 'task') {
-    // Switched from Task to Event format — clean up the stale Google Task.
-    const tasklistId = await resolveGoodPupTaskListId(accessToken)
-    await deleteGoogleTaskBestEffort(tasklistId, accessToken, task.googleExtId)
+    // Legacy: this task was pushed as a Google Tasks to-do before the Tasks
+    // format was removed — clean it up so it isn't left behind alongside
+    // the event we're about to create.
+    const tasklistId = await resolveGoodPupTaskListId(accessToken).catch(() => null)
+    if (tasklistId) await deleteGoogleTaskBestEffort(tasklistId, accessToken, task.googleExtId)
   }
 
   const res = await fetch(
@@ -451,56 +423,6 @@ async function upsertCalendarEvent(calendarId: string, accessToken: string, task
     throw new Error('EXPIRED')
   }
   if (!res.ok) throw new Error('Could not push tasks to Google Calendar.')
-  return ((await res.json()) as { id: string }).id
-}
-
-/** Same idea as upsertCalendarEvent, for the Google Tasks side. */
-async function upsertGoogleTask(tasklistId: string, accessToken: string, task: Task): Promise<string> {
-  const scheduledTime = new Date(task.scheduledTime)
-  // Google Tasks' `due` field only carries a date, not a time-of-day — it's
-  // discarded by Google's own apps no matter what we send. Putting the time
-  // in the title is the only way it actually shows up anywhere.
-  const time = scheduledTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
-  // Build the date from LOCAL date parts, not scheduledTime.toISOString() —
-  // that converts to UTC first, which rolls evening local times (e.g. a
-  // 6pm task in a timezone behind UTC) into the next UTC calendar day, so
-  // Google Tasks would show it due a day late.
-  const pad2 = (n: number) => String(n).padStart(2, '0')
-  const localDate = `${scheduledTime.getFullYear()}-${pad2(scheduledTime.getMonth() + 1)}-${pad2(scheduledTime.getDate())}`
-  const body = JSON.stringify({
-    title: `${time} — ${task.title} — ${task.dogName}`,
-    notes: task.note || undefined,
-    due: `${localDate}T00:00:00.000Z`,
-  })
-  const headers = { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }
-
-  if (task.googleExtId && task.googleExtKind === 'task') {
-    const res = await fetch(
-      `https://tasks.googleapis.com/tasks/v1/lists/${encodeURIComponent(tasklistId)}/tasks/${encodeURIComponent(task.googleExtId)}`,
-      { method: 'PATCH', headers, body },
-    )
-    if (res.status === 401 || res.status === 403) {
-      disconnectGoogleCalendar()
-      throw new Error('EXPIRED')
-    }
-    if (res.ok) return ((await res.json()) as { id: string }).id
-    if (res.status !== 404) throw new Error('Could not push tasks to Google Tasks.')
-    // 404 — the task was deleted/completed-and-cleared on Google's side; recreate it.
-  } else if (task.googleExtId && task.googleExtKind === 'event') {
-    // Switched from Event to Task format — clean up the stale Calendar event.
-    const calendarId = await resolveGoodPupCalendarId(accessToken)
-    await deleteCalendarEventBestEffort(calendarId, accessToken, task.googleExtId)
-  }
-
-  const res = await fetch(
-    `https://tasks.googleapis.com/tasks/v1/lists/${encodeURIComponent(tasklistId)}/tasks`,
-    { method: 'POST', headers, body },
-  )
-  if (res.status === 401 || res.status === 403) {
-    disconnectGoogleCalendar()
-    throw new Error('EXPIRED')
-  }
-  if (!res.ok) throw new Error('Could not push tasks to Google Tasks.')
   return ((await res.json()) as { id: string }).id
 }
 
@@ -535,35 +457,24 @@ export async function deletePushedTasksFromGoogle(tasks: Task[]): Promise<void> 
   }
 }
 
-/** Pushes a stay's care tasks to Google — each task type goes to the
- *  GoodPup calendar (as a timed event) or the GoodPup Google Tasks list (as
- *  a checkable to-do) depending on the user's per-type preference. Tasks
- *  that were already pushed get updated in place rather than duplicated,
- *  tracked via each task's stored googleExtId/googleExtKind. A no-op if
- *  push is turned off. Fire-and-forget from the caller's perspective —
- *  best-effort, doesn't block or roll back stay creation if it fails. */
+/** Pushes a stay's care tasks to the GoodPup calendar as timed events.
+ *  Tasks that were already pushed get updated in place rather than
+ *  duplicated, tracked via each task's stored googleExtId/googleExtKind —
+ *  including legacy ones pushed as Google Tasks to-dos, which get converted
+ *  to events (and the stale to-do deleted). A no-op if push is turned off.
+ *  Fire-and-forget from the caller's perspective — best-effort, doesn't
+ *  block or roll back stay creation if it fails. */
 export async function pushTasksToGoogleCalendar(tasks: Task[]): Promise<void> {
   if (!isPushEnabled()) return
   const token = readToken()
   if (!token) throw new Error('NOT_CONNECTED')
 
   try {
-    const formats = getPushFormats()
-    const eventTasks = tasks.filter((t) => formats[t.type] !== 'task')
-    const todoTasks = tasks.filter((t) => formats[t.type] === 'task')
-
-    if (eventTasks.length > 0) {
+    if (tasks.length > 0) {
       const calendarId = await resolveGoodPupCalendarId(token.accessToken)
-      for (const task of eventTasks) {
+      for (const task of tasks) {
         const id = await upsertCalendarEvent(calendarId, token.accessToken, task)
         await setTaskGoogleRef(task.id, 'event', id)
-      }
-    }
-    if (todoTasks.length > 0) {
-      const tasklistId = await resolveGoodPupTaskListId(token.accessToken)
-      for (const task of todoTasks) {
-        const id = await upsertGoogleTask(tasklistId, token.accessToken, task)
-        await setTaskGoogleRef(task.id, 'task', id)
       }
     }
     localStorage.removeItem(PUSH_ERROR_KEY)

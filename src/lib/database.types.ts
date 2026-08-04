@@ -86,6 +86,7 @@ export interface Database {
           completed_at: string | null
           google_ext_id: string | null
           google_ext_kind: string | null
+          reminder_sent_at: string | null
         }
         Insert: {
           id?: string
@@ -101,8 +102,31 @@ export interface Database {
           completed_at?: string | null
           google_ext_id?: string | null
           google_ext_kind?: string | null
+          reminder_sent_at?: string | null
         }
         Update: Partial<Database['public']['Tables']['tasks']['Insert']>
+      }
+      push_subscriptions: {
+        Relationships: []
+        Row: {
+          id: string
+          owner_id: string
+          endpoint: string
+          p256dh: string
+          auth: string
+          reminder_minutes: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          owner_id: string
+          endpoint: string
+          p256dh: string
+          auth: string
+          reminder_minutes?: number
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['push_subscriptions']['Insert']>
       }
     }
     Views: Record<string, never>

@@ -118,11 +118,13 @@ export default function TaskPreviewPage() {
         notes: state.notes,
       })
       const finalTasks = generateTasksForStay(dog, stay)
-      await createTasks(finalTasks)
+      // Push the rows createTasks returns, not finalTasks — only they carry
+      // real DB ids, which the push needs to save each Google event ref.
+      const createdTasks = await createTasks(finalTasks)
       if (isGoogleCalendarConnected()) {
         // Best-effort: a stay is already saved by this point, so a push
         // failure (expired token, API hiccup) shouldn't block the user.
-        pushTasksToGoogleCalendar(finalTasks).catch(() => {})
+        pushTasksToGoogleCalendar(createdTasks).catch(() => {})
       }
       navigate('/')
     } catch (e) {

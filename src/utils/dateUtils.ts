@@ -59,10 +59,24 @@ export function combineLocalDateTime(day: string, time: string): string {
   return new Date(year, month - 1, date, hours, minutes, 0, 0).toISOString()
 }
 
-export function formatTodayHeading(): string {
-  return new Date().toLocaleDateString('en-US', {
+export function formatTodayHeading(date: Date = new Date()): string {
+  return date.toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
   }).toUpperCase()
+}
+
+export function addDays(date: Date, days: number): Date {
+  const d = new Date(date)
+  d.setDate(d.getDate() + days)
+  return d
+}
+
+/** Sunday of the week containing `date`, at local midnight. */
+export function startOfWeek(date: Date): Date {
+  const d = new Date(date)
+  d.setHours(0, 0, 0, 0)
+  d.setDate(d.getDate() - d.getDay())
+  return d
 }

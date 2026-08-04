@@ -4,6 +4,7 @@ import { ImagePlus, RefreshCw, Trash2, Plus, ChevronDown, X } from 'lucide-react
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
 import { getDog, createDog, updateDog, uploadDogPhoto } from '../lib/dogs'
+import { regenerateFutureTasksForDog } from '../lib/stayTaskSync'
 import { TimePickerButton } from '../components/TimePicker'
 import { DOG_BREEDS } from '../data/dogBreeds'
 import type { CareScheduleEntry, DogSize, TaskType } from '../types'
@@ -566,7 +567,10 @@ export default function AddEditDogPage() {
       const input = { ...form, photoUrl, careSchedule }
 
       if (isEdit && existingId) {
-        await updateDog(existingId, input)
+        const updated = await updateDog(existingId, input)
+        // The care schedule may have changed — rebuild the future tasks of
+        // any active/upcoming stay so Today reflects the edit immediately.
+        await regenerateFutureTasksForDog(updated)
       } else {
         await createDog(dogId, input)
       }

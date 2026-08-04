@@ -63,6 +63,20 @@ export default function CalendarPage() {
     }
   }
 
+  // Tasks pushed before the Google Tasks format was removed still live as
+  // to-dos in Google Tasks — re-pushing them converts each to a Calendar
+  // event and deletes the stale to-do. Self-limiting: once converted their
+  // googleExtKind is 'event', so this finds nothing on later loads.
+  async function convertLegacyGoogleTaskPushes(stayRows: Stay[]) {
+    if (!googleConnected || !isPushEnabled()) return
+    for (const stay of stayRows) {
+      if (new Date(stay.endDate) < new Date()) continue
+      const stayTasks = await listTasksByStay(stay.id)
+      const legacy = stayTasks.filter((t) => t.googleExtKind === 'task')
+      if (legacy.length > 0) await pushTasksToGoogleCalendar(legacy)
+    }
+  }
+
   useEffect(() => {
     let cancelled = false
     Promise.all([listStays(), listDogs()])
@@ -70,6 +84,7 @@ export default function CalendarPage() {
         if (cancelled) return
         setStays(stayRows)
         setDogs(dogRows)
+        convertLegacyGoogleTaskPushes(stayRows).catch(() => {})
       })
       .catch((e) => !cancelled && setError(e instanceof Error ? e.message : 'Could not load.'))
       .finally(() => !cancelled && setLoading(false))

@@ -9,7 +9,6 @@ import {
   Shield,
   LogOut,
   AlertCircle,
-  Pencil,
 } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import BottomNav from '../components/BottomNav'
@@ -20,20 +19,15 @@ import {
   isGoogleCalendarConnected,
   isPushEnabled,
   setPushEnabled,
-  getPushFormats,
-  setPushFormat,
   getLastPushError,
-  type PushFormat,
 } from '../lib/googleCalendar'
-import type { TaskType } from '../types'
-
-const taskTypeLabels: { value: TaskType; label: string }[] = [
-  { value: 'walk', label: 'Walks' },
-  { value: 'meal', label: 'Meals' },
-  { value: 'medication', label: 'Medication' },
-  { value: 'potty', label: 'Potty breaks' },
-  { value: 'other', label: 'Other' },
-]
+import {
+  enablePushReminders,
+  disablePushReminders,
+  isPushReminderEnabled,
+  getReminderMinutes,
+  setReminderMinutes as savePushReminderMinutes,
+} from '../lib/pushNotifications'
 
 function PurposeRow({ done, label, soon }: { done: boolean; label: string; soon?: boolean }) {
   return (
@@ -112,12 +106,11 @@ export default function SyncSettingsPage() {
   const [connectError, setConnectError] = useState<string | null>(null)
   const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false)
   const [pushEnabled, setPushEnabledState] = useState(true)
-  const [pushFormats, setPushFormatsState] = useState<Record<TaskType, PushFormat>>(() => getPushFormats())
-  const [editingFormats, setEditingFormats] = useState(false)
-  const [draftFormats, setDraftFormats] = useState<Record<TaskType, PushFormat>>(() => getPushFormats())
   const [pushError, setPushError] = useState<string | null>(null)
-  const [reminders, setReminders] = useState(true)
+  const [reminders, setReminders] = useState(false)
   const [reminderMinutes, setReminderMinutes] = useState(15)
+  const [reminderBusy, setReminderBusy] = useState(false)
+  const [reminderError, setReminderError] = useState<string | null>(null)
   const [userEmail, setUserEmail] = useState<string | null>(null)
 
   useEffect(() => {
@@ -125,6 +118,10 @@ export default function SyncSettingsPage() {
     setCalendarConnected(isGoogleCalendarConnected())
     setPushEnabledState(isPushEnabled())
     setPushError(getLastPushError())
+    isPushReminderEnabled().then((on) => {
+      setReminders(on)
+      if (on) getReminderMinutes().then(setReminderMinutes)
+    })
   }, [])
 
   function togglePush(on: boolean) {
@@ -132,24 +129,29 @@ export default function SyncSettingsPage() {
     setPushEnabledState(on)
   }
 
-  function startEditingFormats() {
-    setDraftFormats(pushFormats)
-    setEditingFormats(true)
-  }
-
-  function cancelEditingFormats() {
-    setEditingFormats(false)
-  }
-
-  function saveFormats() {
-    for (const type of Object.keys(draftFormats) as TaskType[]) {
-      if (draftFormats[type] !== pushFormats[type]) setPushFormat(type, draftFormats[type])
+  async function toggleReminders(on: boolean) {
+    setReminderBusy(true)
+    setReminderError(null)
+    try {
+      if (on) {
+        await enablePushReminders(reminderMinutes)
+      } else {
+        await disablePushReminders()
+      }
+      setReminders(on)
+    } catch (e) {
+      setReminderError(e instanceof Error ? e.message : 'Could not update reminders.')
+    } finally {
+      setReminderBusy(false)
     }
-    setPushFormatsState(draftFormats)
-    setEditingFormats(false)
   }
 
-  const reminderOptions = [5, 10, 15, 30, 60]
+  function pickReminderMinutes(min: number) {
+    setReminderMinutes(min)
+    if (reminders) void savePushReminderMinutes(min).catch(() => {})
+  }
+
+  const reminderOptions = [0, 5, 10, 15, 30, 60]
 
   async function handleCalendarToggle(on: boolean) {
     if (!on) {
@@ -207,7 +209,10 @@ export default function SyncSettingsPage() {
             <div className="pb-4 flex flex-col gap-3">
               <PurposeRow done={calendarConnected} label="Shows your Rover bookings" />
               <div className="flex items-center justify-between gap-3">
-                <PurposeRow done={calendarConnected && pushEnabled} label="Adds tasks to your Google calendar" />
+                <PurposeRow
+                  done={calendarConnected && pushEnabled}
+                  label="Adds tasks as events on your Google calendar"
+                />
                 <Toggle
                   value={pushEnabled}
                   onChange={togglePush}
@@ -224,74 +229,6 @@ export default function SyncSettingsPage() {
                 </div>
               )}
 
-              {calendarConnected && pushEnabled && (
-                <div className="pt-3 border-t border-border-faint flex flex-col gap-2.5">
-                  <div className="flex items-center justify-between">
-                    <p className="font-dm font-bold text-[11px] text-text-muted uppercase tracking-wide">
-                      Add As
-                    </p>
-                    {!editingFormats && (
-                      <button
-                        onClick={startEditingFormats}
-                        className="flex items-center gap-1 font-dm font-bold text-[12px] text-coral"
-                      >
-                        <Pencil size={12} />
-                        Edit
-                      </button>
-                    )}
-                  </div>
-
-                  <p className="font-dm text-[11px] text-text-muted leading-relaxed">
-                    Events show as timed blocks on your calendar. Tasks show as checkable to-dos
-                    in Google Tasks.
-                  </p>
-
-                  {taskTypeLabels.map(({ value, label }) => {
-                    const selected = editingFormats ? draftFormats[value] : pushFormats[value]
-                    return (
-                      <div key={value} className="flex items-center justify-between gap-3">
-                        <p className="font-dm text-[13px] text-text-primary">{label}</p>
-                        <div
-                          className={`relative flex w-[92px] rounded-full border border-border-light bg-white p-0.5 ${
-                            editingFormats ? '' : 'opacity-60'
-                          }`}
-                        >
-                          <div
-                            className={`absolute top-0.5 bottom-0.5 left-0.5 w-[44px] rounded-full bg-coral transition-transform duration-200 ease-out ${
-                              selected === 'task' ? 'translate-x-[44px]' : 'translate-x-0'
-                            }`}
-                          />
-                          {(['event', 'task'] as const).map((format) => (
-                            <button
-                              key={format}
-                              onClick={() =>
-                                editingFormats &&
-                                setDraftFormats((prev) => ({ ...prev, [value]: format }))
-                              }
-                              className={`relative z-10 w-[44px] py-1 rounded-full font-dm font-bold text-[10px] transition-colors duration-200 ${
-                                selected === format ? 'text-white' : 'text-text-primary'
-                              } ${editingFormats ? '' : 'cursor-default'}`}
-                            >
-                              {format === 'event' ? 'Event' : 'Task'}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )
-                  })}
-
-                  {editingFormats && (
-                    <div className="flex gap-2 mt-1">
-                      <Button size="sm" onClick={saveFormats}>
-                        Save
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={cancelEditingFormats}>
-                        Cancel
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         </section>
@@ -305,9 +242,23 @@ export default function SyncSettingsPage() {
             <SettingRow
               icon={<Bell size={18} />}
               label="Push Notifications"
-              description="Get reminded before each task"
-              right={<Toggle value={reminders} onChange={setReminders} />}
+              description={reminderBusy ? 'Updating…' : 'Get reminded before each task'}
+              right={
+                <Toggle
+                  value={reminders}
+                  onChange={(on) => void toggleReminders(on)}
+                  disabled={reminderBusy}
+                />
+              }
             />
+            {reminderError && (
+              <div className="py-3">
+                <div className="flex items-start gap-2 bg-[#fee2e2] rounded-[12px] px-3 py-2.5">
+                  <AlertCircle size={15} className="text-[#b91c1c] shrink-0 mt-0.5" />
+                  <p className="font-dm text-[12px] text-[#b91c1c] leading-snug">{reminderError}</p>
+                </div>
+              </div>
+            )}
             {reminders && (
               <div className="py-4">
                 <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
@@ -317,14 +268,14 @@ export default function SyncSettingsPage() {
                   {reminderOptions.map((min) => (
                     <button
                       key={min}
-                      onClick={() => setReminderMinutes(min)}
+                      onClick={() => pickReminderMinutes(min)}
                       className={`px-4 py-2 rounded-full font-dm font-bold text-[13px] border transition-colors ${
                         reminderMinutes === min
                           ? 'bg-coral border-coral text-white'
                           : 'bg-white border-border-light text-text-secondary'
                       }`}
                     >
-                      {min < 60 ? `${min}m` : '1h'}
+                      {min === 0 ? 'On time' : min < 60 ? `${min}m` : '1h'}
                     </button>
                   ))}
                 </div>

@@ -73,6 +73,12 @@ export async function deleteTasksByStay(stayId: string): Promise<void> {
   if (error) throw error
 }
 
+export async function deleteTasksByIds(ids: string[]): Promise<void> {
+  if (ids.length === 0) return
+  const { error } = await supabase.from('tasks').delete().in('id', ids)
+  if (error) throw error
+}
+
 export async function updateTaskStatus(id: string, status: TaskStatus): Promise<void> {
   const { error } = await supabase
     .from('tasks')

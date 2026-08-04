@@ -5,7 +5,7 @@ import Button from './Button'
 const pad = (n: number) => String(n).padStart(2, '0')
 
 const HOURS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']
-const MINUTES = ['00', '15', '30', '45']
+const MINUTES = Array.from({ length: 12 }, (_, i) => pad(i * 5))
 const MERIDIEMS = ['am', 'pm']
 
 export function formatTimeValue(value: string): string {
@@ -115,7 +115,7 @@ export function TimeWheelSheet({
   onClose: () => void
 }) {
   const [h24, m] = value.split(':').map(Number)
-  const snappedMin = pad(Math.round(m / 15) * 15 === 60 ? 45 : Math.round(m / 15) * 15)
+  const snappedMin = pad(Math.round(m / 5) * 5 === 60 ? 55 : Math.round(m / 5) * 5)
   const [hour, setHour] = useState(String(h24 % 12 === 0 ? 12 : h24 % 12))
   const [minute, setMinute] = useState(MINUTES.includes(snappedMin) ? snappedMin : '00')
   const [meridiem, setMeridiem] = useState(h24 < 12 ? 'am' : 'pm')

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { CheckCircle, CalendarPlus, UserPlus } from 'lucide-react'
+import { CalendarPlus, UserPlus, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
 import DogIcon from '../components/icons/DogIcon'
 import { Link, useNavigate } from 'react-router-dom'
 import Button from '../components/Button'
@@ -15,9 +15,17 @@ import {
   type GoogleCalendarEvent,
 } from '../lib/googleCalendar'
 import type { Dog, Stay, Task, TaskStatus } from '../types'
-import { formatTodayHeading, toLocalDateKey } from '../utils/dateUtils'
+import {
+  addDays,
+  formatDayHeading,
+  formatTodayHeading,
+  isSameDay,
+  startOfWeek,
+  toLocalDateKey,
+} from '../utils/dateUtils'
 
 const DISMISSED_KEY = 'goodpup-dismissed-stay-suggestions'
+const WEEKDAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
 export default function TodayPage() {
   const navigate = useNavigate()
@@ -37,22 +45,29 @@ export default function TodayPage() {
       return []
     }
   })
+  const [selectedDate, setSelectedDate] = useState(() => new Date())
+  const [viewMode, setViewMode] = useState<'week' | 'month'>('week')
+
+  // The date range whose tasks are loaded: the selected week, or the whole
+  // month when the month grid is open.
+  const range = useMemo(() => {
+    if (viewMode === 'month') {
+      const start = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
+      const end = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0, 23, 59, 59, 999)
+      return { start, end }
+    }
+    const start = startOfWeek(selectedDate)
+    const end = addDays(start, 7)
+    end.setMilliseconds(-1)
+    return { start, end }
+  }, [selectedDate, viewMode])
+  const rangeKey = `${range.start.toISOString()}|${range.end.toISOString()}`
 
   useEffect(() => {
     let cancelled = false
-    const dayStart = new Date()
-    dayStart.setHours(0, 0, 0, 0)
-    const dayEnd = new Date()
-    dayEnd.setHours(23, 59, 59, 999)
-
-    Promise.all([
-      listTasksBetween(dayStart.toISOString(), dayEnd.toISOString()),
-      listDogs(),
-      listStays(),
-    ])
-      .then(([taskRows, dogRows, stayRows]) => {
+    Promise.all([listDogs(), listStays()])
+      .then(([dogRows, stayRows]) => {
         if (cancelled) return
-        setTasks(taskRows)
         setDogs(dogRows)
         const now = new Date()
         const active = stayRows
@@ -65,11 +80,23 @@ export default function TodayPage() {
         setActiveDogs(active)
       })
       .catch((e) => !cancelled && setError(e instanceof Error ? e.message : 'Could not load.'))
-      .finally(() => !cancelled && setLoading(false))
     return () => {
       cancelled = true
     }
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    listTasksBetween(range.start.toISOString(), range.end.toISOString())
+      .then((taskRows) => !cancelled && setTasks(taskRows))
+      .catch((e) => !cancelled && setError(e instanceof Error ? e.message : 'Could not load.'))
+      .finally(() => !cancelled && setLoading(false))
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rangeKey])
 
   // Suggest starting a stay when today's Google/Rover events name a dog we
   // already know, and that dog isn't already under active care.
@@ -111,23 +138,34 @@ export default function TodayPage() {
     localStorage.setItem(DISMISSED_KEY, JSON.stringify(next))
   }
 
-  const todayTasks = useMemo(
-    () => [...tasks].sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime)),
-    [tasks],
+  // Task-count dots for the day picker, keyed by local date.
+  const taskKeys = useMemo(() => {
+    const set = new Set<string>()
+    for (const t of tasks) set.add(toLocalDateKey(new Date(t.scheduledTime)))
+    return set
+  }, [tasks])
+
+  const selectedKey = toLocalDateKey(selectedDate)
+  const dayTasks = useMemo(
+    () =>
+      tasks
+        .filter((t) => toLocalDateKey(new Date(t.scheduledTime)) === selectedKey)
+        .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime)),
+    [tasks, selectedKey],
   )
 
   // Group tasks by dogName
   const tasksByDog = useMemo(() => {
     const map: Record<string, Task[]> = {}
-    for (const t of todayTasks) {
+    for (const t of dayTasks) {
       if (!map[t.dogName]) map[t.dogName] = []
       map[t.dogName].push(t)
     }
     return map
-  }, [todayTasks])
+  }, [dayTasks])
 
-  const doneCount = todayTasks.filter((t) => t.status === 'done').length
-  const total = todayTasks.length
+  const isTodaySelected = isSameDay(selectedDate, new Date())
+  const isPastSelected = !isTodaySelected && selectedDate < new Date()
 
   function updateStatus(id: string, status: TaskStatus) {
     setTasks((prev) =>
@@ -146,13 +184,152 @@ export default function TodayPage() {
       <div className="px-6 pt-8 pb-4 flex items-end justify-between">
         <div>
           <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-1">
-            {formatTodayHeading()}
+            {formatTodayHeading(selectedDate)}
           </p>
           <h1 className="font-outfit font-bold text-[56px] leading-none text-cobalt tracking-tight">
-            Today
+            {formatDayHeading(selectedDate.toISOString()).split(',')[0]}
           </h1>
         </div>
+        <button
+          type="button"
+          onClick={() => setViewMode((m) => (m === 'week' ? 'month' : 'week'))}
+          aria-label={viewMode === 'week' ? 'Show month' : 'Show week'}
+          aria-pressed={viewMode === 'month'}
+          className={`size-11 rounded-full flex items-center justify-center transition-colors active:scale-[0.94] ${
+            viewMode === 'month' ? 'bg-cobalt text-white' : 'bg-card text-cobalt'
+          }`}
+        >
+          <CalendarDays size={20} />
+        </button>
       </div>
+
+      {/* Day picker */}
+      {viewMode === 'week' ? (
+        <div className="px-6 mb-6">
+          <div className="flex justify-between">
+            {Array.from({ length: 7 }, (_, i) => {
+              const day = addDays(startOfWeek(selectedDate), i)
+              const key = toLocalDateKey(day)
+              const isSelected = key === selectedKey
+              const isToday = isSameDay(day, new Date())
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setSelectedDate(day)}
+                  className="flex flex-col items-center gap-1.5 active:scale-[0.94] transition-transform"
+                >
+                  <span className="font-dm font-bold text-[11px] uppercase tracking-widest text-text-muted">
+                    {WEEKDAY_LETTERS[i]}
+                  </span>
+                  <span
+                    className={`size-10 rounded-full flex items-center justify-center font-dm font-bold text-[15px] transition-colors ${
+                      isSelected
+                        ? 'bg-coral text-white'
+                        : isToday
+                          ? 'bg-coral-soft text-coral'
+                          : 'text-text-primary'
+                    }`}
+                  >
+                    {day.getDate()}
+                  </span>
+                  <span
+                    className={`size-1.5 rounded-full ${
+                      taskKeys.has(key) ? (isSelected ? 'bg-coral' : 'bg-coral/50') : 'bg-transparent'
+                    }`}
+                  />
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      ) : (
+        <div className="px-6 mb-6">
+          <div className="bg-card rounded-[20px] p-4">
+            <div className="flex items-center justify-between mb-3">
+              <button
+                type="button"
+                aria-label="Previous month"
+                onClick={() =>
+                  setSelectedDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))
+                }
+                className="size-9 rounded-full flex items-center justify-center text-text-secondary active:scale-[0.94]"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <p className="font-outfit font-bold text-[17px] text-text-primary">
+                {selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+              </p>
+              <button
+                type="button"
+                aria-label="Next month"
+                onClick={() =>
+                  setSelectedDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))
+                }
+                className="size-9 rounded-full flex items-center justify-center text-text-secondary active:scale-[0.94]"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+            <div className="grid grid-cols-7 mb-1">
+              {WEEKDAY_LETTERS.map((l, i) => (
+                <span
+                  key={i}
+                  className="text-center font-dm font-bold text-[11px] uppercase tracking-widest text-text-muted"
+                >
+                  {l}
+                </span>
+              ))}
+            </div>
+            <div className="grid grid-cols-7 gap-y-1">
+              {Array.from(
+                { length: new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1).getDay() },
+                (_, i) => (
+                  <span key={`blank-${i}`} />
+                ),
+              )}
+              {Array.from(
+                { length: new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).getDate() },
+                (_, i) => {
+                  const day = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), i + 1)
+                  const key = toLocalDateKey(day)
+                  const isSelected = key === selectedKey
+                  const isToday = isSameDay(day, new Date())
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setSelectedDate(day)}
+                      className="flex flex-col items-center gap-0.5 active:scale-[0.94] transition-transform"
+                    >
+                      <span
+                        className={`size-9 rounded-full flex items-center justify-center font-dm font-bold text-[14px] transition-colors ${
+                          isSelected
+                            ? 'bg-coral text-white'
+                            : isToday
+                              ? 'bg-coral-soft text-coral'
+                              : 'text-text-primary'
+                        }`}
+                      >
+                        {i + 1}
+                      </span>
+                      <span
+                        className={`size-1 rounded-full ${
+                          taskKeys.has(key)
+                            ? isSelected
+                              ? 'bg-coral'
+                              : 'bg-coral/50'
+                            : 'bg-transparent'
+                        }`}
+                      />
+                    </button>
+                  )
+                },
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="mx-6 mb-4 bg-[#fee2e2] rounded-[12px] px-4 py-3">
@@ -165,7 +342,7 @@ export default function TodayPage() {
       ) : (
         <>
           {/* Suggested stays, from today's Google/Rover events */}
-          {suggestions.length > 0 && (
+          {isTodaySelected && suggestions.length > 0 && (
             <div className="px-6 mb-6 flex flex-col gap-3">
               {suggestions.map(({ dog, event }) => (
                 <div
@@ -208,7 +385,7 @@ export default function TodayPage() {
           )}
 
           {/* New dogs found on the calendar that aren't in the app yet */}
-          {newDogSuggestions.length > 0 && (
+          {isTodaySelected && newDogSuggestions.length > 0 && (
             <div className="px-6 mb-6 flex flex-col gap-3">
               {newDogSuggestions.map(({ dogName, ownerName, event }) => (
                 <div
@@ -286,51 +463,22 @@ export default function TodayPage() {
             </section>
           )}
 
-          {/* Progress */}
-          {total > 0 && (
-            <section className="px-6 mb-6">
-              <div className="flex items-center gap-3 mb-2">
-                <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest">
-                  Reminders
-                </p>
-                {doneCount === total && (
-                  <div className="flex items-center gap-1">
-                    <CheckCircle size={14} className="text-coral" />
-                    <span className="font-dm font-bold text-[12px] text-coral">
-                      All done!
-                    </span>
-                  </div>
-                )}
-                {doneCount < total && (
-                  <span className="font-dm font-bold text-[12px] text-text-secondary">
-                    {doneCount}/{total} done
-                  </span>
-                )}
-              </div>
-
-              {/* Progress bar */}
-              <div className="h-2.5 bg-card rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-coral rounded-full transition-all duration-500"
-                  style={{ width: total ? `${(doneCount / total) * 100}%` : '0%' }}
-                />
-              </div>
-            </section>
-          )}
-
           {/* Tasks grouped by dog */}
           {Object.entries(tasksByDog).map(([dogName, dogTasks]) => (
             <section key={dogName} className="px-6 mb-4">
-              <p className="font-dm font-bold text-[12px] text-text-muted uppercase tracking-widest mb-3">
-                {dogName}
-              </p>
+              {Object.keys(tasksByDog).length > 1 && (
+                <p className="font-dm font-bold text-[12px] text-text-muted uppercase tracking-widest mb-3">
+                  {dogName}
+                </p>
+              )}
               <div>
                 {dogTasks.map((task, i) => (
                   <div key={task.id} className={i === dogTasks.length - 1 ? '[&_.connector]:opacity-0' : ''}>
                     <TaskCard
                       task={task}
                       onDone={(id) => updateStatus(id, 'done')}
-                      onSkip={(id) => updateStatus(id, 'skipped')}
+                      onUndo={(id) => updateStatus(id, 'pending')}
+                      showDogName={Object.keys(tasksByDog).length > 1}
                     />
                   </div>
                 ))}
@@ -338,20 +486,26 @@ export default function TodayPage() {
             </section>
           ))}
 
-          {todayTasks.length === 0 && (
+          {dayTasks.length === 0 && (
             <div className="px-6 py-16 flex flex-col items-center gap-3 text-center">
               <p className="font-outfit font-bold text-[22px] text-text-primary">
-                No tasks today
+                {isTodaySelected
+                  ? 'No tasks today'
+                  : `No tasks ${formatDayHeading(selectedDate.toISOString()).split(',')[0].replace('Tomorrow', 'tomorrow')}`}
               </p>
-              <p className="font-dm text-[14px] text-text-secondary">
-                Start a stay to generate care tasks.
-              </p>
-              <div className="mt-3">
-                <Button onClick={() => navigate('/stays/new')}>
-                  <CalendarPlus size={18} />
-                  Start a Stay
-                </Button>
-              </div>
+              {!isPastSelected && (
+                <>
+                  <p className="font-dm text-[14px] text-text-secondary">
+                    Start a stay to generate care tasks.
+                  </p>
+                  <div className="mt-3">
+                    <Button onClick={() => navigate('/stays/new')}>
+                      <CalendarPlus size={18} />
+                      Start a Stay
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </>

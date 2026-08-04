@@ -270,9 +270,11 @@ export default function StartStayPage() {
       }
       await deleteTasksByStay(stayId)
       const newTasks = generateTasksForStay(selectedDog, stay)
-      await createTasks(newTasks)
+      // Push the rows createTasks returns, not newTasks — only they carry
+      // real DB ids, which the push needs to save each Google event ref.
+      const createdTasks = await createTasks(newTasks)
       if (isGoogleCalendarConnected()) {
-        pushTasksToGoogleCalendar(newTasks).catch(() => {})
+        pushTasksToGoogleCalendar(createdTasks).catch(() => {})
       }
       navigate(`/dogs/${selectedDog.id}`)
     } catch (e) {

@@ -101,19 +101,22 @@ export default function DogListPage() {
 
   return (
     <div className="min-h-svh bg-cream pb-28">
-      <PageHeader title="Dogs" />
+      {/* Header + search stay pinned while the list scrolls */}
+      <div className="sticky top-0 z-30 bg-cream pb-3">
+        <PageHeader title="Dogs" />
 
-      {/* Search */}
-      <div className="px-6 mt-2">
-        <div className="bg-card rounded-full px-4 py-3 flex items-center gap-2.5">
-          <Search size={18} className="text-text-muted shrink-0" />
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search dogs, breeds, owners"
-            className="flex-1 min-w-0 bg-transparent font-dm text-[15px] text-text-primary placeholder:text-text-muted focus:outline-none"
-          />
+        {/* Search */}
+        <div className="px-6 mt-2">
+          <div className="bg-card rounded-full px-4 py-3 flex items-center gap-2.5">
+            <Search size={18} className="text-text-muted shrink-0" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search dogs, breeds, owners"
+              className="flex-1 min-w-0 bg-transparent font-dm text-[15px] text-text-primary placeholder:text-text-muted focus:outline-none"
+            />
+          </div>
         </div>
       </div>
 
@@ -149,7 +152,7 @@ export default function DogListPage() {
                 ref={(el) => {
                   letterRefs.current[group.letter] = el
                 }}
-                className="scroll-mt-4"
+                className="scroll-mt-[156px]"
               >
                 <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
                   {group.letter}

@@ -76,12 +76,33 @@ do $$ begin
   alter table tasks add constraint tasks_google_ext_kind_check check (google_ext_kind in ('event', 'task'));
 exception when duplicate_object then null; end $$;
 
+-- Set once the send-task-reminders Edge Function has pushed a reminder for
+-- this task, so each task only ever notifies once.
+alter table tasks add column if not exists reminder_sent_at timestamptz;
+
+-- One row per browser/device that turned on push reminders in Settings —
+-- the endpoint/p256dh/auth triple is the Web Push subscription the browser
+-- issued, and reminder_minutes is how far ahead that device wants nudging.
+create table if not exists push_subscriptions (
+  id                uuid primary key default gen_random_uuid(),
+  owner_id          uuid not null references auth.users(id) on delete cascade,
+  endpoint          text not null unique,
+  p256dh            text not null,
+  auth              text not null,
+  reminder_minutes  int not null default 15,
+  created_at        timestamptz not null default now()
+);
+
 create index if not exists dogs_owner_idx on dogs(owner_id);
 create index if not exists stays_owner_idx on stays(owner_id);
 create index if not exists stays_dog_idx on stays(dog_id);
 create index if not exists tasks_owner_idx on tasks(owner_id);
 create index if not exists tasks_stay_idx on tasks(stay_id);
 create index if not exists tasks_scheduled_idx on tasks(scheduled_time);
+create index if not exists push_subscriptions_owner_idx on push_subscriptions(owner_id);
+-- The reminder sweep only ever looks at pending, not-yet-notified tasks.
+create index if not exists tasks_reminder_due_idx
+  on tasks(scheduled_time) where status = 'pending' and reminder_sent_at is null;
 
 -- ── updated_at auto-touch ────────────────────────────────────────────────────
 
@@ -103,6 +124,11 @@ create trigger dogs_set_updated_at
 alter table dogs enable row level security;
 alter table stays enable row level security;
 alter table tasks enable row level security;
+alter table push_subscriptions enable row level security;
+
+drop policy if exists "Owners manage their push subscriptions" on push_subscriptions;
+create policy "Owners manage their push subscriptions" on push_subscriptions
+  for all using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
 
 drop policy if exists "Owners manage their dogs" on dogs;
 create policy "Owners manage their dogs" on dogs
