@@ -137,10 +137,13 @@ export async function getReminderMinutes(): Promise<number> {
 }
 
 // The Push API wants the VAPID public key as raw bytes, not the URL-safe
-// base64 string it's usually shipped around as.
+// base64 string it's usually shipped around as. Env values pasted into
+// hosting dashboards often pick up stray quotes or whitespace, which makes
+// Safari's atob throw an opaque "invalid characters" error — strip them.
 function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+  const cleaned = base64String.trim().replace(/^["']|["']$/g, '')
+  const padding = '='.repeat((4 - (cleaned.length % 4)) % 4)
+  const base64 = (cleaned + padding).replace(/-/g, '+').replace(/_/g, '/')
   const rawData = atob(base64)
   const output = new Uint8Array(new ArrayBuffer(rawData.length))
   for (let i = 0; i < rawData.length; i++) output[i] = rawData.charCodeAt(i)
