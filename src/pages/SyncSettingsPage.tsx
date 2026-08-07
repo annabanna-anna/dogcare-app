@@ -37,7 +37,7 @@ function PurposeRow({ done, label, soon }: { done: boolean; label: string; soon?
       ) : (
         <Circle size={16} className="text-[#d1d5db] shrink-0" />
       )}
-      <p className="font-dm text-[13px] text-text-secondary">
+      <p className="font-dm text-[13px] text-text-secondary min-w-0">
         {label}
         {soon && <span className="text-text-muted"> (soon)</span>}
       </p>
@@ -58,7 +58,7 @@ function Toggle({
     <button
       onClick={() => !disabled && onChange(!value)}
       disabled={disabled}
-      className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${
+      className={`relative w-12 h-6 rounded-full shrink-0 transition-colors duration-200 ${
         disabled ? 'bg-[#e5e7eb] cursor-not-allowed' : value ? 'bg-green-vivid' : 'bg-[#d1d5db]'
       }`}
     >
@@ -208,11 +208,17 @@ export default function SyncSettingsPage() {
             />
             <div className="pb-4 flex flex-col gap-3">
               <PurposeRow done={calendarConnected} label="Shows your Rover bookings" />
-              <div className="flex items-center justify-between gap-3">
-                <PurposeRow
-                  done={calendarConnected && pushEnabled}
-                  label="Adds tasks as events on your Google calendar"
-                />
+              <div className="flex items-center gap-3">
+                <div className="flex-1 min-w-0 flex items-center gap-2.5">
+                  {calendarConnected && pushEnabled ? (
+                    <CheckCircle2 size={16} className="text-[#15803d] shrink-0" />
+                  ) : (
+                    <Circle size={16} className="text-[#d1d5db] shrink-0" />
+                  )}
+                  <p className="font-dm text-[13px] text-text-secondary">
+                    Adds tasks as events on your Google calendar
+                  </p>
+                </div>
                 <Toggle
                   value={pushEnabled}
                   onChange={togglePush}
