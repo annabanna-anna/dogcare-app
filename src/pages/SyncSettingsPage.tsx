@@ -63,9 +63,9 @@ function Toggle({
       }`}
     >
       <div
-        className={`absolute top-1 size-4 rounded-full transition-transform duration-200 ${
-          disabled ? 'bg-[#f9fafb]' : 'bg-white'
-        } ${value ? 'translate-x-7' : 'translate-x-1'}`}
+        className={`absolute top-1 size-4 rounded-full bg-white shadow-[0_1px_2px_rgba(0,0,0,0.2)] transition-transform duration-200 ${
+          value ? 'translate-x-7' : 'translate-x-1'
+        }`}
       />
     </button>
   )

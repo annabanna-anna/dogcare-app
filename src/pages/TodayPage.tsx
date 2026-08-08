@@ -34,7 +34,12 @@ export default function TodayPage() {
   const [activeDogs, setActiveDogs] = useState<{ dog: Dog; stay: Stay }[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [suggestions, setSuggestions] = useState<{ dog: Dog; event: GoogleCalendarEvent }[]>([])
+  // One entry per calendar event. `candidates` normally holds a single dog;
+  // more than one means the event's name matched several dogs we couldn't tell
+  // apart, so the card asks the sitter to pick.
+  const [suggestions, setSuggestions] = useState<{ candidates: Dog[]; event: GoogleCalendarEvent }[]>(
+    [],
+  )
   const [newDogSuggestions, setNewDogSuggestions] = useState<
     { dogName: string; ownerName: string; event: GoogleCalendarEvent }[]
   >([])
@@ -109,19 +114,29 @@ export default function TodayPage() {
     listUpcomingGoogleEvents(20)
       .then((events) => {
         if (cancelled) return
-        const matches: { dog: Dog; event: GoogleCalendarEvent }[] = []
+        const matches: { candidates: Dog[]; event: GoogleCalendarEvent }[] = []
         const unmatched: { dogName: string; ownerName: string; event: GoogleCalendarEvent }[] = []
         for (const event of events) {
           if (event.start.slice(0, 10) !== todayKey) continue
           if (dismissedIds.includes(event.id)) continue
           const parsed = parseRoverStyleTitle(event.title)
           if (!parsed) continue
-          const dog = dogs.find((d) => d.name.toLowerCase() === parsed.dogName.toLowerCase())
-          if (dog) {
-            if (!activeDogIds.has(dog.id)) matches.push({ dog, event })
-          } else {
+          const byName = dogs.filter((d) => d.name.toLowerCase() === parsed.dogName.toLowerCase())
+          if (byName.length === 0) {
             unmatched.push({ dogName: parsed.dogName, ownerName: parsed.ownerName, event })
+            continue
           }
+          // Two dogs can share a name — the owner on the event usually tells
+          // them apart. Only fall back to the full name-match set when the
+          // owner narrows it to nothing (e.g. the owner is spelled differently
+          // in the app), so we never silently pick the wrong dog.
+          const byOwner = byName.filter(
+            (d) => d.ownerName.trim().toLowerCase() === parsed.ownerName.trim().toLowerCase(),
+          )
+          const candidates = (byOwner.length > 0 ? byOwner : byName).filter(
+            (d) => !activeDogIds.has(d.id),
+          )
+          if (candidates.length > 0) matches.push({ candidates, event })
         }
         setSuggestions(matches)
         setNewDogSuggestions(unmatched)
@@ -344,43 +359,89 @@ export default function TodayPage() {
           {/* Suggested stays, from today's Google/Rover events */}
           {isTodaySelected && suggestions.length > 0 && (
             <div className="px-6 mb-6 flex flex-col gap-3">
-              {suggestions.map(({ dog, event }) => (
-                <div
-                  key={event.id}
-                  className="bg-[#eef1fd] border border-[#d3daf8] rounded-[16px] p-4"
-                >
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="size-10 rounded-full overflow-hidden bg-white flex items-center justify-center shrink-0">
-                      {dog.photoUrl ? (
-                        <img src={dog.photoUrl} alt={dog.name} className="size-full object-cover" />
-                      ) : (
-                        <DogIcon size={18} className="text-text-muted" />
-                      )}
+              {suggestions.map(({ candidates, event }) => {
+                const [dog] = candidates
+                const ambiguous = candidates.length > 1
+                return (
+                  <div
+                    key={event.id}
+                    className="bg-[#eef1fd] border border-[#d3daf8] rounded-[16px] p-4"
+                  >
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="size-10 rounded-full overflow-hidden bg-white flex items-center justify-center shrink-0">
+                        {!ambiguous && dog.photoUrl ? (
+                          <img src={dog.photoUrl} alt={dog.name} className="size-full object-cover" />
+                        ) : (
+                          <DogIcon size={18} className="text-text-muted" />
+                        )}
+                      </div>
+                      <p className="font-dm font-bold text-[15px] text-text-primary leading-snug">
+                        {ambiguous
+                          ? `Which ${dog.name} are you taking care of today?`
+                          : `Are you taking care of ${dog.name} starting today?`}
+                      </p>
                     </div>
-                    <p className="font-dm font-bold text-[15px] text-text-primary leading-snug">
-                      Are you taking care of {dog.name} starting today?
+                    <p className="font-dm text-[12px] text-text-secondary mb-3">
+                      {ambiguous
+                        ? `You have ${candidates.length} dogs named ${dog.name} — pick the right one to start their stay.`
+                        : `Found on your calendar — start a stay to generate ${dog.name}'s care tasks.`}
                     </p>
+                    {ambiguous ? (
+                      <>
+                        <div className="flex flex-col gap-2 mb-3">
+                          {candidates.map((c) => (
+                            <button
+                              key={c.id}
+                              type="button"
+                              onClick={() =>
+                                navigate(
+                                  `/stays/new?dog=${c.id}&start=${encodeURIComponent(event.start)}&end=${encodeURIComponent(event.end)}`,
+                                )
+                              }
+                              className="flex items-center gap-3 bg-white rounded-[12px] px-3 py-2.5 text-left active:scale-[0.98] transition-transform"
+                            >
+                              <div className="size-9 rounded-full overflow-hidden bg-[#f3f4f6] flex items-center justify-center shrink-0">
+                                {c.photoUrl ? (
+                                  <img src={c.photoUrl} alt={c.name} className="size-full object-cover" />
+                                ) : (
+                                  <DogIcon size={16} className="text-text-muted" />
+                                )}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-dm font-semibold text-[14px] text-text-primary leading-none truncate">
+                                  {c.ownerName || 'No owner on file'}
+                                </p>
+                                <p className="font-dm text-[12px] text-text-secondary mt-1 truncate">
+                                  {c.breed}
+                                </p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                        <Button size="sm" variant="ghost" onClick={() => dismissSuggestion(event.id)}>
+                          Not now
+                        </Button>
+                      </>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() =>
+                            navigate(
+                              `/stays/new?dog=${dog.id}&start=${encodeURIComponent(event.start)}&end=${encodeURIComponent(event.end)}`,
+                            )
+                          }
+                        >
+                          Start a Stay
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => dismissSuggestion(event.id)}>
+                          Not now
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                  <p className="font-dm text-[12px] text-text-secondary mb-3">
-                    Found on your calendar — start a stay to generate {dog.name}'s care tasks.
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() =>
-                        navigate(
-                          `/stays/new?dog=${dog.id}&start=${encodeURIComponent(event.start)}&end=${encodeURIComponent(event.end)}`,
-                        )
-                      }
-                    >
-                      Start a Stay
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => dismissSuggestion(event.id)}>
-                      Not now
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
 
