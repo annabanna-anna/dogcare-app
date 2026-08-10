@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react'
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import Button from '../components/Button'
@@ -252,9 +253,25 @@ export default function AuthPage() {
       <div className="mt-auto pt-8 flex flex-col items-center gap-3">
         {!isLogin && !isReset && (
           <p className="font-dm text-[12px] text-text-muted text-center leading-relaxed px-4">
-            By signing up you agree to our Terms of Service and Privacy Policy.
+            By signing up you agree to our{' '}
+            <Link
+              to="/privacy"
+              className="font-bold text-text-secondary underline underline-offset-2"
+            >
+              Privacy Policy
+            </Link>
+            .
           </p>
         )}
+        {/* A visitor (or a Google verification reviewer) who lands on the bare
+            domain hits this screen first — give them a way to find out what
+            the app is without making an account. */}
+        <Link
+          to="/about"
+          className="font-dm text-[13px] text-text-muted hover:text-text-secondary transition-colors"
+        >
+          What is GoodPup? <span aria-hidden="true">→</span>
+        </Link>
         {!isReset && (
           <p className="font-dm text-[14px] text-text-secondary">
             {isLogin ? 'New here?' : 'Already have an account?'}{' '}

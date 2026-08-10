@@ -66,6 +66,37 @@ body {
   display: none;
 }
 
+/* Public marketing/legal pages (/about, /privacy) opt out of the phone frame
+   below by rendering a [data-public-page] wrapper. Done in CSS rather than
+   with a route-aware class on #root so there's no effect to keep in sync
+   with navigation. */
+#root:has([data-public-page]) {
+  max-width: none;
+}
+
+/* Entrance for the landing hero. The base state is visible: with
+   prefers-reduced-motion the animation is dropped entirely and the content
+   is simply there, never hidden behind an animation that didn't run. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rise-in {
+  animation: rise-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise-in {
+    animation: none;
+  }
+}
+
 /* Mobile app frame */
 #root {
   max-width: 430px;
