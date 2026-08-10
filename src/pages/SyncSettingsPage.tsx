@@ -171,7 +171,10 @@ export default function SyncSettingsPage() {
   }
 
   function confirmDisconnect() {
-    disconnectGoogleCalendar()
+    // Local state is cleared synchronously inside disconnectGoogleCalendar,
+    // so the UI can flip immediately while the stored refresh token is
+    // dropped server-side in the background.
+    void disconnectGoogleCalendar()
     setCalendarConnected(false)
     setShowDisconnectConfirm(false)
   }

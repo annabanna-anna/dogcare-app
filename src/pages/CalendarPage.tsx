@@ -104,9 +104,15 @@ export default function CalendarPage() {
       })
       .catch((e) => {
         if (cancelled) return
+        // Access tokens now refresh themselves, so EXPIRED no longer means
+        // "an hour went by" — it means Google access was actually revoked
+        // and the stored connection has been dropped. Stay rendered as
+        // connected for this pass so the message below (and its Reconnect
+        // action) is visible; the local flag is already cleared, so a
+        // reload lands on the connect card.
         setGoogleError(
           e instanceof Error && e.message === 'EXPIRED'
-            ? 'Your Google Calendar connection expired.'
+            ? 'Google access was revoked — reconnect to see your events.'
             : 'Could not load Google Calendar events.',
         )
       })

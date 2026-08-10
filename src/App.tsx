@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase'
-import { captureProviderTokenIfRequested } from './lib/googleCalendar'
+import {
+  captureGoogleConnectionIfRequested,
+  syncGoogleConnectionState,
+} from './lib/googleCalendar'
 import AuthPage from './pages/AuthPage'
 import UpdatePasswordPage from './pages/UpdatePasswordPage'
 import TodayPage from './pages/TodayPage'
@@ -30,13 +33,27 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSession(data.session))
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session)
+      // Reconcile the Google connection flag with what's stored server-side,
+      // so a user who connected on another device (or cleared site data
+      // here) isn't asked to redo OAuth.
+      if (data.session) void syncGoogleConnectionState()
+    })
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, newSession) => {
       if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true)
-      captureProviderTokenIfRequested(newSession?.provider_token)
       setSession(newSession)
+      // Deferred out of the callback: Supabase serializes auth events, and
+      // awaiting a Supabase call (this one invokes an Edge Function) from
+      // inside the handler can deadlock the client.
+      setTimeout(() => {
+        void captureGoogleConnectionIfRequested(
+          newSession?.provider_token,
+          newSession?.provider_refresh_token,
+        ).catch(() => {})
+      }, 0)
     })
     return () => subscription.unsubscribe()
   }, [])

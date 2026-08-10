@@ -93,6 +93,24 @@ create table if not exists push_subscriptions (
   created_at        timestamptz not null default now()
 );
 
+-- One row per user who connected Google Calendar, holding the long-lived
+-- refresh token Google issues alongside the 1-hour access token. Access
+-- tokens are minted from this on demand by the google-oauth Edge Function,
+-- so a user connects once instead of every hour.
+--
+-- Deliberately has NO RLS policies: with RLS on and no policy, anon and
+-- authenticated are denied outright and only the service role (i.e. the
+-- Edge Function) can touch it. The refresh token is never readable by the
+-- browser, even with a valid user JWT. Clients go through the function for
+-- storing and clearing, and through has_google_credentials() to ask whether
+-- a connection exists.
+create table if not exists google_credentials (
+  owner_id      uuid primary key references auth.users(id) on delete cascade,
+  refresh_token text not null,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+
 create index if not exists dogs_owner_idx on dogs(owner_id);
 create index if not exists stays_owner_idx on stays(owner_id);
 create index if not exists stays_dog_idx on stays(dog_id);
@@ -125,6 +143,19 @@ alter table dogs enable row level security;
 alter table stays enable row level security;
 alter table tasks enable row level security;
 alter table push_subscriptions enable row level security;
+-- No policies by design — see the table comment. Service role only.
+alter table google_credentials enable row level security;
+
+-- Lets the app ask "is this user connected to Google Calendar?" without
+-- being able to read the refresh token itself. security definer so it can
+-- see past the deny-all RLS above; the where clause pins it to the caller.
+create or replace function has_google_credentials()
+returns boolean as $$
+  select exists (select 1 from google_credentials where owner_id = auth.uid());
+$$ language sql security definer stable set search_path = public;
+
+revoke all on function has_google_credentials() from public, anon;
+grant execute on function has_google_credentials() to authenticated;
 
 drop policy if exists "Owners manage their push subscriptions" on push_subscriptions;
 create policy "Owners manage their push subscriptions" on push_subscriptions
