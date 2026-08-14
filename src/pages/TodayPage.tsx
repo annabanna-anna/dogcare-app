@@ -540,7 +540,7 @@ export default function TodayPage() {
           {Object.entries(pendingByDog).map(([dogName, dogTasks]) => (
             <section key={dogName} className="px-6 mb-4">
               {isMultiDog && (
-                <p className="font-dm font-bold text-[12px] text-text-muted uppercase tracking-widest mb-3">
+                <p className="font-dm font-bold text-[12px] text-cobalt uppercase tracking-widest mb-3">
                   {dogName}
                 </p>
               )}
@@ -572,7 +572,7 @@ export default function TodayPage() {
                 Object.entries(pastByDog).map(([dogName, dogTasks]) => (
                   <div key={dogName} className="mb-4 last:mb-0">
                     {isMultiDog && (
-                      <p className="font-dm font-bold text-[12px] text-text-muted uppercase tracking-widest mb-3">
+                      <p className="font-dm font-bold text-[12px] text-cobalt uppercase tracking-widest mb-3">
                         {dogName}
                       </p>
                     )}

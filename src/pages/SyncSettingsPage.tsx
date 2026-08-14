@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useNavigate } from 'react-router-dom'
 import {
   CalendarDays,
   Bell,
@@ -9,6 +10,7 @@ import {
   Shield,
   LogOut,
   AlertCircle,
+  Info,
 } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import BottomNav from '../components/BottomNav'
@@ -101,10 +103,12 @@ function SettingRow({
 }
 
 export default function SyncSettingsPage() {
+  const navigate = useNavigate()
   const [calendarConnected, setCalendarConnected] = useState(false)
   const [connecting, setConnecting] = useState(false)
   const [connectError, setConnectError] = useState<string | null>(null)
   const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false)
+  const [showCalendarInfo, setShowCalendarInfo] = useState(false)
   const [pushEnabled, setPushEnabledState] = useState(true)
   const [pushError, setPushError] = useState<string | null>(null)
   const [reminders, setReminders] = useState(false)
@@ -212,6 +216,19 @@ export default function SyncSettingsPage() {
               }
             />
             <div className="pb-4 flex flex-col gap-3">
+              <div className="flex items-start gap-2">
+                <p className="flex-1 font-dm text-[12px] text-text-secondary leading-snug">
+                  Works if Rover is already syncing to your Google Calendar. No Rover ↔ Google
+                  connection means no data here either.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowCalendarInfo(true)}
+                  className="font-dm font-bold text-[12px] text-cobalt shrink-0"
+                >
+                  Learn more
+                </button>
+              </div>
               <PurposeRow done={calendarConnected} label="Shows your Rover bookings" />
               <div className="flex items-center gap-3">
                 <div className="flex-1 min-w-0 flex items-center gap-2.5">
@@ -301,6 +318,13 @@ export default function SyncSettingsPage() {
             About
           </p>
           <div className="bg-white border border-border-light rounded-[16px] px-4 divide-y divide-border-faint">
+            <button className="w-full text-left" onClick={() => navigate('/about')}>
+              <SettingRow
+                icon={<Info size={18} />}
+                label="About"
+                right={<ChevronRight size={18} className="text-[#d1d1d1]" />}
+              />
+            </button>
             <SettingRow
               icon={<Shield size={18} />}
               label="Privacy Policy"
@@ -319,18 +343,30 @@ export default function SyncSettingsPage() {
             </button>
           </div>
         </section>
-
-        {!calendarConnected && (
-          <Button
-            fullWidth
-            variant="secondary"
-            disabled={connecting}
-            onClick={() => void handleCalendarToggle(true)}
-          >
-            {connecting ? 'Connecting…' : 'Connect Google Calendar'}
-          </Button>
-        )}
       </div>
+
+      {showCalendarInfo && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center px-6">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowCalendarInfo(false)} />
+          <div className="relative w-full max-w-[380px] bg-cream rounded-[22px] p-6">
+            <p className="font-outfit font-bold text-[20px] text-text-primary leading-tight mb-2">
+              How Google Calendar sync works
+            </p>
+            <p className="font-dm text-[14px] text-text-secondary leading-relaxed mb-3">
+              This app doesn't connect to Rover directly. If your Rover account is already set
+              up to sync bookings to your Google Calendar, connecting Google here lets this app
+              read that same calendar and pull those bookings in.
+            </p>
+            <p className="font-dm text-[14px] text-text-secondary leading-relaxed mb-5">
+              If Rover isn't syncing to Google Calendar, or you skip connecting Google, this
+              feature won't have anything to show — you'll still be able to add stays manually.
+            </p>
+            <Button fullWidth variant="ghost" onClick={() => setShowCalendarInfo(false)}>
+              Got it
+            </Button>
+          </div>
+        </div>
+      )}
 
       {showDisconnectConfirm && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center px-6">

@@ -197,35 +197,39 @@ export default function DogListPage() {
 
           {/* Alphabet index rail */}
           {!query && !nothingFound && (
-            <div className="fixed top-1/2 -translate-y-1/2 left-1/2 translate-x-[192px] z-40 flex flex-col items-center">
-              {ALPHABET.map((letter) => {
-                const enabled = availableLetters.has(letter)
-                return (
-                  <button
-                    key={letter}
-                    onClick={() => enabled && jumpTo(letter)}
-                    disabled={!enabled}
-                    className={`font-dm font-bold text-[10px] leading-[15px] w-4 text-center ${
-                      enabled ? 'text-cobalt' : 'text-text-muted/40'
-                    }`}
-                  >
-                    {letter}
-                  </button>
-                )
-              })}
+            <div className="fixed top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-40 flex justify-end pr-2 pointer-events-none">
+              <div className="flex flex-col items-center pointer-events-auto">
+                {ALPHABET.map((letter) => {
+                  const enabled = availableLetters.has(letter)
+                  return (
+                    <button
+                      key={letter}
+                      onClick={() => enabled && jumpTo(letter)}
+                      disabled={!enabled}
+                      className={`font-dm font-bold text-[10px] leading-[15px] w-4 text-center ${
+                        enabled ? 'text-cobalt' : 'text-text-muted/40'
+                      }`}
+                    >
+                      {letter}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           )}
         </>
       )}
 
       {/* Floating add button */}
-      <button
-        onClick={() => navigate('/dogs/new')}
-        className="fixed bottom-24 left-1/2 translate-x-[135px] z-40 size-14 rounded-full bg-coral flex items-center justify-center text-white active:bg-coral-deep active:scale-95 transition-all duration-100"
-        aria-label="Add dog"
-      >
-        <Plus size={26} />
-      </button>
+      <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-40 flex justify-end pr-6 pointer-events-none">
+        <button
+          onClick={() => navigate('/dogs/new')}
+          className="pointer-events-auto size-14 rounded-full bg-coral flex items-center justify-center text-white active:bg-coral-deep active:scale-95 transition-all duration-100"
+          aria-label="Add dog"
+        >
+          <Plus size={26} />
+        </button>
+      </div>
 
       <BottomNav />
     </div>
