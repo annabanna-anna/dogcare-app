@@ -181,7 +181,9 @@ export default function SyncSettingsPage() {
 
   return (
     <div className="min-h-svh bg-cream pb-28">
-      <PageHeader title="Settings" />
+      <div className="sticky top-0 z-30 bg-cream">
+        <PageHeader title="Settings" />
+      </div>
 
       <div className="px-6 mt-4 flex flex-col gap-4">
         {/* Sync section */}

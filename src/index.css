@@ -18,6 +18,20 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* iOS Safari auto-zooms the page when a focused text field or select computes
+   to under 16px, and it does NOT zoom back out on blur — the page stays scaled,
+   which is what makes the side padding "disappear" and the layout look off.
+   Floor the controls at 16px on touch devices so the zoom never triggers.
+   Only focusable text entry counts: buttons (incl. the time picker trigger)
+   and checkboxes keep their designed sizes. */
+@media (pointer: coarse) {
+  textarea,
+  select,
+  input:not([type='checkbox']):not([type='radio']):not([type='range']) {
+    font-size: 16px !important;
+  }
+}
+
 /* Paw prints bursting out of the Done button when a task is completed */
 @keyframes paw-burst {
   0% {

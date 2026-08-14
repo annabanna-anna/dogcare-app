@@ -136,7 +136,9 @@ export default function CalendarPage() {
 
   return (
     <div className="min-h-svh bg-cream pb-28">
-      <PageHeader title="Calendar" />
+      <div className="sticky top-0 z-30 bg-cream">
+        <PageHeader title="Upcoming" />
+      </div>
 
       <div className="px-6 mt-4 flex flex-col gap-4">
         {!googleConnected && (

@@ -52,6 +52,7 @@ export default function TodayPage() {
   })
   const [selectedDate, setSelectedDate] = useState(() => new Date())
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week')
+  const [showPastTasks, setShowPastTasks] = useState(false)
 
   // The date range whose tasks are loaded: the selected week, or the whole
   // month when the month grid is open.
@@ -169,15 +170,26 @@ export default function TodayPage() {
     [tasks, selectedKey],
   )
 
-  // Group tasks by dogName
-  const tasksByDog = useMemo(() => {
+  function groupByDog(list: Task[]) {
     const map: Record<string, Task[]> = {}
-    for (const t of dayTasks) {
+    for (const t of list) {
       if (!map[t.dogName]) map[t.dogName] = []
       map[t.dogName].push(t)
     }
     return map
-  }, [dayTasks])
+  }
+
+  // Upcoming tasks stay in the main list; done ones move into a collapsible
+  // "Past tasks" section so they don't push what's next further down the page.
+  const pendingTasks = useMemo(() => dayTasks.filter((t) => t.status !== 'done'), [dayTasks])
+  const pastTasks = useMemo(() => dayTasks.filter((t) => t.status === 'done'), [dayTasks])
+  const pendingByDog = useMemo(() => groupByDog(pendingTasks), [pendingTasks])
+  const pastByDog = useMemo(() => groupByDog(pastTasks), [pastTasks])
+  const isMultiDog = useMemo(() => new Set(dayTasks.map((t) => t.dogName)).size > 1, [dayTasks])
+
+  useEffect(() => {
+    setShowPastTasks(false)
+  }, [selectedKey])
 
   const isTodaySelected = isSameDay(selectedDate, new Date())
   const isPastSelected = !isTodaySelected && selectedDate < new Date()
@@ -196,7 +208,7 @@ export default function TodayPage() {
   return (
     <div className="min-h-svh bg-cream pb-28">
       {/* Header */}
-      <div className="px-6 pt-8 pb-4 flex items-end justify-between">
+      <div className="sticky top-0 z-30 bg-cream px-6 pt-8 pb-4 flex items-end justify-between">
         <div>
           <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-1">
             {formatTodayHeading(selectedDate)}
@@ -525,9 +537,9 @@ export default function TodayPage() {
           )}
 
           {/* Tasks grouped by dog */}
-          {Object.entries(tasksByDog).map(([dogName, dogTasks]) => (
+          {Object.entries(pendingByDog).map(([dogName, dogTasks]) => (
             <section key={dogName} className="px-6 mb-4">
-              {Object.keys(tasksByDog).length > 1 && (
+              {isMultiDog && (
                 <p className="font-dm font-bold text-[12px] text-text-muted uppercase tracking-widest mb-3">
                   {dogName}
                 </p>
@@ -539,13 +551,48 @@ export default function TodayPage() {
                       task={task}
                       onDone={(id) => updateStatus(id, 'done')}
                       onUndo={(id) => updateStatus(id, 'pending')}
-                      showDogName={Object.keys(tasksByDog).length > 1}
+                      showDogName={isMultiDog}
                     />
                   </div>
                 ))}
               </div>
             </section>
           ))}
+
+          {pastTasks.length > 0 && (
+            <section className="px-6 mb-4">
+              <button
+                type="button"
+                onClick={() => setShowPastTasks((v) => !v)}
+                className="font-dm font-bold text-[12px] text-text-muted uppercase tracking-widest mb-3"
+              >
+                {showPastTasks ? 'Hide' : 'Show'} past tasks ({pastTasks.length})
+              </button>
+              {showPastTasks &&
+                Object.entries(pastByDog).map(([dogName, dogTasks]) => (
+                  <div key={dogName} className="mb-4 last:mb-0">
+                    {isMultiDog && (
+                      <p className="font-dm font-bold text-[12px] text-text-muted uppercase tracking-widest mb-3">
+                        {dogName}
+                      </p>
+                    )}
+                    {dogTasks.map((task, i) => (
+                      <div
+                        key={task.id}
+                        className={i === dogTasks.length - 1 ? '[&_.connector]:opacity-0' : ''}
+                      >
+                        <TaskCard
+                          task={task}
+                          onDone={(id) => updateStatus(id, 'done')}
+                          onUndo={(id) => updateStatus(id, 'pending')}
+                          showDogName={isMultiDog}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ))}
+            </section>
+          )}
 
           {dayTasks.length === 0 && (
             <div className="px-6 py-16 flex flex-col items-center gap-3 text-center">
