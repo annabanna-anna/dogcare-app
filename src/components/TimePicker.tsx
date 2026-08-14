@@ -50,6 +50,20 @@ function Wheel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Keep the wheel physically pointed at `value` when it's changed from the
+  // outside (e.g. the hour wheel crossing 11↔12 flips am/pm). Without this the
+  // bold "selected" row drifts out of the highlight band and it stops being
+  // clear which option is actually picked.
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    if (rendered[clampedIndex(el)] === value) return // already there / user-driven
+    const baseIdx = Math.max(0, options.indexOf(value))
+    const idx = loop ? MIDDLE_CYCLE * cycleLen + baseIdx : baseIdx
+    el.scrollTo({ top: idx * ROW, behavior: 'smooth' })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value])
+
   function clampedIndex(el: HTMLDivElement) {
     return Math.min(rendered.length - 1, Math.max(0, Math.round(el.scrollTop / ROW)))
   }

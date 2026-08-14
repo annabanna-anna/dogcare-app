@@ -36,7 +36,6 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true }: P
   const isDone = task.status === 'done'
   const isSkipped = task.status === 'skipped'
   const isOverdue = task.status === 'overdue'
-  const isMedication = task.type === 'medication'
   const isCompleted = isDone || isSkipped
 
   return (
@@ -54,11 +53,7 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true }: P
 
       {/* Timeline column */}
       <div className={`flex flex-col items-center w-8 shrink-0 ${isCompleted ? 'opacity-50' : ''}`}>
-        <div
-          className={`size-8 rounded-full flex items-center justify-center shrink-0 ${bg} ${
-            isMedication ? 'ring-2 ring-[#2344dd] ring-offset-2 ring-offset-cream' : ''
-          }`}
-        >
+        <div className={`size-8 rounded-full flex items-center justify-center shrink-0 ${bg}`}>
           <Icon size={17} className="text-white" />
         </div>
         {/* connector line – always present, fades at end of list via CSS in parent */}
@@ -81,11 +76,6 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true }: P
           {isOverdue && (
             <span className="ml-2 text-[11px] font-bold uppercase tracking-wide text-coral">
               Overdue
-            </span>
-          )}
-          {isMedication && !isCompleted && (
-            <span className="ml-2 text-[11px] font-bold uppercase tracking-wide text-blue-task">
-              Med
             </span>
           )}
         </p>
