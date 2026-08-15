@@ -26,40 +26,55 @@ function todayAt(hours: number, minutes: number): string {
   return d.toISOString()
 }
 
+// George's photo for the hero mockup — a real stock photo of a West
+// Highland Terrier, not a colored placeholder (Unsplash photo el4HY7Nx7yc).
+const GEORGE_PHOTO_URL =
+  'https://images.unsplash.com/photo-1725394953800-cd68713d5df6?auto=format&fit=crop&w=200&h=200&q=80'
+
 function demoTasks(): Task[] {
   return [
     {
       id: 'demo-1',
       stayId: 'demo',
-      dogId: 'demo-barkley',
-      dogName: 'Barkley',
-      type: 'meal',
-      title: 'Breakfast',
+      dogId: 'demo-george',
+      dogName: 'George',
+      type: 'walk',
+      title: 'Morning walk',
       scheduledTime: todayAt(8, 0),
-      // Kept short on purpose: TaskCard is built for the app's 430px frame,
-      // and long notes wrap to a ribbon inside the narrower demo mock.
-      note: 'Half scoop, soaked.',
       status: 'done',
     },
     {
       id: 'demo-2',
       stayId: 'demo',
-      dogId: 'demo-mochi',
-      dogName: 'Mochi',
-      type: 'medication',
-      title: 'Ear drops',
+      dogId: 'demo-george',
+      dogName: 'George',
+      type: 'meal',
+      title: 'Breakfast',
       scheduledTime: todayAt(8, 30),
-      note: 'Left ear only.',
+      // Kept short on purpose: TaskCard is built for the app's 430px frame,
+      // and long notes wrap to a ribbon inside the narrower demo mock.
+      note: 'Half scoop, soaked.',
       status: 'pending',
     },
     {
       id: 'demo-3',
       stayId: 'demo',
-      dogId: 'demo-barkley',
-      dogName: 'Barkley',
-      type: 'walk',
-      title: 'Morning walk',
-      scheduledTime: todayAt(9, 15),
+      dogId: 'demo-george',
+      dogName: 'George',
+      type: 'potty',
+      title: 'Potty break',
+      scheduledTime: todayAt(12, 0),
+      status: 'pending',
+    },
+    {
+      id: 'demo-4',
+      stayId: 'demo',
+      dogId: 'demo-george',
+      dogName: 'George',
+      type: 'medication',
+      title: 'Ear drops',
+      scheduledTime: todayAt(14, 0),
+      note: 'Left ear only.',
       status: 'pending',
     },
   ]
@@ -293,20 +308,12 @@ export default function AboutPage() {
   return (
     <PublicPageShell>
       {/* ── Hero ───────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden mx-auto max-w-[1100px] px-6 pt-14 pb-20 sm:pt-24 sm:pb-28 grid gap-14 lg:grid-cols-[1.05fr_1fr] lg:gap-16 lg:items-center">
-        <PawPrint
-          aria-hidden="true"
-          size={220}
-          strokeWidth={1.5}
-          className="hidden lg:block absolute -left-16 -top-10 text-coral-soft -rotate-[18deg] pointer-events-none"
-        />
-        <div className="relative">
-          {/* Three short, specific lines — the demo dogs below, not an
-              abstract "3 dogs, 9 meals" tally — read as voice, not a stat. */}
+      <section className="mx-auto max-w-[1100px] px-6 pt-14 pb-20 sm:pt-24 sm:pb-28 grid gap-14 lg:grid-cols-[1.05fr_1fr] lg:gap-16 lg:items-center">
+        <div>
           <h1 className="rise-in font-outfit font-bold text-text-primary leading-[0.95] tracking-[-0.03em] text-[clamp(2rem,5vw,3.25rem)]">
-            <span className="block">Barkley&rsquo;s breakfast.</span>
-            <span className="block">Mochi&rsquo;s meds.</span>
-            <span className="block text-coral">Nobody&rsquo;s stress.</span>
+            <span className="block">Three dogs.</span>
+            <span className="block">Nine meals.</span>
+            <span className="block text-coral">Two meds. One list.</span>
           </h1>
           <p
             className="rise-in font-dm text-[17px] sm:text-[19px] text-text-secondary leading-relaxed mt-6 max-w-[52ch]"
@@ -334,24 +341,64 @@ export default function AboutPage() {
         </div>
 
         {/* Live product surface — the app's real TaskCard, not a screenshot,
-            so it stays accurate and stays interactive — inside a phone
-            mockup so it reads as "the app," not a floating card. */}
-        <div className="rise-in justify-self-center w-full max-w-[360px]" style={{ animationDelay: '260ms' }}>
-          <PhoneFrame>
-            <div className="px-4 pt-4 pb-4">
-              <p className="font-outfit font-bold text-[28px] leading-none text-cobalt tracking-tight">
-                Today
-              </p>
-              <p className="font-dm text-[13px] text-text-secondary mt-1.5">
-                {remaining === 0 ? 'All caught up — good work.' : `${remaining} left across 2 dogs`}
-              </p>
+            so it stays accurate and stays interactive — set into a coral
+            backdrop and cropped at the bottom edge so it reads as a phone
+            caught mid-shot, not a floating card. */}
+        <div className="rise-in justify-self-center w-full max-w-[400px]" style={{ animationDelay: '260ms' }}>
+          <div className="relative overflow-hidden rounded-[40px] bg-coral h-[420px] sm:h-[480px]">
+            {/* Decorative blobs + a fully-contained paw print — sized and
+                inset so nothing bleeds past the panel's clipped edge. */}
+            <div
+              aria-hidden="true"
+              className="absolute -top-14 -left-12 size-52 rounded-full bg-coral-soft/70"
+            />
+            <div
+              aria-hidden="true"
+              className="absolute top-4 -right-14 size-44 rounded-full bg-white/15"
+            />
+            <div
+              aria-hidden="true"
+              className="absolute bottom-6 left-6 size-28 rounded-full bg-coral-soft/40"
+            />
+            <PawPrint
+              aria-hidden="true"
+              size={56}
+              strokeWidth={1.5}
+              className="absolute top-7 right-8 text-white/30 rotate-[14deg] pointer-events-none"
+            />
+
+            <div className="absolute left-1/2 -translate-x-1/2 top-8 w-[80%] max-w-[300px]">
+              <PhoneFrame>
+                <div className="px-4 pt-4 pb-3 flex items-center gap-3">
+                  <img
+                    src={GEORGE_PHOTO_URL}
+                    alt="George, a West Highland Terrier"
+                    className="size-11 rounded-full object-cover shrink-0"
+                  />
+                  <div className="min-w-0">
+                    <p className="font-outfit font-bold text-[22px] leading-none text-cobalt tracking-tight">
+                      Today
+                    </p>
+                    <p className="font-dm text-[12px] text-text-secondary mt-1 truncate">
+                      George ·{' '}
+                      {remaining === 0 ? 'all caught up' : `${remaining} task${remaining === 1 ? '' : 's'} left`}
+                    </p>
+                  </div>
+                </div>
+                <div className="px-4 pb-2">
+                  {tasks.map((task) => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      onDone={markDone}
+                      onUndo={markUndone}
+                      showDogName={false}
+                    />
+                  ))}
+                </div>
+              </PhoneFrame>
             </div>
-            <div className="px-4 pb-2">
-              {tasks.map((task) => (
-                <TaskCard key={task.id} task={task} onDone={markDone} onUndo={markUndone} />
-              ))}
-            </div>
-          </PhoneFrame>
+          </div>
           <p className="font-dm text-[13px] text-text-muted text-center mt-4">
             Go ahead — tap a <span className="font-bold text-text-secondary">Done</span> button.
           </p>

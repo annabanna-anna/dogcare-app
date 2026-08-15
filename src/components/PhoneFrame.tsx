@@ -14,7 +14,7 @@ interface Props {
 export default function PhoneFrame({ children, className = '' }: Props) {
   return (
     <div
-      className={`rounded-[38px] bg-text-primary p-[10px] shadow-[0_24px_60px_-24px_rgba(20,20,20,0.35)] ${className}`}
+      className={`rounded-[38px] bg-text-primary p-[10px] ${className}`}
     >
       <div className="rounded-[28px] bg-cream overflow-hidden flex flex-col">
         <div className="relative flex items-center justify-between px-6 pt-2.5 pb-1 shrink-0">
