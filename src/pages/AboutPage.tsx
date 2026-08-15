@@ -10,6 +10,8 @@ import {
   Circle,
   CheckCircle2,
   PawPrint,
+  Home,
+  Settings,
 } from 'lucide-react'
 import PublicPageShell from '../components/PublicPageShell'
 import PhoneFrame from '../components/PhoneFrame'
@@ -17,6 +19,9 @@ import TaskCard from '../components/TaskCard'
 import DogIcon from '../components/icons/DogIcon'
 import DogBowlIcon from '../components/icons/DogBowlIcon'
 import type { Task } from '../types'
+import { formatTodayHeading, startOfWeek, addDays, toLocalDateKey } from '../utils/dateUtils'
+
+const WEEKDAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
 /** Builds an ISO datetime at a fixed clock time today, so the demo schedule
  *  always reads as a plausible working day rather than a frozen date. */
@@ -78,6 +83,145 @@ function demoTasks(): Task[] {
       status: 'pending',
     },
   ]
+}
+
+// ── Hero mockup: a faithful small replica of the real Today page ───────────
+// Header, week strip, Active Care chip, and TaskCard itself — the actual
+// component, not a redrawn stand-in — so the hero reads as the real app.
+function HeroTodayScreen({
+  tasks,
+  onDone,
+  onUndo,
+  showPast,
+  onTogglePast,
+}: {
+  tasks: Task[]
+  onDone: (id: string) => void
+  onUndo: (id: string) => void
+  showPast: boolean
+  onTogglePast: () => void
+}) {
+  const today = new Date()
+  const weekStart = startOfWeek(today)
+  const todayKey = toLocalDateKey(today)
+  const untilDate = new Date(Date.now() + 6 * 86400000).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  })
+  const pending = tasks.filter((t) => t.status !== 'done')
+  const past = tasks.filter((t) => t.status === 'done')
+
+  return (
+    <div className="pb-2">
+      {/* Header */}
+      <div className="px-4 pt-4 pb-3 flex items-end justify-between">
+        <div>
+          <p className="font-dm font-bold text-[10px] text-coral uppercase tracking-widest mb-0.5">
+            {formatTodayHeading(today)}
+          </p>
+          <h1 className="font-outfit font-bold text-[32px] leading-none text-cobalt tracking-tight">
+            Today
+          </h1>
+        </div>
+        <span className="size-8 rounded-full bg-card flex items-center justify-center shrink-0">
+          <CalendarDays size={15} className="text-cobalt" />
+        </span>
+      </div>
+
+      {/* Week strip */}
+      <div className="px-4 mb-4">
+        <div className="flex justify-between">
+          {Array.from({ length: 7 }, (_, i) => {
+            const day = addDays(weekStart, i)
+            const key = toLocalDateKey(day)
+            const isToday = key === todayKey
+            return (
+              <div key={key} className="flex flex-col items-center gap-1">
+                <span className="font-dm font-bold text-[8px] uppercase tracking-widest text-text-muted">
+                  {WEEKDAY_LETTERS[i]}
+                </span>
+                <span
+                  className={`size-7 rounded-full flex items-center justify-center font-dm font-bold text-[11px] ${
+                    isToday ? 'bg-coral text-white' : 'text-text-primary'
+                  }`}
+                >
+                  {day.getDate()}
+                </span>
+                <span className={`size-1 rounded-full ${isToday ? 'bg-coral' : 'bg-transparent'}`} />
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Active Care */}
+      <div className="px-4 mb-4">
+        <p className="font-dm font-bold text-[10px] text-text-secondary uppercase tracking-widest mb-2">
+          Active Care
+        </p>
+        <span className="inline-flex items-center gap-2.5 rounded-full pl-1.5 pr-4 py-1.5 bg-cream border border-border-light">
+          <img
+            src={GEORGE_PHOTO_URL}
+            alt="George, a West Highland Terrier"
+            className="size-8 rounded-full object-cover shrink-0"
+          />
+          <span>
+            <span className="block font-dm font-semibold text-[13px] text-text-primary leading-none">
+              George
+            </span>
+            <span className="block font-dm text-[11px] text-text-secondary mt-0.5">
+              Until {untilDate}
+            </span>
+          </span>
+        </span>
+      </div>
+
+      {/* Tasks — the real TaskCard, single dog so no name eyebrow, exactly
+          matching how the live app hides it once only one dog is active. */}
+      <div className="px-4">
+        {pending.map((task) => (
+          <TaskCard key={task.id} task={task} onDone={onDone} onUndo={onUndo} showDogName={false} />
+        ))}
+        {past.length > 0 && (
+          <button
+            type="button"
+            onClick={onTogglePast}
+            className="font-dm font-bold text-[10px] text-text-muted uppercase tracking-widest mb-2"
+          >
+            {showPast ? 'Hide' : 'Show'} past tasks ({past.length})
+          </button>
+        )}
+        {showPast && past.map((task) => (
+          <TaskCard key={task.id} task={task} onDone={onDone} onUndo={onUndo} showDogName={false} />
+        ))}
+      </div>
+
+      {/* Bottom nav — a static echo of BottomNav, not the real (fixed,
+          routed) component, which would break out of the phone frame. */}
+      <div className="px-4 pt-1">
+        <div className="bg-card rounded-full px-1.5 py-1.5 grid grid-cols-4">
+          {[
+            { label: 'Today', Icon: Home, active: true },
+            { label: 'Dogs', Icon: PawPrint, active: false },
+            { label: 'Upcoming', Icon: CalendarDays, active: false },
+            { label: 'Settings', Icon: Settings, active: false },
+          ].map(({ label, Icon, active }) => (
+            <span
+              key={label}
+              className={`flex flex-col items-center gap-0.5 py-2 rounded-full ${
+                active ? 'bg-cobalt text-white' : 'text-nav-inactive'
+              }`}
+            >
+              <Icon size={14} strokeWidth={active ? 2.5 : 2} />
+              <span className={`font-dm text-[8px] leading-none ${active ? 'font-bold' : 'font-medium'}`}>
+                {label}
+              </span>
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 // ── Tiny, static preview row used inside the "how it works" mockups ────────
@@ -274,6 +418,7 @@ const STEP_INTERVAL_MS = 4200
 export default function AboutPage() {
   const [tasks, setTasks] = useState<Task[]>(demoTasks)
   const [activeStep, setActiveStep] = useState(0)
+  const [showPastHero, setShowPastHero] = useState(false)
 
   useEffect(() => {
     document.title = 'GoodPup — care tracking for dog sitters and boarders'
@@ -303,17 +448,17 @@ export default function AboutPage() {
     )
   }
 
-  const remaining = tasks.filter((t) => t.status !== 'done').length
-
   return (
     <PublicPageShell>
       {/* ── Hero ───────────────────────────────────────────────────────── */}
       <section className="mx-auto max-w-[1100px] px-6 pt-14 pb-20 sm:pt-24 sm:pb-28 grid gap-14 lg:grid-cols-[1.05fr_1fr] lg:gap-16 lg:items-center">
         <div>
+          {/* Grounded in the mockup beside it: one dog (George), his four
+              tasks today — not an abstract multi-dog tally. */}
           <h1 className="rise-in font-outfit font-bold text-text-primary leading-[0.95] tracking-[-0.03em] text-[clamp(2rem,5vw,3.25rem)]">
-            <span className="block">Three dogs.</span>
-            <span className="block">Nine meals.</span>
-            <span className="block text-coral">Two meds. One list.</span>
+            <span className="block">One dog.</span>
+            <span className="block">Four tasks.</span>
+            <span className="block text-coral">One list.</span>
           </h1>
           <p
             className="rise-in font-dm text-[17px] sm:text-[19px] text-text-secondary leading-relaxed mt-6 max-w-[52ch]"
@@ -340,62 +485,38 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* Live product surface — the app's real TaskCard, not a screenshot,
-            so it stays accurate and stays interactive — set into a coral
+        {/* Live product surface — the real Today page (header, week strip,
+            Active Care chip, the actual TaskCard), set on a solid Cobalt
             backdrop and cropped at the bottom edge so it reads as a phone
             caught mid-shot, not a floating card. */}
-        <div className="rise-in justify-self-center w-full max-w-[400px]" style={{ animationDelay: '260ms' }}>
-          <div className="relative overflow-hidden rounded-[40px] bg-coral h-[420px] sm:h-[480px]">
-            {/* Decorative blobs + a fully-contained paw print — sized and
+        <div className="rise-in justify-self-center w-full max-w-[440px]" style={{ animationDelay: '260ms' }}>
+          <div className="relative overflow-hidden rounded-[40px] bg-cobalt h-[520px] sm:h-[560px]">
+            {/* Decorative circles + a fully-contained paw print — sized and
                 inset so nothing bleeds past the panel's clipped edge. */}
             <div
               aria-hidden="true"
-              className="absolute -top-14 -left-12 size-52 rounded-full bg-coral-soft/70"
+              className="absolute -top-16 -left-14 size-56 rounded-full bg-white/10"
             />
             <div
               aria-hidden="true"
-              className="absolute top-4 -right-14 size-44 rounded-full bg-white/15"
-            />
-            <div
-              aria-hidden="true"
-              className="absolute bottom-6 left-6 size-28 rounded-full bg-coral-soft/40"
+              className="absolute top-6 -right-16 size-48 rounded-full bg-white/10"
             />
             <PawPrint
               aria-hidden="true"
               size={56}
               strokeWidth={1.5}
-              className="absolute top-7 right-8 text-white/30 rotate-[14deg] pointer-events-none"
+              className="absolute top-7 right-8 text-white/20 rotate-[14deg] pointer-events-none"
             />
 
-            <div className="absolute left-1/2 -translate-x-1/2 top-8 w-[80%] max-w-[300px]">
+            <div className="absolute left-1/2 -translate-x-1/2 top-5 w-[92%] max-w-[380px]">
               <PhoneFrame>
-                <div className="px-4 pt-4 pb-3 flex items-center gap-3">
-                  <img
-                    src={GEORGE_PHOTO_URL}
-                    alt="George, a West Highland Terrier"
-                    className="size-11 rounded-full object-cover shrink-0"
-                  />
-                  <div className="min-w-0">
-                    <p className="font-outfit font-bold text-[22px] leading-none text-cobalt tracking-tight">
-                      Today
-                    </p>
-                    <p className="font-dm text-[12px] text-text-secondary mt-1 truncate">
-                      George ·{' '}
-                      {remaining === 0 ? 'all caught up' : `${remaining} task${remaining === 1 ? '' : 's'} left`}
-                    </p>
-                  </div>
-                </div>
-                <div className="px-4 pb-2">
-                  {tasks.map((task) => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      onDone={markDone}
-                      onUndo={markUndone}
-                      showDogName={false}
-                    />
-                  ))}
-                </div>
+                <HeroTodayScreen
+                  tasks={tasks}
+                  onDone={markDone}
+                  onUndo={markUndone}
+                  showPast={showPastHero}
+                  onTogglePast={() => setShowPastHero((v) => !v)}
+                />
               </PhoneFrame>
             </div>
           </div>
