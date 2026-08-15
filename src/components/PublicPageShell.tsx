@@ -20,20 +20,20 @@ export default function PublicPageShell({ children }: Props) {
         <div className="mx-auto max-w-[1100px] px-6 h-16 flex items-center justify-between gap-4">
           <Link
             to="/about"
-            className="font-outfit font-bold text-[22px] tracking-tight text-text-primary rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-coral"
+            className="font-outfit font-bold text-[22px] tracking-tight text-cobalt rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-coral"
           >
             GoodPup
           </Link>
           <nav className="flex items-center gap-5" aria-label="Site">
             <Link
               to="/privacy"
-              className="font-dm font-bold text-[14px] text-text-secondary hover:text-text-primary transition-colors rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-coral"
+              className="font-dm font-bold text-[14px] text-text-secondary hover:text-cobalt transition-colors rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-coral"
             >
               Privacy
             </Link>
             <Link
               to="/"
-              className="font-dm font-bold text-[14px] px-4 py-2 rounded-full bg-text-primary text-white hover:bg-black transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coral"
+              className="font-dm font-bold text-[14px] px-4 py-2 rounded-full bg-cobalt text-white hover:bg-[#1c37b8] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coral"
             >
               Open app
             </Link>

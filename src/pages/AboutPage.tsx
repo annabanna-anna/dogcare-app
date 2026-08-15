@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowRight,
+  ArrowLeft,
   CalendarDays,
+  ChevronDown,
   Download,
   Upload,
   ShieldCheck,
@@ -10,8 +12,6 @@ import {
   Circle,
   CheckCircle2,
   PawPrint,
-  Home,
-  Settings,
 } from 'lucide-react'
 import PublicPageShell from '../components/PublicPageShell'
 import PhoneFrame from '../components/PhoneFrame'
@@ -88,18 +88,18 @@ function demoTasks(): Task[] {
 // ── Hero mockup: a faithful small replica of the real Today page ───────────
 // Header, week strip, Active Care chip, and TaskCard itself — the actual
 // component, not a redrawn stand-in — so the hero reads as the real app.
+// Simplified from the full page on purpose: no calendar-view toggle and no
+// bottom nav (that's fixed-position and routed in the real app — pinning it
+// here would break out of the phone frame), so tapped Done just dims the
+// row in place rather than filing it under Past Tasks.
 function HeroTodayScreen({
   tasks,
   onDone,
   onUndo,
-  showPast,
-  onTogglePast,
 }: {
   tasks: Task[]
   onDone: (id: string) => void
   onUndo: (id: string) => void
-  showPast: boolean
-  onTogglePast: () => void
 }) {
   const today = new Date()
   const weekStart = startOfWeek(today)
@@ -108,24 +108,17 @@ function HeroTodayScreen({
     month: 'short',
     day: 'numeric',
   })
-  const pending = tasks.filter((t) => t.status !== 'done')
-  const past = tasks.filter((t) => t.status === 'done')
 
   return (
-    <div className="pb-2">
+    <div className="pb-3">
       {/* Header */}
-      <div className="px-4 pt-4 pb-3 flex items-end justify-between">
-        <div>
-          <p className="font-dm font-bold text-[10px] text-coral uppercase tracking-widest mb-0.5">
-            {formatTodayHeading(today)}
-          </p>
-          <h1 className="font-outfit font-bold text-[32px] leading-none text-cobalt tracking-tight">
-            Today
-          </h1>
-        </div>
-        <span className="size-8 rounded-full bg-card flex items-center justify-center shrink-0">
-          <CalendarDays size={15} className="text-cobalt" />
-        </span>
+      <div className="px-4 pt-4 pb-3">
+        <p className="font-dm font-bold text-[10px] text-coral uppercase tracking-widest mb-0.5">
+          {formatTodayHeading(today)}
+        </p>
+        <h1 className="font-outfit font-bold text-[32px] leading-none text-cobalt tracking-tight">
+          Today
+        </h1>
       </div>
 
       {/* Week strip */}
@@ -176,49 +169,14 @@ function HeroTodayScreen({
         </span>
       </div>
 
-      {/* Tasks — the real TaskCard, single dog so no name eyebrow, exactly
-          matching how the live app hides it once only one dog is active. */}
+      {/* Tasks — the real TaskCard, single dog so no name eyebrow (matching
+          how the live app hides it once only one dog is active), and Done
+          just dims the row in place rather than filing it under Past Tasks
+          — easier to see working in a hero than the real hide-on-done. */}
       <div className="px-4">
-        {pending.map((task) => (
+        {tasks.map((task) => (
           <TaskCard key={task.id} task={task} onDone={onDone} onUndo={onUndo} showDogName={false} />
         ))}
-        {past.length > 0 && (
-          <button
-            type="button"
-            onClick={onTogglePast}
-            className="font-dm font-bold text-[10px] text-text-muted uppercase tracking-widest mb-2"
-          >
-            {showPast ? 'Hide' : 'Show'} past tasks ({past.length})
-          </button>
-        )}
-        {showPast && past.map((task) => (
-          <TaskCard key={task.id} task={task} onDone={onDone} onUndo={onUndo} showDogName={false} />
-        ))}
-      </div>
-
-      {/* Bottom nav — a static echo of BottomNav, not the real (fixed,
-          routed) component, which would break out of the phone frame. */}
-      <div className="px-4 pt-1">
-        <div className="bg-card rounded-full px-1.5 py-1.5 grid grid-cols-4">
-          {[
-            { label: 'Today', Icon: Home, active: true },
-            { label: 'Dogs', Icon: PawPrint, active: false },
-            { label: 'Upcoming', Icon: CalendarDays, active: false },
-            { label: 'Settings', Icon: Settings, active: false },
-          ].map(({ label, Icon, active }) => (
-            <span
-              key={label}
-              className={`flex flex-col items-center gap-0.5 py-2 rounded-full ${
-                active ? 'bg-cobalt text-white' : 'text-nav-inactive'
-              }`}
-            >
-              <Icon size={14} strokeWidth={active ? 2.5 : 2} />
-              <span className={`font-dm text-[8px] leading-none ${active ? 'font-bold' : 'font-medium'}`}>
-                {label}
-              </span>
-            </span>
-          ))}
-        </div>
       </div>
     </div>
   )
@@ -315,47 +273,61 @@ function AddDogMock() {
   )
 }
 
+// A faithful small replica of the real Start Stay page — same back-arrow
+// header, dog selector, Start/End date+time fields, notes, and CTA — not a
+// redrawn calendar-grid stand-in.
 function StartStayMock() {
-  const days = Array.from({ length: 28 }, (_, i) => i + 1)
-  const rangeStart = 17
-  const rangeEnd = 23
   return (
-    <div className="px-5 pt-4 pb-5 flex flex-col gap-3.5">
-      <div>
-        <p className="font-dm font-bold text-[11px] uppercase tracking-wide text-coral">New stay</p>
-        <p className="font-outfit font-bold text-[22px] text-cobalt leading-tight mt-0.5">
-          Barkley&rsquo;s dates
-        </p>
+    <div className="px-4 pt-4 pb-4 flex flex-col gap-3.5">
+      <div className="flex items-center gap-2">
+        <ArrowLeft size={15} className="text-text-secondary" />
+        <p className="font-outfit font-bold text-[19px] text-cobalt leading-none">Start Stay</p>
       </div>
-      <div className="rounded-[16px] border border-border-faint bg-white p-3">
-        <div className="grid grid-cols-7 gap-y-1.5 place-items-center">
-          {days.map((d) => {
-            const edge = d === rangeStart || d === rangeEnd
-            const inRange = d > rangeStart && d < rangeEnd
-            return (
-              <span
-                key={d}
-                className={`size-6 flex items-center justify-center rounded-full text-[10.5px] font-dm font-bold ${
-                  edge
-                    ? 'bg-coral text-white'
-                    : inRange
-                      ? 'bg-coral-soft text-coral'
-                      : 'text-text-secondary'
-                }`}
-              >
-                {d}
-              </span>
-            )
-          })}
+
+      <div>
+        <p className="font-dm font-bold text-[9px] text-text-secondary uppercase tracking-widest mb-1.5">
+          Which dog?
+        </p>
+        <div className="flex items-center gap-2.5 rounded-[12px] border border-coral bg-[#fff5f3] p-2">
+          <img
+            src={GEORGE_PHOTO_URL}
+            alt="George, a West Highland Terrier"
+            className="size-9 rounded-[8px] object-cover shrink-0"
+          />
+          <div className="min-w-0">
+            <p className="font-dm font-semibold text-[13px] text-text-primary leading-none">George</p>
+            <p className="font-dm text-[11px] text-text-secondary mt-0.5 truncate">
+              West Highland Terrier
+            </p>
+          </div>
         </div>
       </div>
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-[12px] font-dm font-bold text-text-primary self-start">
-        <CalendarDays size={13} className="text-cobalt" />
-        Jul 17 – Jul 23
+
+      <div>
+        <p className="font-dm font-bold text-[9px] text-text-secondary uppercase tracking-widest mb-1.5">
+          Stay Dates
+        </p>
+        <div className="flex flex-col gap-2">
+          {[
+            { label: 'Start', date: 'Fri, Aug 14' },
+            { label: 'End', date: 'Wed, Aug 20' },
+          ].map(({ label, date }) => (
+            <div key={label}>
+              <p className="font-dm font-bold text-[8px] text-text-muted uppercase tracking-widest mb-1">
+                {label}
+              </p>
+              <div className="flex items-center justify-between rounded-[10px] border border-border-light bg-white px-2.5 py-2">
+                <span className="font-dm text-[11px] text-text-primary">{date}</span>
+                <CalendarDays size={12} className="text-text-muted" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <span className="mt-auto inline-flex items-center justify-center rounded-full bg-coral py-2.5 font-dm font-bold text-[12px] text-white">
+        Generate Care Tasks
       </span>
-      <p className="font-dm text-[13px] text-text-secondary leading-relaxed">
-        Their daily schedule comes along — meals, meds, and walks are already set.
-      </p>
     </div>
   )
 }
@@ -413,26 +385,98 @@ const STEPS = [
   },
 ]
 
-const STEP_INTERVAL_MS = 4200
+// Task-type badges that drift from a scattered rest position into the hero
+// phone's task list, echoing Structured's "one planner, one timeline"
+// convergence effect. tx/ty are the drift offset in px (toward the phone).
+const HERO_ICON_BADGES = [
+  { Icon: PawPrint, color: 'text-green-vivid', style: { top: '8%', left: '6%' }, tx: 130, ty: 190, delay: '0s' },
+  { Icon: DogBowlIcon, color: 'text-coral', style: { top: '12%', right: '6%' }, tx: -120, ty: 200, delay: '1.3s' },
+  { Icon: PawPrint, color: 'text-green-vivid', style: { bottom: '20%', left: '4%' }, tx: 130, ty: -90, delay: '2.6s' },
+  { Icon: Pill, color: 'text-cobalt', style: { bottom: '16%', right: '5%' }, tx: -120, ty: -110, delay: '3.9s' },
+] as const
+
+const FAQS = [
+  {
+    q: 'Is GoodPup a mobile app I need to download?',
+    a: "No — GoodPup is a web app. Open it in your phone's browser, no App Store and nothing to install. Add it to your home screen if you want one-tap access, but that's optional.",
+  },
+  {
+    q: 'How many dogs can I track at once?',
+    a: 'As many as you’re actually sitting — tasks are grouped by dog, so a house full of concurrent stays stays scannable instead of turning into one long list.',
+  },
+  {
+    q: 'Do I need to connect Google Calendar?',
+    a: 'No — calendar sync is optional. GoodPup works fully with tasks generated straight from a dog’s care schedule; connecting Google just saves you from re-typing bookings.',
+  },
+  {
+    q: 'What happens to my Google access if I disconnect?',
+    a: 'Disconnecting in Settings deletes the access GoodPup was given, and you can also revoke it directly from your Google Account at any time.',
+  },
+  {
+    q: 'Is it free?',
+    a: "Free while GoodPup is finding its feet — bring your own dogs, no card required.",
+  },
+]
+
+function FaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="border-b border-border-faint last:border-b-0">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="w-full flex items-center justify-between gap-4 py-5 text-left"
+      >
+        <span className="font-outfit font-bold text-[17px] text-text-primary leading-snug">{q}</span>
+        <ChevronDown
+          size={18}
+          className={`shrink-0 text-cobalt transition-transform duration-300 ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+      <div
+        className={`grid transition-[grid-template-rows] duration-300 ease-out ${
+          open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+        }`}
+      >
+        <div className="overflow-hidden">
+          <p className="font-dm text-[15px] text-text-secondary leading-relaxed pb-5 max-w-[60ch]">{a}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function AboutPage() {
   const [tasks, setTasks] = useState<Task[]>(demoTasks)
   const [activeStep, setActiveStep] = useState(0)
-  const [showPastHero, setShowPastHero] = useState(false)
+  const stepRefs = useRef<Array<HTMLDivElement | null>>([])
 
   useEffect(() => {
     document.title = 'GoodPup — care tracking for dog sitters and boarders'
   }, [])
 
-  // Auto-advances the "how it works" mockup, resetting the clock on every
-  // manual click too — so a click doesn't get immediately overridden.
+  // Scroll-driven, not timer-driven: whichever step block crosses the
+  // vertical middle of the viewport becomes active, so the mockup advances
+  // in step with scrolling instead of on its own clock.
   useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const id = setInterval(() => {
-      setActiveStep((s) => (s + 1) % STEPS.length)
-    }, STEP_INTERVAL_MS)
-    return () => clearInterval(id)
-  }, [activeStep])
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue
+          const idx = Number((entry.target as HTMLElement).dataset.stepIndex)
+          setActiveStep(idx)
+        }
+      },
+      { rootMargin: '-45% 0px -45% 0px', threshold: 0 },
+    )
+    for (const el of stepRefs.current) if (el) observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  function scrollToStep(i: number) {
+    stepRefs.current[i]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
 
   function markDone(id: string) {
     setTasks((prev) =>
@@ -455,7 +499,7 @@ export default function AboutPage() {
         <div>
           {/* Grounded in the mockup beside it: one dog (George), his four
               tasks today — not an abstract multi-dog tally. */}
-          <h1 className="rise-in font-outfit font-bold text-text-primary leading-[0.95] tracking-[-0.03em] text-[clamp(2rem,5vw,3.25rem)]">
+          <h1 className="rise-in font-outfit font-bold text-cobalt leading-[0.95] tracking-[-0.03em] text-[clamp(2rem,5vw,3.25rem)]">
             <span className="block">One dog.</span>
             <span className="block">Four tasks.</span>
             <span className="block text-coral">One list.</span>
@@ -488,47 +532,54 @@ export default function AboutPage() {
         {/* Live product surface — the real Today page (header, week strip,
             Active Care chip, the actual TaskCard), set on a solid Cobalt
             backdrop and cropped at the bottom edge so it reads as a phone
-            caught mid-shot, not a floating card. */}
-        <div className="rise-in justify-self-center w-full max-w-[440px]" style={{ animationDelay: '260ms' }}>
-          <div className="relative overflow-hidden rounded-[40px] bg-cobalt h-[520px] sm:h-[560px]">
-            {/* Decorative circles + a fully-contained paw print — sized and
-                inset so nothing bleeds past the panel's clipped edge. */}
+            caught mid-shot, not a floating card. The four task-type badges
+            drift in from a scattered rest position and fade into the list —
+            everything on the calendar, landing in one place. */}
+        <div className="rise-in justify-self-center w-full max-w-[340px]" style={{ animationDelay: '260ms' }}>
+          <div className="relative overflow-hidden rounded-[36px] bg-cobalt h-[460px] sm:h-[500px]">
+            {/* Decorative circles — sized and inset so nothing bleeds past
+                the panel's clipped edge. */}
             <div
               aria-hidden="true"
-              className="absolute -top-16 -left-14 size-56 rounded-full bg-white/10"
+              className="absolute -top-14 -left-12 size-48 rounded-full bg-white/10"
             />
             <div
               aria-hidden="true"
-              className="absolute top-6 -right-16 size-48 rounded-full bg-white/10"
-            />
-            <PawPrint
-              aria-hidden="true"
-              size={56}
-              strokeWidth={1.5}
-              className="absolute top-7 right-8 text-white/20 rotate-[14deg] pointer-events-none"
+              className="absolute top-4 -right-14 size-40 rounded-full bg-white/10"
             />
 
-            <div className="absolute left-1/2 -translate-x-1/2 top-5 w-[92%] max-w-[380px]">
+            {HERO_ICON_BADGES.map(({ Icon, color, style, tx, ty, delay }, i) => (
+              <span
+                key={i}
+                aria-hidden="true"
+                className="hero-icon-float absolute size-10 rounded-full bg-white flex items-center justify-center pointer-events-none"
+                style={
+                  { ...style, '--tx': `${tx}px`, '--ty': `${ty}px`, animationDelay: delay } as unknown as React.CSSProperties
+                }
+              >
+                <Icon size={17} className={color} />
+              </span>
+            ))}
+
+            <div className="absolute left-1/2 -translate-x-1/2 top-4 w-[90%] max-w-[300px]">
               <PhoneFrame>
-                <HeroTodayScreen
-                  tasks={tasks}
-                  onDone={markDone}
-                  onUndo={markUndone}
-                  showPast={showPastHero}
-                  onTogglePast={() => setShowPastHero((v) => !v)}
-                />
+                <HeroTodayScreen tasks={tasks} onDone={markDone} onUndo={markUndone} />
               </PhoneFrame>
             </div>
           </div>
           <p className="font-dm text-[13px] text-text-muted text-center mt-4">
-            Go ahead — tap a <span className="font-bold text-text-secondary">Done</span> button.
+            Go ahead — tap a <span className="font-bold text-text-secondary">Done</span> button. It
+            works right in your browser — nothing to download.
           </p>
         </div>
       </section>
 
-      {/* ── How it works: a real sequence, with a mockup that walks it ──── */}
+      {/* ── How it works: scroll pins the mockup, each step block scrolling
+          past drives which one is showing — Structured's scrollytelling
+          pattern, an interactive mockup in place of their video. Steps are
+          still clickable and jump straight there. ──────────────────────── */}
       <section className="border-t border-border-faint">
-        <div className="mx-auto max-w-[1100px] px-6 py-20">
+        <div className="mx-auto max-w-[1100px] px-6 pt-20">
           <div className="max-w-[640px]">
             <p className="font-dm font-bold text-[12px] uppercase tracking-wide text-coral">
               How it works
@@ -538,13 +589,20 @@ export default function AboutPage() {
             </h2>
           </div>
 
-          <div className="grid gap-10 lg:grid-cols-[1fr_320px] lg:gap-16 mt-12 items-center">
-            <ol className="flex flex-col gap-1.5">
+          <div className="grid lg:grid-cols-[1fr_320px] lg:gap-16 mt-8">
+            <div className="flex flex-col">
               {STEPS.map((step, i) => (
-                <li key={step.title}>
+                <div
+                  key={step.title}
+                  ref={(el) => {
+                    stepRefs.current[i] = el
+                  }}
+                  data-step-index={i}
+                  className="flex flex-col justify-center py-6 lg:min-h-[70vh] lg:py-0"
+                >
                   <button
                     type="button"
-                    onClick={() => setActiveStep(i)}
+                    onClick={() => scrollToStep(i)}
                     aria-current={i === activeStep}
                     className={`w-full flex items-start gap-4 text-left rounded-[18px] px-4 py-4 transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coral ${
                       i === activeStep ? 'bg-card' : 'hover:bg-card/60'
@@ -579,24 +637,37 @@ export default function AboutPage() {
                       </span>
                     </span>
                   </button>
-                </li>
-              ))}
-            </ol>
 
-            <div className="grid justify-self-center w-full max-w-[300px]">
-              {STEPS.map((step, i) => (
-                <div
-                  key={step.title}
-                  aria-hidden={i !== activeStep}
-                  className={`[grid-area:1/1] transition-opacity duration-500 motion-reduce:transition-none ${
-                    i === activeStep ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                  }`}
-                >
-                  <PhoneFrame>
-                    <step.Mock />
-                  </PhoneFrame>
+                  {/* Mobile: no room for a pinned sidebar, so each step
+                      carries its own mockup inline. */}
+                  <div className="lg:hidden mt-4 px-4">
+                    <div className="w-full max-w-[280px] mx-auto">
+                      <PhoneFrame>
+                        <step.Mock />
+                      </PhoneFrame>
+                    </div>
+                  </div>
                 </div>
               ))}
+            </div>
+
+            {/* Desktop: pinned mockup, crossfading as scroll crosses steps. */}
+            <div className="hidden lg:block sticky top-24 self-start">
+              <div className="grid w-full max-w-[300px] mx-auto">
+                {STEPS.map((step, i) => (
+                  <div
+                    key={step.title}
+                    aria-hidden={i !== activeStep}
+                    className={`[grid-area:1/1] transition-opacity duration-500 motion-reduce:transition-none ${
+                      i === activeStep ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                    }`}
+                  >
+                    <PhoneFrame>
+                      <step.Mock />
+                    </PhoneFrame>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -678,6 +749,23 @@ export default function AboutPage() {
                 </dd>
               </div>
             </dl>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FAQ ────────────────────────────────────────────────────────── */}
+      <section>
+        <div className="mx-auto max-w-[720px] px-6 py-20">
+          <p className="font-dm font-bold text-[12px] uppercase tracking-wide text-coral text-center">
+            Questions
+          </p>
+          <h2 className="font-outfit font-bold text-cobalt text-[clamp(1.75rem,4vw,2.5rem)] leading-tight tracking-[-0.02em] mt-2 text-center">
+            Good to know
+          </h2>
+          <div className="mt-10">
+            {FAQS.map((item) => (
+              <FaqItem key={item.q} q={item.q} a={item.a} />
+            ))}
           </div>
         </div>
       </section>

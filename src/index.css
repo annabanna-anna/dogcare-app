@@ -111,6 +111,36 @@ body {
   }
 }
 
+/* Task-type icon badges drifting from a scattered position into the hero
+   phone mockup's task list — loops with a per-icon stagger so they don't
+   move in lockstep. Holds at rest scattered, then converges + fades. */
+@keyframes icon-drift {
+  0%,
+  22% {
+    opacity: 0.95;
+    transform: translate(0, 0) scale(1);
+  }
+  68% {
+    opacity: 0.5;
+    transform: translate(var(--tx), var(--ty)) scale(0.5);
+  }
+  84%,
+  100% {
+    opacity: 0;
+    transform: translate(var(--tx), var(--ty)) scale(0.35);
+  }
+}
+.hero-icon-float {
+  animation: icon-drift 5.5s cubic-bezier(0.65, 0, 0.35, 1) infinite both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-icon-float {
+    animation: none;
+    opacity: 0.9;
+  }
+}
+
 /* Mobile app frame */
 #root {
   max-width: 430px;
