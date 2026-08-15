@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import {
   ArrowRight,
   ArrowLeft,
+  Bell,
   CalendarDays,
   ChevronDown,
   Download,
@@ -19,9 +20,29 @@ import TaskCard from '../components/TaskCard'
 import DogIcon from '../components/icons/DogIcon'
 import DogBowlIcon from '../components/icons/DogBowlIcon'
 import type { Task } from '../types'
-import { formatTodayHeading, startOfWeek, addDays, toLocalDateKey } from '../utils/dateUtils'
+import { formatTodayHeading } from '../utils/dateUtils'
 
-const WEEKDAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+// Both keep the iPhone 15 Plus / 14 Pro Max aspect ratio (402×874). The
+// hero's is scaled down to ~67% so the phone reads as a mockup sitting
+// inside its section, not a card that fills it — the modest phone-to-page
+// ratio a real device photo gets on a hero. "How it works" runs larger
+// (~90%) since that section is a sticky, vertically-centered stage built
+// around the mockup — it should fill the viewport, not sit small inside
+// it. Content past each height is cropped by PhoneFrame's own height, not
+// left to overflow; `maxWidth`/`maxHeight` keep either from overflowing a
+// smaller viewport.
+const HERO_PHONE_SIZE: React.CSSProperties = {
+  width: 270,
+  height: 587,
+  maxWidth: '100%',
+  maxHeight: '80vh',
+}
+const STEPS_PHONE_SIZE: React.CSSProperties = {
+  width: 360,
+  height: 783,
+  maxWidth: '100%',
+  maxHeight: '85vh',
+}
 
 /** Builds an ISO datetime at a fixed clock time today, so the demo schedule
  *  always reads as a plausible working day rather than a frozen date. */
@@ -46,7 +67,7 @@ function demoTasks(): Task[] {
       type: 'walk',
       title: 'Morning walk',
       scheduledTime: todayAt(8, 0),
-      status: 'done',
+      status: 'pending',
     },
     {
       id: 'demo-2',
@@ -55,7 +76,7 @@ function demoTasks(): Task[] {
       dogName: 'George',
       type: 'meal',
       title: 'Breakfast',
-      scheduledTime: todayAt(8, 30),
+      scheduledTime: todayAt(9, 0),
       // Kept short on purpose: TaskCard is built for the app's 430px frame,
       // and long notes wrap to a ribbon inside the narrower demo mock.
       note: 'Half scoop, soaked.',
@@ -96,14 +117,17 @@ function HeroTodayScreen({
   tasks,
   onDone,
   onUndo,
+  rowRefs,
 }: {
   tasks: Task[]
   onDone: (id: string) => void
   onUndo: (id: string) => void
+  /** One ref per task row, in the same order as `tasks` — lets the parent
+   *  measure each row's real position so the hero icon animation can dock
+   *  at the task's actual icon instead of an estimated spot. */
+  rowRefs?: React.MutableRefObject<Array<HTMLDivElement | null>>
 }) {
   const today = new Date()
-  const weekStart = startOfWeek(today)
-  const todayKey = toLocalDateKey(today)
   const untilDate = new Date(Date.now() + 6 * 86400000).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -112,39 +136,13 @@ function HeroTodayScreen({
   return (
     <div className="pb-3">
       {/* Header */}
-      <div className="px-4 pt-4 pb-3">
+      <div className="px-4 pt-4 pb-4">
         <p className="font-dm font-bold text-[10px] text-coral uppercase tracking-widest mb-0.5">
           {formatTodayHeading(today)}
         </p>
         <h1 className="font-outfit font-bold text-[32px] leading-none text-cobalt tracking-tight">
           Today
         </h1>
-      </div>
-
-      {/* Week strip */}
-      <div className="px-4 mb-4">
-        <div className="flex justify-between">
-          {Array.from({ length: 7 }, (_, i) => {
-            const day = addDays(weekStart, i)
-            const key = toLocalDateKey(day)
-            const isToday = key === todayKey
-            return (
-              <div key={key} className="flex flex-col items-center gap-1">
-                <span className="font-dm font-bold text-[8px] uppercase tracking-widest text-text-muted">
-                  {WEEKDAY_LETTERS[i]}
-                </span>
-                <span
-                  className={`size-7 rounded-full flex items-center justify-center font-dm font-bold text-[11px] ${
-                    isToday ? 'bg-coral text-white' : 'text-text-primary'
-                  }`}
-                >
-                  {day.getDate()}
-                </span>
-                <span className={`size-1 rounded-full ${isToday ? 'bg-coral' : 'bg-transparent'}`} />
-              </div>
-            )
-          })}
-        </div>
       </div>
 
       {/* Active Care */}
@@ -174,8 +172,15 @@ function HeroTodayScreen({
           just dims the row in place rather than filing it under Past Tasks
           — easier to see working in a hero than the real hide-on-done. */}
       <div className="px-4">
-        {tasks.map((task) => (
-          <TaskCard key={task.id} task={task} onDone={onDone} onUndo={onUndo} showDogName={false} />
+        {tasks.map((task, i) => (
+          <div
+            key={task.id}
+            ref={(el) => {
+              if (rowRefs) rowRefs.current[i] = el
+            }}
+          >
+            <TaskCard task={task} onDone={onDone} onUndo={onUndo} showDogName={false} dense />
+          </div>
         ))}
       </div>
     </div>
@@ -385,23 +390,54 @@ const STEPS = [
   },
 ]
 
-// Task-type badges that drift from a scattered rest position to dock at the
-// mockup's edge, echoing Structured's "one planner, one timeline"
-// convergence effect. Same icon + color pairing as TaskCard's own
-// typeConfig (white glyph on a filled circle), so they read as the same
-// four task types, not a redrawn set. tx/ty are the drift offset in px.
+// Task-type badges that drift once from a scattered rest position to dock
+// exactly on their matching task's real icon — Structured's "one planner,
+// one timeline" convergence effect, run once rather than looped. Same icon
+// + color pairing as TaskCard's own typeConfig (white glyph on a filled
+// circle), so they read as the same four task types, not a redrawn set.
+// `start` sits in the visible margin beside the phone — the panel clips
+// with overflow-hidden, so anything outside 0–100% is invisible until the
+// animation carries it into view, which reads as "appearing from nowhere"
+// instead of drifting in from around the mockup. The docking point itself
+// is measured from the real DOM in AboutPage, not hardcoded, since
+// TaskCard's row height varies with note text.
 const HERO_ICON_BADGES = [
-  { Icon: PawPrint, bg: 'bg-green-vivid', style: { top: '4%', left: '2%' }, tx: 78, ty: 150, delay: '0s' },
-  { Icon: DogBowlIcon, bg: 'bg-coral', style: { top: '8%', right: '0%' }, tx: -70, ty: 160, delay: '1.6s' },
-  { Icon: PawPrint, bg: 'bg-green-vivid', style: { bottom: '14%', left: '0%' }, tx: 75, ty: -70, delay: '3.2s' },
-  { Icon: Pill, bg: 'bg-blue-task', style: { bottom: '10%', right: '2%' }, tx: -70, ty: -85, delay: '4.8s' },
+  { Icon: PawPrint, bg: 'bg-green-vivid', start: { top: '4%', left: '3%' }, delay: '0.2s' },
+  { Icon: DogBowlIcon, bg: 'bg-coral', start: { top: '6%', left: '76%' }, delay: '0.9s' },
+  { Icon: PawPrint, bg: 'bg-green-vivid', start: { top: '40%', left: '3%' }, delay: '1.6s' },
+  { Icon: Pill, bg: 'bg-blue-task', start: { top: '44%', left: '76%' }, delay: '2.3s' },
 ] as const
 
-// The hero mockup renders at this native width (roomy enough that TaskCard
-// never wraps, same as it gets in the real app) then scales down as a whole
-// to this display width — shrinks the whole screenshot, doesn't reflow it.
-const HERO_PHONE_NATIVE_WIDTH = 380
-const HERO_PHONE_DISPLAY_WIDTH = 250
+// TaskCard's own layout in `dense` mode (used here): a 40px time column +
+// 2px gap (gap-0.5) puts the icon circle's horizontal center at
+// 40+2+12 = 54px from the row's left edge; the icon sits flush at the
+// row's top, so its vertical center is half its own 24px (size-6, 1.5rem)
+// height, ~12px down. Both are fixed px regardless of row width, so this
+// holds at any breakpoint.
+const TASK_ICON_OFFSET = { x: 54, y: 12 }
+
+const FEATURES = [
+  {
+    Icon: PawPrint,
+    title: 'Grouped by dog',
+    body: 'Every task lives under the dog it’s for — even with three overlapping stays, nothing gets crossed with the wrong bowl.',
+  },
+  {
+    Icon: Bell,
+    title: 'Reminders that find you',
+    body: 'A push notification for each task, timed to the schedule — so a med window doesn’t slip by while you’re heads-down at work.',
+  },
+  {
+    Icon: CalendarDays,
+    title: 'Calendar sync, optional',
+    body: 'Bookings come in from Rover, care tasks go out to their own calendar. Connect it below, or skip it entirely.',
+  },
+  {
+    Icon: CheckCircle2,
+    title: 'One tap, one hand',
+    body: 'Built for checking things off standing in a kitchen with a leash in one hand, not sitting down to plan.',
+  },
+]
 
 const FAQS = [
   {
@@ -411,6 +447,10 @@ const FAQS = [
   {
     q: 'How many dogs can I track at once?',
     a: 'As many as you’re actually sitting — tasks are grouped by dog, so a house full of concurrent stays stays scannable instead of turning into one long list.',
+  },
+  {
+    q: 'Does GoodPup send reminders?',
+    a: 'Yes — each task can send a push notification at its scheduled time, so a meal or a med window doesn’t slip by while you’re heads-down at work.',
   },
   {
     q: 'Do I need to connect Google Calendar?',
@@ -459,10 +499,39 @@ export default function AboutPage() {
   const [tasks, setTasks] = useState<Task[]>(demoTasks)
   const [activeStep, setActiveStep] = useState(0)
   const stepRefs = useRef<Array<HTMLDivElement | null>>([])
+  const heroPanelRef = useRef<HTMLDivElement | null>(null)
+  const heroRowRefs = useRef<Array<HTMLDivElement | null>>([])
+  const [dockPositions, setDockPositions] = useState<Array<{ top: number; left: number } | null>>(
+    [],
+  )
 
   useEffect(() => {
     document.title = 'GoodPup — care tracking for dog sitters and boarders'
   }, [])
+
+  // Measures each task row's real icon position (not an estimate) so the
+  // hero animation can dock exactly on it — re-measures on resize since the
+  // panel's width, and therefore each row's position, changes per breakpoint.
+  useEffect(() => {
+    function measure() {
+      const panel = heroPanelRef.current
+      if (!panel) return
+      const panelRect = panel.getBoundingClientRect()
+      setDockPositions(
+        heroRowRefs.current.map((el) => {
+          if (!el) return null
+          const r = el.getBoundingClientRect()
+          return {
+            top: r.top - panelRect.top + TASK_ICON_OFFSET.y,
+            left: r.left - panelRect.left + TASK_ICON_OFFSET.x,
+          }
+        }),
+      )
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [tasks])
 
   // Scroll-driven, not timer-driven: whichever step block crosses the
   // vertical middle of the viewport becomes active, so the mockup advances
@@ -538,16 +607,18 @@ export default function AboutPage() {
         </div>
 
         {/* Live product surface — the real Today page (header, week strip,
-            Active Care chip, the actual TaskCard), set on a solid Cobalt
-            backdrop and cropped at the bottom edge so it reads as a phone
-            caught mid-shot, not a floating card. Rendered at its natural
-            width (same as the real app) then scaled down as a whole, so
-            TaskCard never has to reflow into a too-narrow column — it just
-            gets visually smaller, like a shrunk screenshot. The four
-            task-type badges (same icon + color as the real task rows) drift
-            in from a scattered rest position and dock at the mockup's edge. */}
-        <div className="rise-in justify-self-center w-full max-w-[340px]" style={{ animationDelay: '260ms' }}>
-          <div className="relative overflow-hidden rounded-[36px] bg-cobalt h-[420px] sm:h-[450px]">
+            Active Care chip, the actual TaskCard), sized as a modest mockup
+            on a solid Cobalt backdrop — not a card that fills the panel —
+            and cropped at the bottom edge so it reads as a phone caught
+            mid-shot. The four task-type badges (same icon + color as the
+            real task rows) drift once from a scattered rest position and
+            dock exactly on their matching row's icon — measured from the
+            real layout below, not estimated. */}
+        <div className="rise-in justify-self-center w-full max-w-[440px]" style={{ animationDelay: '260ms' }}>
+          <div
+            ref={heroPanelRef}
+            className="relative overflow-hidden rounded-[36px] bg-cobalt h-[520px] sm:h-[560px]"
+          >
             {/* Decorative circles — sized and inset so nothing bleeds past
                 the panel's clipped edge. */}
             <div
@@ -559,36 +630,70 @@ export default function AboutPage() {
               className="absolute top-4 -right-14 size-40 rounded-full bg-white/10"
             />
 
-            <div className="absolute left-1/2 -translate-x-1/2 top-4" style={{ width: HERO_PHONE_DISPLAY_WIDTH }}>
-              <div
-                style={{
-                  width: HERO_PHONE_NATIVE_WIDTH,
-                  transform: `scale(${HERO_PHONE_DISPLAY_WIDTH / HERO_PHONE_NATIVE_WIDTH})`,
-                  transformOrigin: 'top left',
-                }}
-              >
-                <PhoneFrame>
-                  <HeroTodayScreen tasks={tasks} onDone={markDone} onUndo={markUndone} />
-                </PhoneFrame>
-              </div>
+            <div className="absolute left-1/2 -translate-x-1/2 top-8" style={HERO_PHONE_SIZE}>
+              <PhoneFrame>
+                <HeroTodayScreen
+                  tasks={tasks}
+                  onDone={markDone}
+                  onUndo={markUndone}
+                  rowRefs={heroRowRefs}
+                />
+              </PhoneFrame>
             </div>
 
-            {HERO_ICON_BADGES.map(({ Icon, bg, style, tx, ty, delay }, i) => (
-              <span
-                key={i}
-                aria-hidden="true"
-                className={`hero-icon-float absolute size-11 rounded-full ${bg} flex items-center justify-center pointer-events-none`}
-                style={
-                  { ...style, '--tx': `${tx}px`, '--ty': `${ty}px`, animationDelay: delay } as unknown as React.CSSProperties
-                }
-              >
-                <Icon size={19} className="text-white" />
-              </span>
-            ))}
+            {HERO_ICON_BADGES.map(({ Icon, bg, start, delay }, i) => {
+              const dock = dockPositions[i]
+              const end = dock
+                ? { top: `${dock.top}px`, left: `${dock.left}px` }
+                : { top: '50%', left: '50%' }
+              return (
+                <span
+                  key={i}
+                  aria-hidden="true"
+                  className={`hero-icon-dock absolute size-11 rounded-full ${bg} flex items-center justify-center pointer-events-none`}
+                  style={
+                    {
+                      '--s-top': start.top,
+                      '--s-left': start.left,
+                      '--e-top': end.top,
+                      '--e-left': end.left,
+                      animationDelay: delay,
+                    } as unknown as React.CSSProperties
+                  }
+                >
+                  <Icon size={19} className="text-white" />
+                </span>
+              )
+            })}
           </div>
           <p className="font-dm text-[13px] text-text-muted text-center mt-4">
             Go ahead — tap a <span className="font-bold text-text-secondary">Done</span> button. It
             works right in your browser — nothing to download.
+          </p>
+        </div>
+      </section>
+
+      {/* ── Problem statement ─────────────────────────────────────────────
+          The "why this exists" beat, between the hero's demo and the
+          product walkthrough — a plain, centered editorial block for
+          contrast against the two-column sections around it. */}
+      <section className="border-t border-border-faint bg-card">
+        <div className="mx-auto max-w-[760px] px-6 py-20 text-center">
+          <p className="font-dm font-bold text-[12px] uppercase tracking-wide text-coral">
+            The problem
+          </p>
+          <h2
+            className="font-outfit font-bold text-text-primary text-[clamp(2rem,5vw,3.25rem)] leading-[1.1] tracking-[-0.02em] mt-3"
+            style={{ textWrap: 'balance' }}
+          >
+            Every dog runs on its own clock — and yours doesn't stop for it.
+          </h2>
+          <p className="font-dm text-[18px] text-text-secondary leading-relaxed mt-6 max-w-[60ch] mx-auto">
+            One wants breakfast at seven. Another needs a thyroid pill at noon —{' '}
+            <em className="not-italic font-bold text-text-primary">exactly</em> at noon, not
+            "sometime around lunch." You're heads-down on a work call, and by the time you look
+            up, there's a very unimpressed nose parked on your knee. Now multiply that by three
+            dogs, three schedules, and a sticky note that fell off the fridge.
           </p>
         </div>
       </section>
@@ -608,71 +713,96 @@ export default function AboutPage() {
             </h2>
           </div>
 
-          <div className="grid lg:grid-cols-[1fr_380px] lg:gap-16 mt-8">
-            <div className="flex flex-col">
-              {STEPS.map((step, i) => (
+          <div className="grid lg:grid-cols-[1fr_420px] lg:gap-16 mt-8">
+            {/* Text column. Mobile: a normal stacked list, each step with its
+                own inline mockup. Desktop: the visible text is a single
+                sticky, crossfading panel — like Structured's "split your day
+                into tasks" section — driven by four invisible scroll markers
+                spread across a tall relative track underneath it. */}
+            <div className="relative lg:min-h-[280vh]">
+              {STEPS.map((_, i) => (
                 <div
-                  key={step.title}
+                  key={i}
                   ref={(el) => {
                     stepRefs.current[i] = el
                   }}
                   data-step-index={i}
-                  className="flex flex-col justify-center py-8 lg:min-h-[70vh] lg:py-0"
-                >
-                  <button
-                    type="button"
-                    onClick={() => scrollToStep(i)}
-                    aria-current={i === activeStep}
-                    className={`w-full flex items-start gap-5 text-left rounded-[22px] px-5 py-5 transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coral ${
-                      i === activeStep ? 'bg-card' : 'hover:bg-card/60'
-                    }`}
-                  >
-                    {/* Cobalt marks "which step you're on," the same job it
-                        does for the active bottom-nav tab in the app —
-                        wayfinding, not action, so it stays off-limits to Ember. */}
-                    <span
-                      className={`relative shrink-0 size-10 rounded-full font-outfit font-bold text-[16px] flex items-center justify-center transition-colors duration-300 ${
-                        i === activeStep
-                          ? 'bg-cobalt text-white'
-                          : 'bg-white border border-border-light text-text-muted'
-                      }`}
+                  aria-hidden="true"
+                  className="hidden lg:block absolute inset-x-0 h-px"
+                  style={{ top: `${(i / STEPS.length) * 100}%` }}
+                />
+              ))}
+
+              <div className="lg:hidden flex flex-col gap-14 py-8">
+                {STEPS.map((step, i) => (
+                  <div key={step.title}>
+                    <button
+                      type="button"
+                      onClick={() => scrollToStep(i)}
+                      className="w-full text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-coral rounded-sm"
                     >
-                      {i + 1}
-                    </span>
-                    <span>
-                      <span
-                        className={`block font-outfit font-bold text-[26px] leading-tight tracking-[-0.01em] transition-colors duration-300 ${
-                          i === activeStep ? 'text-cobalt' : 'text-text-secondary'
-                        }`}
-                      >
+                      <span className="block font-dm font-bold text-[13px] uppercase tracking-[0.1em] text-coral">
+                        Step {i + 1}
+                      </span>
+                      <span className="block font-outfit font-bold text-cobalt text-[clamp(1.75rem,3.2vw,2.5rem)] leading-[1.05] tracking-[-0.02em] mt-1.5">
                         {step.title}
                       </span>
-                      <span
-                        className={`block font-dm text-[16px] leading-relaxed mt-2 max-w-[40ch] transition-colors duration-300 ${
-                          i === activeStep ? 'text-text-secondary' : 'text-text-muted'
-                        }`}
-                      >
+                      <span className="block font-dm text-[17px] leading-relaxed text-text-secondary mt-3 max-w-[40ch]">
                         {step.body}
                       </span>
-                    </span>
-                  </button>
-
-                  {/* Mobile: no room for a pinned sidebar, so each step
-                      carries its own mockup inline, at real mobile size. */}
-                  <div className="lg:hidden mt-5 px-4">
-                    <div className="w-full max-w-[340px] mx-auto">
+                    </button>
+                    <div className="mt-6" style={STEPS_PHONE_SIZE}>
                       <PhoneFrame>
                         <step.Mock />
                       </PhoneFrame>
                     </div>
                   </div>
+                ))}
+              </div>
+
+              {/* Desktop: vertically centered in the viewport while pinned,
+                  like Structured's own switching text — not stuck near the
+                  top of the fold. */}
+              <div className="hidden lg:flex lg:sticky lg:top-0 lg:h-screen lg:items-center">
+                <div className="grid w-full">
+                  {STEPS.map((step, i) => (
+                    <button
+                      key={step.title}
+                      type="button"
+                      onClick={() => scrollToStep(i)}
+                      aria-current={i === activeStep}
+                      aria-hidden={i !== activeStep}
+                      className={`[grid-area:1/1] w-full text-left transition-all duration-500 motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-coral rounded-sm ${
+                        i === activeStep
+                          ? 'opacity-100 translate-y-0'
+                          : 'opacity-0 translate-y-3 pointer-events-none'
+                      }`}
+                    >
+                      {/* Cobalt marks "which step you're on," the same job it
+                          does for the active bottom-nav tab in the app —
+                          wayfinding, not action, so it stays off-limits to
+                          Ember. No card behind it — weight and the crossfade
+                          alone carry the switch, bare on the page. */}
+                      <span className="block font-dm font-bold text-[13px] uppercase tracking-[0.1em] text-coral">
+                        Step {i + 1}
+                      </span>
+                      <span className="block font-outfit font-bold text-cobalt text-[clamp(2rem,3.5vw,2.75rem)] leading-[1.05] tracking-[-0.02em] mt-2">
+                        {step.title}
+                      </span>
+                      <span className="block font-dm text-[18px] leading-relaxed text-text-secondary mt-3 max-w-[40ch]">
+                        {step.body}
+                      </span>
+                    </button>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
 
-            {/* Desktop: pinned mockup, crossfading as scroll crosses steps. */}
-            <div className="hidden lg:block sticky top-24 self-start">
-              <div className="grid w-full max-w-[360px] mx-auto">
+            {/* Mockup column: pinned and vertically centered, crossfading
+                as scroll crosses steps — sized to fill the viewport rather
+                than sit small inside it. */}
+            <div className="hidden lg:flex lg:sticky lg:top-0 lg:h-screen lg:items-center">
+              <div className="grid" style={STEPS_PHONE_SIZE}>
                 {STEPS.map((step, i) => (
                   <div
                     key={step.title}
@@ -692,82 +822,116 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ── Calendar sync ─────────────────────────────────────────────────
-          Deliberately concrete about what Google access is used for: this
-          is the section a Google OAuth reviewer reads, and the one a sitter
-          reads before granting calendar permission. */}
-      <section id="calendar-sync" className="bg-card border-y border-border-faint scroll-mt-16">
+      {/* ── Features ───────────────────────────────────────────────────────
+          Calendar sync used to get its own section as if it were the whole
+          pitch; it's one of four things worth knowing, so it's a grid entry
+          here — the detailed disclosure a sitter (and a Google OAuth
+          reviewer) actually needs still gets its own sub-section below,
+          just not the entire spotlight. */}
+      <section className="border-t border-border-faint">
         <div className="mx-auto max-w-[1100px] px-6 py-20">
-          <div className="grid gap-12 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
-            {/* Centered against the taller list beside it — top-aligning left
-                a dead quarter-screen under this column on desktop. */}
-            <div className="lg:self-center">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white border border-border-light px-3 py-1.5">
-                <CalendarDays size={15} className="text-cobalt" />
-                <span className="font-dm font-bold text-[13px] text-text-primary">
-                  Google Calendar
+          <div className="max-w-[640px]">
+            <p className="font-dm font-bold text-[12px] uppercase tracking-wide text-coral">
+              Features
+            </p>
+            <h2 className="font-outfit font-bold text-cobalt text-[clamp(2.25rem,5.5vw,3.5rem)] leading-tight tracking-[-0.02em] mt-2">
+              Everything a sitter actually needs, nothing they don't.
+            </h2>
+          </div>
+
+          <div className="grid gap-x-8 gap-y-12 sm:grid-cols-2 mt-14">
+            {FEATURES.map(({ Icon, title, body }) => (
+              <div key={title}>
+                <span className="size-11 rounded-full bg-card flex items-center justify-center">
+                  <Icon size={20} className="text-cobalt" />
                 </span>
+                <p className="font-outfit font-bold text-[20px] text-text-primary mt-4">{title}</p>
+                <p className="font-dm text-[15px] text-text-secondary leading-relaxed mt-2 max-w-[40ch]">
+                  {body}
+                </p>
               </div>
-              <h2 className="font-outfit font-bold text-cobalt text-[clamp(2.25rem,5.5vw,3.5rem)] leading-tight tracking-[-0.02em] mt-5">
-                Your bookings come in. Your tasks go out.
-              </h2>
-              <p className="font-dm text-[16px] text-text-secondary leading-relaxed mt-4 max-w-[46ch]">
-                Connecting Google Calendar is optional, and GoodPup asks for exactly what these two
-                jobs need — nothing broader.
-              </p>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Calendar sync detail ───────────────────────────────────────
+            Deliberately concrete about what Google access is used for: this
+            is the sub-section a Google OAuth reviewer reads, and the one a
+            sitter reads before granting calendar permission — the hero's
+            "How calendar sync works" link jumps straight here. */}
+        <div id="calendar-sync" className="bg-card border-t border-border-faint pt-20 pb-20 scroll-mt-16">
+          <div className="mx-auto max-w-[1100px] px-6">
+            <div className="grid gap-12 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
+              {/* Centered against the taller list beside it — top-aligning left
+                  a dead quarter-screen under this column on desktop. */}
+              <div className="lg:self-center">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white border border-border-light px-3 py-1.5">
+                  <CalendarDays size={15} className="text-cobalt" />
+                  <span className="font-dm font-bold text-[13px] text-text-primary">
+                    Google Calendar
+                  </span>
+                </div>
+                <h2 className="font-outfit font-bold text-cobalt text-[clamp(2.25rem,5.5vw,3.5rem)] leading-tight tracking-[-0.02em] mt-5">
+                  Your bookings come in. Your tasks go out.
+                </h2>
+                <p className="font-dm text-[16px] text-text-secondary leading-relaxed mt-4 max-w-[46ch]">
+                  Connecting Google Calendar is optional, and GoodPup asks for exactly what these two
+                  jobs need — nothing broader.
+                </p>
+              </div>
+
+              {/* One panel, hairline-separated rows — three separate cards read
+                  as a template grid and said nothing the rules don't. */}
+              <dl className="bg-white rounded-[18px] border border-border-faint divide-y divide-border-faint overflow-hidden">
+                <div className="p-6 sm:p-7">
+                  <dt className="flex items-center gap-2.5">
+                    <Download size={18} className="text-green-vivid shrink-0" />
+                    <span className="font-outfit font-bold text-[18px] text-text-primary">
+                      Reading your bookings
+                    </span>
+                  </dt>
+                  <dd className="font-dm text-[15px] text-text-secondary leading-relaxed mt-2.5">
+                    If you use Rover's calendar sync, GoodPup finds that calendar automatically and
+                    reads only its confirmed bookings — so a stay you accepted on Rover shows up here
+                    without retyping it. No other calendar is read.
+                  </dd>
+                </div>
+
+                <div className="p-6 sm:p-7">
+                  <dt className="flex items-center gap-2.5">
+                    <Upload size={18} className="text-cobalt shrink-0" />
+                    <span className="font-outfit font-bold text-[18px] text-text-primary">
+                      Writing your care tasks
+                    </span>
+                  </dt>
+                  <dd className="font-dm text-[15px] text-text-secondary leading-relaxed mt-2.5">
+                    Meals, meds, and walks are written as timed events to a separate calendar called
+                    “GoodPup” that the app creates for you. Your personal calendar is never written
+                    to, and you can turn pushing off while staying connected.
+                  </dd>
+                </div>
+
+                <div className="p-6 sm:p-7">
+                  <dt className="flex items-center gap-2.5">
+                    <ShieldCheck size={18} className="text-coral shrink-0" />
+                    <span className="font-outfit font-bold text-[18px] text-text-primary">
+                      Ending it is one tap
+                    </span>
+                  </dt>
+                  <dd className="font-dm text-[15px] text-text-secondary leading-relaxed mt-2.5">
+                    Disconnect in Settings and GoodPup deletes the access it was given. You can also
+                    revoke it from your Google Account at any time.{' '}
+                    <Link
+                      to="/privacy"
+                      className="font-bold text-text-primary underline underline-offset-2 hover:text-coral transition-colors"
+                    >
+                      Read the privacy policy
+                    </Link>
+                    .
+                  </dd>
+                </div>
+              </dl>
             </div>
-
-            {/* One panel, hairline-separated rows — three separate cards read
-                as a template grid and said nothing the rules don't. */}
-            <dl className="bg-white rounded-[18px] border border-border-faint divide-y divide-border-faint overflow-hidden">
-              <div className="p-6 sm:p-7">
-                <dt className="flex items-center gap-2.5">
-                  <Download size={18} className="text-green-vivid shrink-0" />
-                  <span className="font-outfit font-bold text-[18px] text-text-primary">
-                    Reading your bookings
-                  </span>
-                </dt>
-                <dd className="font-dm text-[15px] text-text-secondary leading-relaxed mt-2.5">
-                  If you use Rover's calendar sync, GoodPup finds that calendar automatically and
-                  reads only its confirmed bookings — so a stay you accepted on Rover shows up here
-                  without retyping it. No other calendar is read.
-                </dd>
-              </div>
-
-              <div className="p-6 sm:p-7">
-                <dt className="flex items-center gap-2.5">
-                  <Upload size={18} className="text-cobalt shrink-0" />
-                  <span className="font-outfit font-bold text-[18px] text-text-primary">
-                    Writing your care tasks
-                  </span>
-                </dt>
-                <dd className="font-dm text-[15px] text-text-secondary leading-relaxed mt-2.5">
-                  Meals, meds, and walks are written as timed events to a separate calendar called
-                  “GoodPup” that the app creates for you. Your personal calendar is never written
-                  to, and you can turn pushing off while staying connected.
-                </dd>
-              </div>
-
-              <div className="p-6 sm:p-7">
-                <dt className="flex items-center gap-2.5">
-                  <ShieldCheck size={18} className="text-coral shrink-0" />
-                  <span className="font-outfit font-bold text-[18px] text-text-primary">
-                    Ending it is one tap
-                  </span>
-                </dt>
-                <dd className="font-dm text-[15px] text-text-secondary leading-relaxed mt-2.5">
-                  Disconnect in Settings and GoodPup deletes the access it was given. You can also
-                  revoke it from your Google Account at any time.{' '}
-                  <Link
-                    to="/privacy"
-                    className="font-bold text-text-primary underline underline-offset-2 hover:text-coral transition-colors"
-                  >
-                    Read the privacy policy
-                  </Link>
-                  .
-                </dd>
-              </div>
-            </dl>
           </div>
         </div>
       </section>

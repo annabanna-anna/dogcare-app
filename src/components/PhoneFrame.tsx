@@ -14,9 +14,13 @@ interface Props {
 export default function PhoneFrame({ children, className = '' }: Props) {
   return (
     <div
-      className={`rounded-[38px] bg-text-primary p-[10px] ${className}`}
+      // `h-full` only takes effect when a parent gives this box an explicit
+      // height (e.g. the fixed 402×874 mockup size) — with no such
+      // ancestor, a percentage height resolves to `auto` per spec, so this
+      // is a no-op for any caller that doesn't opt in.
+      className={`h-full rounded-[38px] bg-text-primary p-[10px] ${className}`}
     >
-      <div className="rounded-[28px] bg-cream overflow-hidden flex flex-col">
+      <div className="h-full rounded-[28px] bg-cream overflow-hidden flex flex-col">
         <div className="relative flex items-center justify-between px-6 pt-2.5 pb-1 shrink-0">
           <span className="font-dm font-bold text-[11px] text-text-primary">9:41</span>
           <div
@@ -29,7 +33,7 @@ export default function PhoneFrame({ children, className = '' }: Props) {
             <BatteryFull size={15} strokeWidth={2} />
           </span>
         </div>
-        <div className="flex-1 min-h-0">{children}</div>
+        <div className="flex-1 min-h-0 overflow-hidden">{children}</div>
         <div aria-hidden="true" className="flex justify-center pb-2 pt-1.5 shrink-0">
           <div className="h-1 w-28 rounded-full bg-text-primary/20" />
         </div>

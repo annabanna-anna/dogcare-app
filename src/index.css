@@ -111,34 +111,46 @@ body {
   }
 }
 
-/* Task-type icon badges drifting from a scattered position into the hero
-   phone mockup's task list — loops with a per-icon stagger so they don't
-   move in lockstep. Holds at rest scattered, then converges + fades. */
-@keyframes icon-drift {
-  0%,
+/* Task-type icon badges drifting once from a scattered rest position to
+   dock exactly on their matching task's real icon, then staying put — no
+   loop, no fade-out. `top`/`left` are the target's CENTER point (both the
+   scattered start and the measured end), so every step also carries
+   translate(-50%,-50%) to recenter the badge's own box on that point —
+   without it the badge's top-left corner lands on the target instead of
+   its center, which reads as a second icon floating down-right of the
+   real one. End scale (0.73) shrinks the 44px badge to the real 32px
+   icon's size, so it reads as docking into it, not hovering beside it. */
+@keyframes icon-dock {
+  0% {
+    top: var(--s-top);
+    left: var(--s-left);
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
   14% {
     opacity: 1;
-    transform: translate(0, 0) scale(1);
+    transform: translate(-50%, -50%) scale(1);
   }
-  50%,
-  78% {
-    opacity: 1;
-    transform: translate(var(--tx), var(--ty)) scale(0.82);
-  }
-  92%,
+  75%,
   100% {
-    opacity: 0;
-    transform: translate(var(--tx), var(--ty)) scale(0.7);
+    top: var(--e-top);
+    left: var(--e-left);
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.73);
   }
 }
-.hero-icon-float {
-  animation: icon-drift 6.5s cubic-bezier(0.65, 0, 0.35, 1) infinite both;
+.hero-icon-dock {
+  animation: icon-dock 2.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-iteration-count: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-icon-float {
+  .hero-icon-dock {
     animation: none;
-    opacity: 0.9;
+    top: var(--e-top);
+    left: var(--e-left);
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.73);
   }
 }
 
