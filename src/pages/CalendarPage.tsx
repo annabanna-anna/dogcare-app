@@ -47,6 +47,7 @@ export default function CalendarPage() {
   const [isRover, setIsRover] = useState(false)
   const [retrying, setRetrying] = useState(false)
   const [lastPushError, setLastPushError] = useState<string | null>(getLastPushError)
+  const [showCalendarInfo, setShowCalendarInfo] = useState(false)
 
   async function retryAllPushes() {
     setRetrying(true)
@@ -151,16 +152,25 @@ export default function CalendarPage() {
                 Connect Google Calendar
               </p>
               <p className="font-dm text-[13px] text-text-secondary mt-0.5 leading-snug">
-                See your upcoming Google Calendar events here too — handy for stays booked
-                elsewhere, like through Rover.
+                Works if Rover is already syncing to your Google Calendar. No Rover ↔ Google
+                connection means no bookings here either.
               </p>
-              <button
-                onClick={handleConnect}
-                disabled={connecting}
-                className="font-dm font-bold text-[13px] text-cobalt mt-2"
-              >
-                {connecting ? 'Connecting…' : 'Connect'}
-              </button>
+              <div className="flex items-center gap-3 mt-2">
+                <button
+                  onClick={handleConnect}
+                  disabled={connecting}
+                  className="font-dm font-bold text-[13px] text-cobalt"
+                >
+                  {connecting ? 'Connecting…' : 'Connect'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCalendarInfo(true)}
+                  className="font-dm font-bold text-[13px] text-text-secondary"
+                >
+                  Learn more
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -249,9 +259,18 @@ export default function CalendarPage() {
 
         {googleConnected && (
           <>
-            <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mt-2">
-              {isRover ? 'From Rover' : 'From Google Calendar'}
-            </p>
+            <div className="flex items-center justify-between mt-2">
+              <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest">
+                {isRover ? 'From Rover' : 'From Google Calendar'}
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowCalendarInfo(true)}
+                className="font-dm font-bold text-[12px] text-cobalt"
+              >
+                Learn more
+              </button>
+            </div>
 
             {googleError && (
               <div className="flex items-start gap-2 bg-[#fee2e2] rounded-[12px] px-4 py-3">
@@ -301,6 +320,32 @@ export default function CalendarPage() {
           </>
         )}
       </div>
+
+      {showCalendarInfo && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center px-6">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowCalendarInfo(false)} />
+          <div className="relative w-full max-w-[380px] bg-cream rounded-[22px] p-6">
+            <p className="font-outfit font-bold text-[20px] text-text-primary leading-tight mb-2">
+              How Google Calendar sync works
+            </p>
+            <p className="font-dm text-[14px] text-text-secondary leading-relaxed mb-3">
+              This app doesn't connect to Rover directly. If your Rover account is already set
+              up to sync bookings to your Google Calendar, connecting Google here lets this app
+              read that same calendar and pull those bookings in.
+            </p>
+            <p className="font-dm text-[14px] text-text-secondary leading-relaxed mb-5">
+              If Rover isn't syncing to Google Calendar, or you skip connecting Google, this
+              feature won't have anything to show — you'll still be able to add stays manually.
+            </p>
+            <button
+              onClick={() => setShowCalendarInfo(false)}
+              className="w-full rounded-full py-3 font-dm font-bold text-[15px] text-text-secondary active:bg-black/5 transition-colors"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
 
       <BottomNav />
     </div>

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { useNavigate } from 'react-router-dom'
 import {
   CalendarDays,
   Bell,
@@ -11,6 +10,7 @@ import {
   LogOut,
   AlertCircle,
   Info,
+  ExternalLink,
 } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import BottomNav from '../components/BottomNav'
@@ -103,7 +103,6 @@ function SettingRow({
 }
 
 export default function SyncSettingsPage() {
-  const navigate = useNavigate()
   const [calendarConnected, setCalendarConnected] = useState(false)
   const [connecting, setConnecting] = useState(false)
   const [connectError, setConnectError] = useState<string | null>(null)
@@ -216,20 +215,22 @@ export default function SyncSettingsPage() {
               }
             />
             <div className="pb-4 flex flex-col gap-3">
-              <div className="flex items-start gap-2">
-                <p className="flex-1 font-dm text-[12px] text-text-secondary leading-snug">
-                  Works if Rover is already syncing to your Google Calendar. No Rover ↔ Google
-                  connection means no data here either.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setShowCalendarInfo(true)}
-                  className="font-dm font-bold text-[12px] text-cobalt shrink-0"
-                >
-                  Learn more
-                </button>
+              <div className="flex flex-col gap-1">
+                <PurposeRow done={calendarConnected} label="Shows your Rover bookings" />
+                <div className="flex items-start gap-2 pl-[26px]">
+                  <p className="flex-1 font-dm text-[12px] text-text-secondary leading-snug">
+                    Works if Rover is already syncing to your Google Calendar. No Rover ↔
+                    Google connection means no data here either.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowCalendarInfo(true)}
+                    className="font-dm font-bold text-[12px] text-cobalt shrink-0"
+                  >
+                    Learn more
+                  </button>
+                </div>
               </div>
-              <PurposeRow done={calendarConnected} label="Shows your Rover bookings" />
               <div className="flex items-center gap-3">
                 <div className="flex-1 min-w-0 flex items-center gap-2.5">
                   {calendarConnected && pushEnabled ? (
@@ -318,18 +319,20 @@ export default function SyncSettingsPage() {
             About
           </p>
           <div className="bg-white border border-border-light rounded-[16px] px-4 divide-y divide-border-faint">
-            <button className="w-full text-left" onClick={() => navigate('/about')}>
+            <a className="block w-full text-left" href="/about" target="_blank" rel="noreferrer">
               <SettingRow
                 icon={<Info size={18} />}
-                label="About"
-                right={<ChevronRight size={18} className="text-[#d1d1d1]" />}
+                label="About GoodPup"
+                right={<ExternalLink size={18} className="text-[#d1d1d1]" />}
               />
-            </button>
-            <SettingRow
-              icon={<Shield size={18} />}
-              label="Privacy Policy"
-              right={<ChevronRight size={18} className="text-[#d1d1d1]" />}
-            />
+            </a>
+            <a className="block w-full text-left" href="/privacy" target="_blank" rel="noreferrer">
+              <SettingRow
+                icon={<Shield size={18} />}
+                label="Privacy Policy"
+                right={<ExternalLink size={18} className="text-[#d1d1d1]" />}
+              />
+            </a>
             <button
               className="w-full text-left"
               onClick={() => void supabase.auth.signOut()}
