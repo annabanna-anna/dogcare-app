@@ -385,15 +385,23 @@ const STEPS = [
   },
 ]
 
-// Task-type badges that drift from a scattered rest position into the hero
-// phone's task list, echoing Structured's "one planner, one timeline"
-// convergence effect. tx/ty are the drift offset in px (toward the phone).
+// Task-type badges that drift from a scattered rest position to dock at the
+// mockup's edge, echoing Structured's "one planner, one timeline"
+// convergence effect. Same icon + color pairing as TaskCard's own
+// typeConfig (white glyph on a filled circle), so they read as the same
+// four task types, not a redrawn set. tx/ty are the drift offset in px.
 const HERO_ICON_BADGES = [
-  { Icon: PawPrint, color: 'text-green-vivid', style: { top: '8%', left: '6%' }, tx: 130, ty: 190, delay: '0s' },
-  { Icon: DogBowlIcon, color: 'text-coral', style: { top: '12%', right: '6%' }, tx: -120, ty: 200, delay: '1.3s' },
-  { Icon: PawPrint, color: 'text-green-vivid', style: { bottom: '20%', left: '4%' }, tx: 130, ty: -90, delay: '2.6s' },
-  { Icon: Pill, color: 'text-cobalt', style: { bottom: '16%', right: '5%' }, tx: -120, ty: -110, delay: '3.9s' },
+  { Icon: PawPrint, bg: 'bg-green-vivid', style: { top: '4%', left: '2%' }, tx: 78, ty: 150, delay: '0s' },
+  { Icon: DogBowlIcon, bg: 'bg-coral', style: { top: '8%', right: '0%' }, tx: -70, ty: 160, delay: '1.6s' },
+  { Icon: PawPrint, bg: 'bg-green-vivid', style: { bottom: '14%', left: '0%' }, tx: 75, ty: -70, delay: '3.2s' },
+  { Icon: Pill, bg: 'bg-blue-task', style: { bottom: '10%', right: '2%' }, tx: -70, ty: -85, delay: '4.8s' },
 ] as const
+
+// The hero mockup renders at this native width (roomy enough that TaskCard
+// never wraps, same as it gets in the real app) then scales down as a whole
+// to this display width — shrinks the whole screenshot, doesn't reflow it.
+const HERO_PHONE_NATIVE_WIDTH = 380
+const HERO_PHONE_DISPLAY_WIDTH = 250
 
 const FAQS = [
   {
@@ -499,7 +507,7 @@ export default function AboutPage() {
         <div>
           {/* Grounded in the mockup beside it: one dog (George), his four
               tasks today — not an abstract multi-dog tally. */}
-          <h1 className="rise-in font-outfit font-bold text-cobalt leading-[0.95] tracking-[-0.03em] text-[clamp(2rem,5vw,3.25rem)]">
+          <h1 className="rise-in font-outfit font-bold text-cobalt leading-[0.95] tracking-[-0.03em] text-[clamp(2.5rem,7vw,4.5rem)]">
             <span className="block">One dog.</span>
             <span className="block">Four tasks.</span>
             <span className="block text-coral">One list.</span>
@@ -532,11 +540,14 @@ export default function AboutPage() {
         {/* Live product surface — the real Today page (header, week strip,
             Active Care chip, the actual TaskCard), set on a solid Cobalt
             backdrop and cropped at the bottom edge so it reads as a phone
-            caught mid-shot, not a floating card. The four task-type badges
-            drift in from a scattered rest position and fade into the list —
-            everything on the calendar, landing in one place. */}
+            caught mid-shot, not a floating card. Rendered at its natural
+            width (same as the real app) then scaled down as a whole, so
+            TaskCard never has to reflow into a too-narrow column — it just
+            gets visually smaller, like a shrunk screenshot. The four
+            task-type badges (same icon + color as the real task rows) drift
+            in from a scattered rest position and dock at the mockup's edge. */}
         <div className="rise-in justify-self-center w-full max-w-[340px]" style={{ animationDelay: '260ms' }}>
-          <div className="relative overflow-hidden rounded-[36px] bg-cobalt h-[460px] sm:h-[500px]">
+          <div className="relative overflow-hidden rounded-[36px] bg-cobalt h-[420px] sm:h-[450px]">
             {/* Decorative circles — sized and inset so nothing bleeds past
                 the panel's clipped edge. */}
             <div
@@ -548,24 +559,32 @@ export default function AboutPage() {
               className="absolute top-4 -right-14 size-40 rounded-full bg-white/10"
             />
 
-            {HERO_ICON_BADGES.map(({ Icon, color, style, tx, ty, delay }, i) => (
+            <div className="absolute left-1/2 -translate-x-1/2 top-4" style={{ width: HERO_PHONE_DISPLAY_WIDTH }}>
+              <div
+                style={{
+                  width: HERO_PHONE_NATIVE_WIDTH,
+                  transform: `scale(${HERO_PHONE_DISPLAY_WIDTH / HERO_PHONE_NATIVE_WIDTH})`,
+                  transformOrigin: 'top left',
+                }}
+              >
+                <PhoneFrame>
+                  <HeroTodayScreen tasks={tasks} onDone={markDone} onUndo={markUndone} />
+                </PhoneFrame>
+              </div>
+            </div>
+
+            {HERO_ICON_BADGES.map(({ Icon, bg, style, tx, ty, delay }, i) => (
               <span
                 key={i}
                 aria-hidden="true"
-                className="hero-icon-float absolute size-10 rounded-full bg-white flex items-center justify-center pointer-events-none"
+                className={`hero-icon-float absolute size-11 rounded-full ${bg} flex items-center justify-center pointer-events-none`}
                 style={
                   { ...style, '--tx': `${tx}px`, '--ty': `${ty}px`, animationDelay: delay } as unknown as React.CSSProperties
                 }
               >
-                <Icon size={17} className={color} />
+                <Icon size={19} className="text-white" />
               </span>
             ))}
-
-            <div className="absolute left-1/2 -translate-x-1/2 top-4 w-[90%] max-w-[300px]">
-              <PhoneFrame>
-                <HeroTodayScreen tasks={tasks} onDone={markDone} onUndo={markUndone} />
-              </PhoneFrame>
-            </div>
           </div>
           <p className="font-dm text-[13px] text-text-muted text-center mt-4">
             Go ahead — tap a <span className="font-bold text-text-secondary">Done</span> button. It
@@ -584,12 +603,12 @@ export default function AboutPage() {
             <p className="font-dm font-bold text-[12px] uppercase tracking-wide text-coral">
               How it works
             </p>
-            <h2 className="font-outfit font-bold text-cobalt text-[clamp(1.75rem,4vw,2.5rem)] leading-tight tracking-[-0.02em] mt-2">
+            <h2 className="font-outfit font-bold text-cobalt text-[clamp(2.25rem,5.5vw,3.5rem)] leading-tight tracking-[-0.02em] mt-2">
               From “can you take him this weekend?” to a checklist
             </h2>
           </div>
 
-          <div className="grid lg:grid-cols-[1fr_320px] lg:gap-16 mt-8">
+          <div className="grid lg:grid-cols-[1fr_380px] lg:gap-16 mt-8">
             <div className="flex flex-col">
               {STEPS.map((step, i) => (
                 <div
@@ -598,13 +617,13 @@ export default function AboutPage() {
                     stepRefs.current[i] = el
                   }}
                   data-step-index={i}
-                  className="flex flex-col justify-center py-6 lg:min-h-[70vh] lg:py-0"
+                  className="flex flex-col justify-center py-8 lg:min-h-[70vh] lg:py-0"
                 >
                   <button
                     type="button"
                     onClick={() => scrollToStep(i)}
                     aria-current={i === activeStep}
-                    className={`w-full flex items-start gap-4 text-left rounded-[18px] px-4 py-4 transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coral ${
+                    className={`w-full flex items-start gap-5 text-left rounded-[22px] px-5 py-5 transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coral ${
                       i === activeStep ? 'bg-card' : 'hover:bg-card/60'
                     }`}
                   >
@@ -612,7 +631,7 @@ export default function AboutPage() {
                         does for the active bottom-nav tab in the app —
                         wayfinding, not action, so it stays off-limits to Ember. */}
                     <span
-                      className={`relative shrink-0 size-8 rounded-full font-outfit font-bold text-[14px] flex items-center justify-center transition-colors duration-300 ${
+                      className={`relative shrink-0 size-10 rounded-full font-outfit font-bold text-[16px] flex items-center justify-center transition-colors duration-300 ${
                         i === activeStep
                           ? 'bg-cobalt text-white'
                           : 'bg-white border border-border-light text-text-muted'
@@ -622,14 +641,14 @@ export default function AboutPage() {
                     </span>
                     <span>
                       <span
-                        className={`block font-outfit font-bold text-[19px] leading-tight transition-colors duration-300 ${
-                          i === activeStep ? 'text-text-primary' : 'text-text-secondary'
+                        className={`block font-outfit font-bold text-[26px] leading-tight tracking-[-0.01em] transition-colors duration-300 ${
+                          i === activeStep ? 'text-cobalt' : 'text-text-secondary'
                         }`}
                       >
                         {step.title}
                       </span>
                       <span
-                        className={`block font-dm text-[15px] leading-relaxed mt-1.5 max-w-[40ch] transition-colors duration-300 ${
+                        className={`block font-dm text-[16px] leading-relaxed mt-2 max-w-[40ch] transition-colors duration-300 ${
                           i === activeStep ? 'text-text-secondary' : 'text-text-muted'
                         }`}
                       >
@@ -639,9 +658,9 @@ export default function AboutPage() {
                   </button>
 
                   {/* Mobile: no room for a pinned sidebar, so each step
-                      carries its own mockup inline. */}
-                  <div className="lg:hidden mt-4 px-4">
-                    <div className="w-full max-w-[280px] mx-auto">
+                      carries its own mockup inline, at real mobile size. */}
+                  <div className="lg:hidden mt-5 px-4">
+                    <div className="w-full max-w-[340px] mx-auto">
                       <PhoneFrame>
                         <step.Mock />
                       </PhoneFrame>
@@ -653,7 +672,7 @@ export default function AboutPage() {
 
             {/* Desktop: pinned mockup, crossfading as scroll crosses steps. */}
             <div className="hidden lg:block sticky top-24 self-start">
-              <div className="grid w-full max-w-[300px] mx-auto">
+              <div className="grid w-full max-w-[360px] mx-auto">
                 {STEPS.map((step, i) => (
                   <div
                     key={step.title}
@@ -689,7 +708,7 @@ export default function AboutPage() {
                   Google Calendar
                 </span>
               </div>
-              <h2 className="font-outfit font-bold text-cobalt text-[clamp(1.75rem,4vw,2.5rem)] leading-tight tracking-[-0.02em] mt-5">
+              <h2 className="font-outfit font-bold text-cobalt text-[clamp(2.25rem,5.5vw,3.5rem)] leading-tight tracking-[-0.02em] mt-5">
                 Your bookings come in. Your tasks go out.
               </h2>
               <p className="font-dm text-[16px] text-text-secondary leading-relaxed mt-4 max-w-[46ch]">
@@ -759,7 +778,7 @@ export default function AboutPage() {
           <p className="font-dm font-bold text-[12px] uppercase tracking-wide text-coral text-center">
             Questions
           </p>
-          <h2 className="font-outfit font-bold text-cobalt text-[clamp(1.75rem,4vw,2.5rem)] leading-tight tracking-[-0.02em] mt-2 text-center">
+          <h2 className="font-outfit font-bold text-cobalt text-[clamp(2.25rem,5.5vw,3.5rem)] leading-tight tracking-[-0.02em] mt-2 text-center">
             Good to know
           </h2>
           <div className="mt-10">
@@ -790,7 +809,7 @@ export default function AboutPage() {
         />
         <div className="relative mx-auto max-w-[1100px] px-6 py-20 sm:py-24 text-center">
           <h2
-            className="font-outfit font-bold text-white text-[clamp(1.875rem,5vw,3rem)] leading-[1.05] tracking-[-0.02em] mx-auto max-w-[18ch]"
+            className="font-outfit font-bold text-white text-[clamp(2.25rem,6vw,4rem)] leading-[1.05] tracking-[-0.02em] mx-auto max-w-[18ch]"
             style={{ textWrap: 'balance' }}
           >
             Zero missed meals. Zero missed meds.
