@@ -118,8 +118,9 @@ body {
    translate(-50%,-50%) to recenter the badge's own box on that point —
    without it the badge's top-left corner lands on the target instead of
    its center, which reads as a second icon floating down-right of the
-   real one. End scale (0.73) shrinks the 44px badge to the real 32px
-   icon's size, so it reads as docking into it, not hovering beside it. */
+   real one. End scale (0.55) shrinks the 44px badge to the real task
+   icon's 24px (1.5rem, dense mode) size, so it reads as docking into it,
+   not landing oversized beside it. */
 @keyframes icon-dock {
   0% {
     top: var(--s-top);
@@ -136,7 +137,7 @@ body {
     top: var(--e-top);
     left: var(--e-left);
     opacity: 1;
-    transform: translate(-50%, -50%) scale(0.73);
+    transform: translate(-50%, -50%) scale(0.55);
   }
 }
 .hero-icon-dock {
@@ -150,7 +151,7 @@ body {
     top: var(--e-top);
     left: var(--e-left);
     opacity: 1;
-    transform: translate(-50%, -50%) scale(0.73);
+    transform: translate(-50%, -50%) scale(0.55);
   }
 }
 

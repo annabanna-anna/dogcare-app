@@ -83,6 +83,17 @@ function demoTasks(): Task[] {
       status: 'pending',
     },
     {
+      id: 'demo-4',
+      stayId: 'demo',
+      dogId: 'demo-george',
+      dogName: 'George',
+      type: 'medication',
+      title: 'Ear drops',
+      scheduledTime: todayAt(9, 0),
+      note: 'Left ear only.',
+      status: 'pending',
+    },
+    {
       id: 'demo-3',
       stayId: 'demo',
       dogId: 'demo-george',
@@ -93,14 +104,23 @@ function demoTasks(): Task[] {
       status: 'pending',
     },
     {
-      id: 'demo-4',
+      id: 'demo-5',
       stayId: 'demo',
       dogId: 'demo-george',
       dogName: 'George',
-      type: 'medication',
-      title: 'Ear drops',
-      scheduledTime: todayAt(14, 0),
-      note: 'Left ear only.',
+      type: 'walk',
+      title: 'Evening walk',
+      scheduledTime: todayAt(16, 0),
+      status: 'pending',
+    },
+    {
+      id: 'demo-6',
+      stayId: 'demo',
+      dogId: 'demo-george',
+      dogName: 'George',
+      type: 'meal',
+      title: 'Dinner',
+      scheduledTime: todayAt(17, 0),
       status: 'pending',
     },
   ]
@@ -145,11 +165,8 @@ function HeroTodayScreen({
         </h1>
       </div>
 
-      {/* Active Care */}
+      {/* Active dog chip — no "Active Care" eyebrow above it */}
       <div className="px-4 mb-4">
-        <p className="font-dm font-bold text-[10px] text-text-secondary uppercase tracking-widest mb-2">
-          Active Care
-        </p>
         <span className="inline-flex items-center gap-2.5 rounded-full pl-1.5 pr-4 py-1.5 bg-cream border border-border-light">
           <img
             src={GEORGE_PHOTO_URL}
@@ -401,20 +418,22 @@ const STEPS = [
 // instead of drifting in from around the mockup. The docking point itself
 // is measured from the real DOM in AboutPage, not hardcoded, since
 // TaskCard's row height varies with note text.
+// Ordered to match demoTasks(): walk, meal, medication (ear drops, now
+// before potty since it's earlier in the day), potty.
 const HERO_ICON_BADGES = [
   { Icon: PawPrint, bg: 'bg-green-vivid', start: { top: '4%', left: '3%' }, delay: '0.2s' },
   { Icon: DogBowlIcon, bg: 'bg-coral', start: { top: '6%', left: '76%' }, delay: '0.9s' },
-  { Icon: PawPrint, bg: 'bg-green-vivid', start: { top: '40%', left: '3%' }, delay: '1.6s' },
-  { Icon: Pill, bg: 'bg-blue-task', start: { top: '44%', left: '76%' }, delay: '2.3s' },
+  { Icon: Pill, bg: 'bg-blue-task', start: { top: '40%', left: '3%' }, delay: '1.6s' },
+  { Icon: PawPrint, bg: 'bg-green-vivid', start: { top: '44%', left: '76%' }, delay: '2.3s' },
 ] as const
 
-// TaskCard's own layout in `dense` mode (used here): a 40px time column +
-// 2px gap (gap-0.5) puts the icon circle's horizontal center at
-// 40+2+12 = 54px from the row's left edge; the icon sits flush at the
-// row's top, so its vertical center is half its own 24px (size-6, 1.5rem)
-// height, ~12px down. Both are fixed px regardless of row width, so this
-// holds at any breakpoint.
-const TASK_ICON_OFFSET = { x: 54, y: 12 }
+// TaskCard's own layout in `dense` mode (used here): a 36px (2.25rem) time
+// column + 4px gap (gap-1, 0.25rem) puts the icon circle's horizontal
+// center at 36+4+12 = 52px from the row's left edge; the icon sits flush
+// at the row's top, so its vertical center is half its own 24px (size-6,
+// 1.5rem) height, ~12px down. Both are fixed px regardless of row width,
+// so this holds at any breakpoint.
+const TASK_ICON_OFFSET = { x: 52, y: 12 }
 
 const FEATURES = [
   {
@@ -630,7 +649,7 @@ export default function AboutPage() {
               className="absolute top-4 -right-14 size-40 rounded-full bg-white/10"
             />
 
-            <div className="absolute left-1/2 -translate-x-1/2 top-8" style={HERO_PHONE_SIZE}>
+            <div className="absolute left-1/2 -translate-x-1/2 top-16" style={HERO_PHONE_SIZE}>
               <PhoneFrame>
                 <HeroTodayScreen
                   tasks={tasks}
@@ -661,7 +680,7 @@ export default function AboutPage() {
                     } as unknown as React.CSSProperties
                   }
                 >
-                  <Icon size={19} className="text-white" />
+                  <Icon size={24} className="text-white" />
                 </span>
               )
             })}

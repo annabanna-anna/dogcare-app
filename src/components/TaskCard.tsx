@@ -49,11 +49,11 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, den
     : formatTime(task.scheduledTime)
 
   return (
-    <div className={`relative flex ${dense ? 'gap-0.5' : 'gap-3'} pb-5`}>
+    <div className={`relative flex ${dense ? 'gap-1' : 'gap-3'} pb-5`}>
       {/* Time column — narrower in dense mode: compact times ("8 AM", "12
           PM") never need the full 68px the app's longest label ("11:30
           AM") does. */}
-      <div className={`${dense ? 'w-10' : 'w-[68px]'} shrink-0 pt-1 ${isCompleted ? 'opacity-50' : ''}`}>
+      <div className={`${dense ? 'w-9' : 'w-[68px]'} shrink-0 pt-1 ${isCompleted ? 'opacity-50' : ''}`}>
         <span
           className={`font-dm font-bold ${dense ? 'text-[12px]' : 'text-[13px]'} ${
             isOverdue ? 'text-coral' : 'text-text-primary'
