@@ -34,6 +34,8 @@ create table if not exists dogs (
   medication_notes  text not null default '',
   walk_notes        text not null default '',
   emergency_notes   text not null default '',
+  other_notes       text not null default '',
+  walk_time_flexible boolean not null default false,
   care_schedule     jsonb not null default '[]'::jsonb,
   created_at        timestamptz not null default now(),
   updated_at        timestamptz not null default now()
@@ -79,6 +81,11 @@ exception when duplicate_object then null; end $$;
 -- Set once the send-task-reminders Edge Function has pushed a reminder for
 -- this task, so each task only ever notifies once.
 alter table tasks add column if not exists reminder_sent_at timestamptz;
+
+-- Patches an existing dogs table (created before the catch-all notes field
+-- existed) — no-ops on a fresh install where the column above already covers this.
+alter table dogs add column if not exists other_notes text not null default '';
+alter table dogs add column if not exists walk_time_flexible boolean not null default false;
 
 -- One row per browser/device that turned on push reminders in Settings —
 -- the endpoint/p256dh/auth triple is the Web Push subscription the browser

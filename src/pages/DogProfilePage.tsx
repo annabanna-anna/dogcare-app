@@ -10,6 +10,7 @@ import {
   Pencil,
   Clock,
   Trash2,
+  StickyNote,
 } from 'lucide-react'
 import DogBowlIcon from '../components/icons/DogBowlIcon'
 import DogIcon from '../components/icons/DogIcon'
@@ -223,6 +224,12 @@ export default function DogProfilePage() {
           content={dog.emergencyNotes}
           emptyText="No emergency notes."
         />
+        <CareNoteSection
+          title="Other Notes"
+          icon={<StickyNote size={16} />}
+          content={dog.otherNotes}
+          emptyText="No other notes."
+        />
 
         {/* Daily Schedule */}
         <div className="bg-white border border-border-light rounded-[16px] p-4">
@@ -231,6 +238,11 @@ export default function DogProfilePage() {
             <h3 className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-wide">
               Daily Schedule
             </h3>
+            {dog.walkTimeFlexible && (
+              <span className="ml-auto text-[11px] font-dm font-bold bg-[#eef1fd] text-cobalt rounded-full px-2 py-0.5">
+                Walk time flexible
+              </span>
+            )}
           </div>
           <div className="flex flex-col gap-3">
             {dog.careSchedule.map((entry, i) => {

@@ -22,7 +22,9 @@ export interface Dog {
   medicationNotes: string
   walkNotes: string
   emergencyNotes: string
+  otherNotes: string
   // Regular daily schedule
+  walkTimeFlexible: boolean
   careSchedule: CareScheduleEntry[]
   createdAt: string
   updatedAt: string

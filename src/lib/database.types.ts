@@ -24,6 +24,8 @@ export interface Database {
           medication_notes: string
           walk_notes: string
           emergency_notes: string
+          other_notes: string
+          walk_time_flexible: boolean
           care_schedule: CareScheduleEntry[]
           created_at: string
           updated_at: string
@@ -42,6 +44,8 @@ export interface Database {
           medication_notes?: string
           walk_notes?: string
           emergency_notes?: string
+          other_notes?: string
+          walk_time_flexible?: boolean
           care_schedule?: CareScheduleEntry[]
           created_at?: string
           updated_at?: string

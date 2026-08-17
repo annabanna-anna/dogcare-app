@@ -18,6 +18,8 @@ function mapRow(row: DogRow): Dog {
     medicationNotes: row.medication_notes,
     walkNotes: row.walk_notes,
     emergencyNotes: row.emergency_notes,
+    otherNotes: row.other_notes,
+    walkTimeFlexible: row.walk_time_flexible,
     careSchedule: row.care_schedule ?? [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -36,6 +38,8 @@ export interface DogInput {
   medicationNotes: string
   walkNotes: string
   emergencyNotes: string
+  otherNotes: string
+  walkTimeFlexible: boolean
   careSchedule: CareScheduleEntry[]
 }
 
@@ -77,6 +81,8 @@ export async function createDog(id: string, input: DogInput): Promise<Dog> {
       medication_notes: input.medicationNotes,
       walk_notes: input.walkNotes,
       emergency_notes: input.emergencyNotes,
+      other_notes: input.otherNotes,
+      walk_time_flexible: input.walkTimeFlexible,
       care_schedule: input.careSchedule,
     })
     .select('*')
@@ -100,6 +106,8 @@ export async function updateDog(id: string, input: DogInput): Promise<Dog> {
       medication_notes: input.medicationNotes,
       walk_notes: input.walkNotes,
       emergency_notes: input.emergencyNotes,
+      other_notes: input.otherNotes,
+      walk_time_flexible: input.walkTimeFlexible,
       care_schedule: input.careSchedule,
     })
     .eq('id', id)

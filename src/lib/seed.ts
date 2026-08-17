@@ -16,6 +16,8 @@ const sampleDogs: (DogInput & { careSchedule: CareScheduleEntry[] })[] = [
     medicationNotes: 'One Apoquel tablet (18 mg) with his evening meal. Do not skip.',
     walkNotes: 'Two walks a day, 30 min each. Keep on leash near traffic. Avoid the dog park on Elm St.',
     emergencyNotes: 'Vet: Greenfield Animal Hospital — Dr. Kim, +1 (555) 390-2211.',
+    otherNotes: '',
+    walkTimeFlexible: false,
     careSchedule: [
       { time: '08:00', taskType: 'walk', note: 'Avoid dog park' },
       { time: '08:30', taskType: 'meal', note: 'Two cups dry kibble' },
@@ -36,6 +38,8 @@ const sampleDogs: (DogInput & { careSchedule: CareScheduleEntry[] })[] = [
     medicationNotes: '',
     walkNotes: 'One 20-minute walk in the morning. Prone to bolting off-leash — always leashed.',
     emergencyNotes: 'Vet: Westside Animal Clinic — Dr. Patel, +1 (555) 288-0091.',
+    otherNotes: '',
+    walkTimeFlexible: false,
     careSchedule: [
       { time: '07:30', taskType: 'walk', note: '' },
       { time: '08:00', taskType: 'meal', note: 'Half cup kibble' },
@@ -54,6 +58,8 @@ const sampleDogs: (DogInput & { careSchedule: CareScheduleEntry[] })[] = [
     medicationNotes: 'Fish oil supplement with breakfast for his skin.',
     walkNotes: 'Loves long sniffy walks, 45 min ideally. Strong nose — keep leashed near trails.',
     emergencyNotes: 'Vet: Greenfield Animal Hospital — Dr. Kim, +1 (555) 390-2211.',
+    otherNotes: '',
+    walkTimeFlexible: false,
     careSchedule: [
       { time: '07:00', taskType: 'meal', note: 'With fish oil supplement' },
       { time: '07:30', taskType: 'walk', note: '45 min sniffy walk' },

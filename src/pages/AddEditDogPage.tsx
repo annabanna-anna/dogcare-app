@@ -36,6 +36,8 @@ interface FormState {
   medicationNotes: string
   walkNotes: string
   emergencyNotes: string
+  otherNotes: string
+  walkTimeFlexible: boolean
 }
 
 const defaultForm: FormState = {
@@ -49,6 +51,8 @@ const defaultForm: FormState = {
   medicationNotes: '',
   walkNotes: '',
   emergencyNotes: '',
+  otherNotes: '',
+  walkTimeFlexible: false,
 }
 
 const sizeOptions: { value: DogSize; label: string; weight: string }[] = [
@@ -274,9 +278,9 @@ function Textarea({
 }
 
 /**
- * Rectangular photo picker with adjustable crop:
+ * Square photo picker with adjustable crop:
  * drag the image to position it, slide to zoom. The visible
- * rectangle is what gets saved (baked via canvas on submit).
+ * square is what gets saved (baked via canvas on submit).
  */
 function PhotoCropField({
   src,
@@ -357,7 +361,7 @@ function PhotoCropField({
       {!src ? (
         <button
           onClick={() => fileRef.current?.click()}
-          className="w-full aspect-[4/3] rounded-[16px] border-2 border-dashed border-border-light bg-white flex flex-col items-center justify-center gap-2 text-text-secondary active:bg-gray-50 transition-colors"
+          className="w-full max-w-[280px] mx-auto aspect-square rounded-[16px] border-2 border-dashed border-border-light bg-white flex flex-col items-center justify-center gap-2 text-text-secondary active:bg-gray-50 transition-colors"
         >
           <ImagePlus size={28} strokeWidth={1.8} />
           <span className="font-dm font-bold text-[14px]">Upload photo</span>
@@ -366,7 +370,7 @@ function PhotoCropField({
         <>
           <div
             ref={boxRef}
-            className="relative w-full aspect-[4/3] rounded-[16px] overflow-hidden bg-card touch-none cursor-grab active:cursor-grabbing select-none"
+            className="relative w-full max-w-[280px] mx-auto aspect-square rounded-[16px] overflow-hidden bg-card touch-none cursor-grab active:cursor-grabbing select-none"
             onPointerDown={(e) => {
               drag.current = { startX: e.clientX, startY: e.clientY, panX: pan.x, panY: pan.y }
               ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
@@ -485,6 +489,8 @@ export default function AddEditDogPage() {
           medicationNotes: d.medicationNotes,
           walkNotes: d.walkNotes,
           emergencyNotes: d.emergencyNotes,
+          otherNotes: d.otherNotes,
+          walkTimeFlexible: d.walkTimeFlexible,
         })
         setSchedule(d.careSchedule.map((e) => ({ ...e })))
         setPhotoSrc(d.photoUrl ?? null)
@@ -514,11 +520,11 @@ export default function AddEditDogPage() {
       img.src = photoSrc
       await img.decode()
       const canvas = document.createElement('canvas')
-      canvas.width = 880
-      canvas.height = 660
+      canvas.width = 800
+      canvas.height = 800
       const ctx = canvas.getContext('2d')
       if (!ctx) return undefined
-      ctx.drawImage(img, -pan.x / s, -pan.y / s, box.width / s, box.height / s, 0, 0, 880, 660)
+      ctx.drawImage(img, -pan.x / s, -pan.y / s, box.width / s, box.height / s, 0, 0, 800, 800)
       return await new Promise<Blob | undefined>((resolve) =>
         canvas.toBlob((blob) => resolve(blob ?? undefined), 'image/jpeg', 0.85),
       )
@@ -528,7 +534,6 @@ export default function AddEditDogPage() {
   }
 
   const [scheduleWarning, setScheduleWarning] = useState<'empty' | 'no-walk' | null>(null)
-  const [noWalkAcknowledged, setNoWalkAcknowledged] = useState(false)
   const [nameTouched, setNameTouched] = useState(false)
   const scheduleSectionRef = useRef<HTMLElement>(null)
   const hasWalkEntry = schedule.some((e) => e.taskType === 'walk')
@@ -542,7 +547,7 @@ export default function AddEditDogPage() {
       setScheduleWarning('empty')
       return
     }
-    if (!hasWalkEntry && !noWalkAcknowledged) {
+    if (!hasWalkEntry && !form.walkTimeFlexible) {
       setScheduleWarning('no-walk')
       return
     }
@@ -763,6 +768,14 @@ export default function AddEditDogPage() {
                 rows={4}
               />
             </div>
+            <div>
+              <FieldLabel>Other Notes</FieldLabel>
+              <Textarea
+                value={form.otherNotes}
+                onChange={set('otherNotes')}
+                placeholder="Anything else worth knowing..."
+              />
+            </div>
           </div>
         </section>
 
@@ -777,8 +790,8 @@ export default function AddEditDogPage() {
           <label className="flex items-center gap-2 px-1 mb-3 cursor-pointer">
             <input
               type="checkbox"
-              checked={noWalkAcknowledged}
-              onChange={(e) => setNoWalkAcknowledged(e.target.checked)}
+              checked={form.walkTimeFlexible}
+              onChange={(e) => set('walkTimeFlexible')(e.target.checked)}
               className="accent-coral size-4 shrink-0"
             />
             <span className="font-dm text-[13px] text-text-secondary">
@@ -829,16 +842,23 @@ export default function AddEditDogPage() {
                     <X size={14} />
                   </button>
                 </div>
-                <input
-                  type="text"
+                <textarea
                   value={entry.note ?? ''}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setSchedule((prev) =>
                       prev.map((en, j) => (j === i ? { ...en, note: e.target.value } : en)),
                     )
-                  }
+                    e.target.style.height = 'auto'
+                    e.target.style.height = `${e.target.scrollHeight}px`
+                  }}
+                  ref={(el) => {
+                    if (!el) return
+                    el.style.height = 'auto'
+                    el.style.height = `${el.scrollHeight}px`
+                  }}
+                  rows={1}
                   placeholder={scheduleNotePlaceholder[entry.taskType]}
-                  className="w-full bg-white border border-border-faint rounded-[10px] px-3 py-2 font-dm text-[13px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors"
+                  className="w-full bg-white border border-border-faint rounded-[10px] px-3 py-2 font-dm text-[13px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors resize-none overflow-hidden"
                 />
               </div>
             ))}
@@ -897,7 +917,7 @@ export default function AddEditDogPage() {
                 fullWidth
                 variant="ghost"
                 onClick={() => {
-                  if (scheduleWarning === 'no-walk') setNoWalkAcknowledged(true)
+                  if (scheduleWarning === 'no-walk') set('walkTimeFlexible')(true)
                   setScheduleWarning(null)
                   void doSave()
                 }}
