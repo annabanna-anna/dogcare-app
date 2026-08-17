@@ -232,7 +232,7 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, den
             flex+justify-center keeps short content vertically balanced
             inside that reserved height instead of hugging the top. */}
         <div
-          className={`flex-1 min-w-0 flex flex-col justify-center ${dense ? 'min-h-9' : 'min-h-11'} py-1 ${
+          className={`flex-1 min-w-0 flex flex-col justify-center ${dense ? 'min-h-9 pr-3' : 'min-h-11 pr-5'} py-1 ${
             isCompleted ? 'opacity-50' : ''
           }`}
         >

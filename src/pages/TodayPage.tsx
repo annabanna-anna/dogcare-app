@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, type TouchEvent } from 'react'
+import { useState, useMemo, useEffect, useRef, type PointerEvent } from 'react'
 import { CalendarPlus, UserPlus, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
 import DogIcon from '../components/icons/DogIcon'
 import { Link, useNavigate } from 'react-router-dom'
@@ -53,24 +53,31 @@ export default function TodayPage() {
   const [selectedDate, setSelectedDate] = useState(() => new Date())
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week')
   const [showPastTasks, setShowPastTasks] = useState(false)
-  const touchStartX = useRef<number | null>(null)
-  const touchStartY = useRef<number | null>(null)
+  const swipeStart = useRef<{ x: number; y: number } | null>(null)
+  const didSwipe = useRef(false)
 
   const SWIPE_THRESHOLD = 40
 
-  const handleWeekTouchStart = (e: TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX
-    touchStartY.current = e.touches[0].clientY
+  const handleWeekPointerDown = (e: PointerEvent) => {
+    swipeStart.current = { x: e.clientX, y: e.clientY }
   }
 
-  const handleWeekTouchEnd = (e: TouchEvent) => {
-    if (touchStartX.current === null || touchStartY.current === null) return
-    const deltaX = e.changedTouches[0].clientX - touchStartX.current
-    const deltaY = e.changedTouches[0].clientY - touchStartY.current
-    touchStartX.current = null
-    touchStartY.current = null
+  const handleWeekPointerUp = (e: PointerEvent) => {
+    if (!swipeStart.current) return
+    const deltaX = e.clientX - swipeStart.current.x
+    const deltaY = e.clientY - swipeStart.current.y
+    swipeStart.current = null
     if (Math.abs(deltaX) < SWIPE_THRESHOLD || Math.abs(deltaX) < Math.abs(deltaY)) return
+    didSwipe.current = true
     setSelectedDate((d) => addDays(d, deltaX < 0 ? 7 : -7))
+  }
+
+  const handleWeekDayClick = (day: Date) => {
+    if (didSwipe.current) {
+      didSwipe.current = false
+      return
+    }
+    setSelectedDate(day)
   }
 
   // The date range whose tasks are loaded: the selected week, or the whole
@@ -252,9 +259,9 @@ export default function TodayPage() {
       {/* Day picker */}
       {viewMode === 'week' ? (
         <div
-          className="px-6 mb-6"
-          onTouchStart={handleWeekTouchStart}
-          onTouchEnd={handleWeekTouchEnd}
+          className="px-6 mb-6 touch-pan-y"
+          onPointerDown={handleWeekPointerDown}
+          onPointerUp={handleWeekPointerUp}
         >
           <div className="flex justify-between">
             {Array.from({ length: 7 }, (_, i) => {
@@ -266,7 +273,7 @@ export default function TodayPage() {
                 <button
                   key={key}
                   type="button"
-                  onClick={() => setSelectedDate(day)}
+                  onClick={() => handleWeekDayClick(day)}
                   className="flex flex-col items-center gap-1.5 active:scale-[0.94] transition-transform"
                 >
                   <span className="font-dm font-bold text-[11px] uppercase tracking-widest text-text-muted">
