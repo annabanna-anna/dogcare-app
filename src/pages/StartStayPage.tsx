@@ -215,7 +215,18 @@ export default function StartStayPage() {
   const [startTime, setStartTime] = useState(startParam.time)
   const [endDay, setEndDay] = useState(endParam.day)
   const [endTime, setEndTime] = useState(endParam.time)
+  const [endDayEdited, setEndDayEdited] = useState(isEditMode)
   const [notes, setNotes] = useState('')
+
+  function handleStartDayChange(day: string) {
+    setStartDay(day)
+    if (!endDayEdited) setEndDay(day)
+  }
+
+  function handleEndDayChange(day: string) {
+    setEndDayEdited(true)
+    setEndDay(day)
+  }
 
   useEffect(() => {
     listDogs()
@@ -236,6 +247,7 @@ export default function StartStayPage() {
         setStartTime(start.time)
         setEndDay(end.day)
         setEndTime(end.time)
+        setEndDayEdited(true)
         setNotes(stay.notes ?? '')
       })
       .finally(() => !cancelled && setLoadingStay(false))
@@ -313,8 +325,8 @@ export default function StartStayPage() {
           <button
             onClick={() => !loading && !isEditMode && setPickerOpen(true)}
             disabled={loading || isEditMode}
-            className={`w-full flex items-center gap-3 p-3 rounded-[14px] border transition-colors text-left ${
-              selectedDog ? 'border-coral bg-[#fff5f3]' : 'border-border-light bg-white active:bg-gray-50'
+            className={`w-full flex items-center gap-3 p-3 rounded-[14px] border border-border-light bg-white transition-colors text-left ${
+              selectedDog ? '' : 'active:bg-gray-50'
             } ${isEditMode ? 'opacity-70' : ''}`}
           >
             {selectedDog ? (
@@ -353,14 +365,14 @@ export default function StartStayPage() {
               label="Start"
               day={startDay}
               time={startTime}
-              onDayChange={setStartDay}
+              onDayChange={handleStartDayChange}
               onTimeChange={setStartTime}
             />
             <DateTimeField
               label="End"
               day={endDay}
               time={endTime}
-              onDayChange={setEndDay}
+              onDayChange={handleEndDayChange}
               onTimeChange={setEndTime}
             />
           </div>
