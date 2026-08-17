@@ -35,8 +35,11 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, den
   const { icon: Icon, bg } = typeConfig[task.type] ?? typeConfig.other
   const isDone = task.status === 'done'
   const isSkipped = task.status === 'skipped'
-  const isOverdue = task.status === 'overdue'
   const isCompleted = isDone || isSkipped
+  // Overdue isn't a status a task gets stuck in — it's just a pending task
+  // whose time has already passed, so it's computed live off the clock
+  // rather than read off task.status.
+  const isOverdue = task.status === 'pending' && new Date(task.scheduledTime) < new Date()
   const displayTime = dense
     ? formatTime(task.scheduledTime).replace(':00 ', ' ')
     : formatTime(task.scheduledTime)
@@ -202,11 +205,7 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, den
             PM") never need the full 68px the app's longest label ("11:30
             AM") does. */}
         <div className={`${dense ? 'w-9 pl-1' : 'w-[68px] pl-2'} shrink-0 pt-1 ${isCompleted ? 'opacity-50' : ''}`}>
-          <span
-            className={`font-dm font-bold ${dense ? 'text-[12px]' : 'text-[13px]'} ${
-              isOverdue ? 'text-coral' : 'text-text-primary'
-            }`}
-          >
+          <span className={`font-dm font-bold ${dense ? 'text-[12px]' : 'text-[13px]'} text-text-primary`}>
             {displayTime}
           </span>
         </div>
@@ -241,14 +240,10 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, den
               {task.dogName}
             </p>
           )}
-          <p
-            className={`font-dm font-bold ${dense ? 'text-[14px]' : 'text-[16px]'} leading-tight ${
-              isOverdue ? 'text-coral' : 'text-text-primary'
-            }`}
-          >
+          <p className={`font-dm font-bold ${dense ? 'text-[14px]' : 'text-[16px]'} leading-tight text-text-primary`}>
             {task.title}
             {isOverdue && (
-              <span className="ml-2 text-[11px] font-bold uppercase tracking-wide text-coral">
+              <span className="ml-2 px-1.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide text-coral bg-[#fdeee9]">
                 Overdue
               </span>
             )}

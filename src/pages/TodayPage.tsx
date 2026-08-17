@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, type PointerEvent } from 'react'
-import { CalendarPlus, UserPlus, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
+import { CalendarPlus, UserPlus, CalendarDays, CalendarCheck2, ChevronLeft, ChevronRight } from 'lucide-react'
 import DogIcon from '../components/icons/DogIcon'
 import { Link, useNavigate } from 'react-router-dom'
 import Button from '../components/Button'
@@ -243,17 +243,29 @@ export default function TodayPage() {
             {formatDayHeading(selectedDate.toISOString()).split(',')[0]}
           </h1>
         </div>
-        <button
-          type="button"
-          onClick={() => setViewMode((m) => (m === 'week' ? 'month' : 'week'))}
-          aria-label={viewMode === 'week' ? 'Show month' : 'Show week'}
-          aria-pressed={viewMode === 'month'}
-          className={`size-11 rounded-full flex items-center justify-center transition-colors active:scale-[0.94] ${
-            viewMode === 'month' ? 'bg-cobalt text-white' : 'bg-card text-cobalt'
-          }`}
-        >
-          <CalendarDays size={20} />
-        </button>
+        <div className="flex items-center gap-2">
+          {!isTodaySelected && (
+            <button
+              type="button"
+              onClick={() => setSelectedDate(new Date())}
+              aria-label="Jump to today"
+              className="size-11 rounded-full flex items-center justify-center bg-coral text-white transition-colors active:scale-[0.94]"
+            >
+              <CalendarCheck2 size={20} />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setViewMode((m) => (m === 'week' ? 'month' : 'week'))}
+            aria-label={viewMode === 'week' ? 'Show month' : 'Show week'}
+            aria-pressed={viewMode === 'month'}
+            className={`size-11 rounded-full flex items-center justify-center transition-colors active:scale-[0.94] ${
+              viewMode === 'month' ? 'bg-cobalt text-white' : 'bg-card text-cobalt'
+            }`}
+          >
+            <CalendarDays size={20} />
+          </button>
+        </div>
       </div>
 
       {/* Day picker */}
