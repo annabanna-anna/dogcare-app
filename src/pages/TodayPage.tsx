@@ -4,7 +4,6 @@ import DogIcon from '../components/icons/DogIcon'
 import { Link, useNavigate } from 'react-router-dom'
 import Button from '../components/Button'
 import TaskCard from '../components/TaskCard'
-import BottomNav from '../components/BottomNav'
 import { listTasksBetween, updateTaskStatus } from '../lib/tasks'
 import { listStays } from '../lib/stays'
 import { listDogs } from '../lib/dogs'
@@ -660,8 +659,6 @@ export default function TodayPage() {
           )}
         </>
       )}
-
-      <BottomNav />
     </div>
   )
 }

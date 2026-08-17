@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Outlet, useLocation } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase'
 import {
@@ -19,6 +19,7 @@ import SyncSettingsPage from './pages/SyncSettingsPage'
 import AboutPage from './pages/AboutPage'
 import PrivacyPage from './pages/PrivacyPage'
 import SplashScreen from './components/SplashScreen'
+import BottomNav from './components/BottomNav'
 
 /** Routes that render for signed-out visitors: the marketing page and the
  *  privacy policy. Both must be reachable without an account — Google's
@@ -128,17 +129,31 @@ function AppRoutes() {
     <>
       {splashOverlay}
       <Routes>
-        <Route path="/" element={<TodayPage />} />
-        <Route path="/dogs" element={<DogListPage />} />
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<TodayPage />} />
+          <Route path="/dogs" element={<DogListPage />} />
+          <Route path="/dogs/:id" element={<DogProfilePage />} />
+          <Route path="/stays/new" element={<StartStayPage />} />
+          <Route path="/stays/:stayId/edit" element={<StartStayPage />} />
+          <Route path="/calendar" element={<CalendarPage />} />
+          <Route path="/settings" element={<SyncSettingsPage />} />
+        </Route>
         <Route path="/dogs/new" element={<AddEditDogPage />} />
-        <Route path="/dogs/:id" element={<DogProfilePage />} />
         <Route path="/dogs/:id/edit" element={<AddEditDogPage />} />
-        <Route path="/stays/new" element={<StartStayPage />} />
-        <Route path="/stays/:stayId/edit" element={<StartStayPage />} />
         <Route path="/stays/preview" element={<TaskPreviewPage />} />
-        <Route path="/calendar" element={<CalendarPage />} />
-        <Route path="/settings" element={<SyncSettingsPage />} />
       </Routes>
+    </>
+  )
+}
+
+/** Wraps the routes that share the bottom tab bar, keeping BottomNav
+ *  mounted across navigations within this set so its active-tab pill
+ *  can animate between positions instead of remounting each time. */
+function AppLayout() {
+  return (
+    <>
+      <Outlet />
+      <BottomNav />
     </>
   )
 }

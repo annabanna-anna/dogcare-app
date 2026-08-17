@@ -3,7 +3,6 @@ import { Plus, Search } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import PageHeader from '../components/PageHeader'
 import DogCard from '../components/DogCard'
-import BottomNav from '../components/BottomNav'
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import Button from '../components/Button'
 import { listDogs } from '../lib/dogs'
@@ -230,8 +229,6 @@ export default function DogListPage() {
           <Plus size={26} />
         </button>
       </div>
-
-      <BottomNav />
     </div>
   )
 }

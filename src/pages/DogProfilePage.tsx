@@ -16,7 +16,6 @@ import DogBowlIcon from '../components/icons/DogBowlIcon'
 import DogIcon from '../components/icons/DogIcon'
 import PageHeader from '../components/PageHeader'
 import CareNoteSection from '../components/CareNoteSection'
-import BottomNav from '../components/BottomNav'
 import Button from '../components/Button'
 import { getDog, deleteDog } from '../lib/dogs'
 import { listStays } from '../lib/stays'
@@ -330,8 +329,6 @@ export default function DogProfilePage() {
           </div>
         </div>
       )}
-
-      <BottomNav />
     </div>
   )
 }

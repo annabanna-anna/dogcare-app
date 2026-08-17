@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { CalendarDays, ExternalLink, AlertCircle } from 'lucide-react'
 import DogIcon from '../components/icons/DogIcon'
 import PageHeader from '../components/PageHeader'
-import BottomNav from '../components/BottomNav'
 import { listStays } from '../lib/stays'
 import { listDogs } from '../lib/dogs'
 import { listTasksByStay } from '../lib/tasks'
@@ -346,8 +345,6 @@ export default function CalendarPage() {
           </div>
         </div>
       )}
-
-      <BottomNav />
     </div>
   )
 }

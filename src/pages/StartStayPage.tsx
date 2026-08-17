@@ -5,7 +5,6 @@ import DogIcon from '../components/icons/DogIcon'
 import { TimePickerButton } from '../components/TimePicker'
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
-import BottomNav from '../components/BottomNav'
 import { listDogs } from '../lib/dogs'
 import { getStay, updateStay } from '../lib/stays'
 import { createTasks, deleteTasksByStay, listTasksByStay } from '../lib/tasks'
@@ -422,8 +421,6 @@ export default function StartStayPage() {
           onClose={() => setPickerOpen(false)}
         />
       )}
-
-      <BottomNav />
     </div>
   )
 }

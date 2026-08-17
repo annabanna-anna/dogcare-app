@@ -13,7 +13,6 @@ import {
   ExternalLink,
 } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
-import BottomNav from '../components/BottomNav'
 import Button from '../components/Button'
 import {
   connectGoogleCalendar,
@@ -396,8 +395,6 @@ export default function SyncSettingsPage() {
           </div>
         </div>
       )}
-
-      <BottomNav />
     </div>
   )
 }
