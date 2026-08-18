@@ -7,7 +7,7 @@ import { getDog, createDog, updateDog, uploadDogPhoto } from '../lib/dogs'
 import { regenerateFutureTasksForDog } from '../lib/stayTaskSync'
 import { TimePickerButton } from '../components/TimePicker'
 import { DOG_BREEDS } from '../data/dogBreeds'
-import type { CareScheduleEntry, DogSize, TaskType } from '../types'
+import type { CareScheduleEntry, DogSize, TaskType, YesNoUnsure } from '../types'
 
 const scheduleTypeOptions: { value: TaskType; label: string }[] = [
   { value: 'walk', label: 'Walk' },
@@ -37,6 +37,9 @@ interface FormState {
   walkNotes: string
   emergencyNotes: string
   otherNotes: string
+  hasAllergies: YesNoUnsure
+  allergyNotes: string
+  goesToDogParks: YesNoUnsure
   walkTimeFlexible: boolean
 }
 
@@ -52,6 +55,9 @@ const defaultForm: FormState = {
   walkNotes: '',
   emergencyNotes: '',
   otherNotes: '',
+  hasAllergies: 'unsure',
+  allergyNotes: '',
+  goesToDogParks: 'unsure',
   walkTimeFlexible: false,
 }
 
@@ -61,6 +67,13 @@ const sizeOptions: { value: DogSize; label: string; weight: string }[] = [
   { value: 'large', label: 'Large', weight: '60–90 lb' },
   { value: 'extra-large', label: 'XL', weight: '90+ lb' },
 ]
+
+const yesNoUnsureOptions: { value: YesNoUnsure; label: string }[] = [
+  { value: 'yes', label: 'Yes' },
+  { value: 'no', label: 'No' },
+  { value: 'unsure', label: 'Not sure' },
+]
+
 
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
@@ -490,6 +503,9 @@ export default function AddEditDogPage() {
           walkNotes: d.walkNotes,
           emergencyNotes: d.emergencyNotes,
           otherNotes: d.otherNotes,
+          hasAllergies: d.hasAllergies,
+          allergyNotes: d.allergyNotes,
+          goesToDogParks: d.goesToDogParks,
           walkTimeFlexible: d.walkTimeFlexible,
         })
         setSchedule(d.careSchedule.map((e) => ({ ...e })))
@@ -742,6 +758,52 @@ export default function AddEditDogPage() {
                 onChange={set('foodNotes')}
                 placeholder="Food type, portion size, allergies, schedule..."
               />
+            </div>
+            <div>
+              <FieldLabel>Allergies?</FieldLabel>
+              <div className="flex gap-2">
+                {yesNoUnsureOptions.map(({ value, label }) => (
+                  <button
+                    key={value}
+                    onClick={() => set('hasAllergies')(value)}
+                    className={`flex-1 py-2.5 rounded-[12px] border font-dm font-bold text-[14px] transition-colors ${
+                      form.hasAllergies === value
+                        ? 'bg-coral border-coral text-white'
+                        : 'bg-white border-border-light text-text-secondary'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {form.hasAllergies === 'yes' && (
+                <div className="mt-2">
+                  <Textarea
+                    value={form.allergyNotes}
+                    onChange={set('allergyNotes')}
+                    placeholder="Which allergen(s)? e.g. chicken, beef, grain..."
+                    rows={2}
+                  />
+                </div>
+              )}
+            </div>
+            <div>
+              <FieldLabel>Goes to Dog Parks?</FieldLabel>
+              <div className="flex gap-2">
+                {yesNoUnsureOptions.map(({ value, label }) => (
+                  <button
+                    key={value}
+                    onClick={() => set('goesToDogParks')(value)}
+                    className={`flex-1 py-2.5 rounded-[12px] border font-dm font-bold text-[14px] transition-colors ${
+                      form.goesToDogParks === value
+                        ? 'bg-coral border-coral text-white'
+                        : 'bg-white border-border-light text-text-secondary'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
             <div>
               <FieldLabel>Medication Notes</FieldLabel>

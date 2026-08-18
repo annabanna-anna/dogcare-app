@@ -2,6 +2,8 @@
 
 export type DogSize = 'small' | 'medium' | 'large' | 'extra-large'
 
+export type YesNoUnsure = 'yes' | 'no' | 'unsure'
+
 export interface CareScheduleEntry {
   time: string     // e.g. "08:00"
   taskType: TaskType
@@ -23,6 +25,9 @@ export interface Dog {
   walkNotes: string
   emergencyNotes: string
   otherNotes: string
+  hasAllergies: YesNoUnsure
+  allergyNotes: string   // which allergen(s) — filled in when hasAllergies is 'yes'
+  goesToDogParks: YesNoUnsure
   // Regular daily schedule
   walkTimeFlexible: boolean
   careSchedule: CareScheduleEntry[]

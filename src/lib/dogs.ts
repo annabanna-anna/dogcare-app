@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { CareScheduleEntry, Dog, DogSize } from '../types'
+import type { CareScheduleEntry, Dog, DogSize, YesNoUnsure } from '../types'
 import type { Database } from './database.types'
 
 type DogRow = Database['public']['Tables']['dogs']['Row']
@@ -19,6 +19,9 @@ function mapRow(row: DogRow): Dog {
     walkNotes: row.walk_notes,
     emergencyNotes: row.emergency_notes,
     otherNotes: row.other_notes,
+    hasAllergies: row.has_allergies,
+    allergyNotes: row.allergy_notes,
+    goesToDogParks: row.goes_to_dog_parks,
     walkTimeFlexible: row.walk_time_flexible,
     careSchedule: row.care_schedule ?? [],
     createdAt: row.created_at,
@@ -39,6 +42,9 @@ export interface DogInput {
   walkNotes: string
   emergencyNotes: string
   otherNotes: string
+  hasAllergies: YesNoUnsure
+  allergyNotes: string
+  goesToDogParks: YesNoUnsure
   walkTimeFlexible: boolean
   careSchedule: CareScheduleEntry[]
 }
@@ -82,6 +88,9 @@ export async function createDog(id: string, input: DogInput): Promise<Dog> {
       walk_notes: input.walkNotes,
       emergency_notes: input.emergencyNotes,
       other_notes: input.otherNotes,
+      has_allergies: input.hasAllergies,
+      allergy_notes: input.allergyNotes,
+      goes_to_dog_parks: input.goesToDogParks,
       walk_time_flexible: input.walkTimeFlexible,
       care_schedule: input.careSchedule,
     })
@@ -107,6 +116,9 @@ export async function updateDog(id: string, input: DogInput): Promise<Dog> {
       walk_notes: input.walkNotes,
       emergency_notes: input.emergencyNotes,
       other_notes: input.otherNotes,
+      has_allergies: input.hasAllergies,
+      allergy_notes: input.allergyNotes,
+      goes_to_dog_parks: input.goesToDogParks,
       walk_time_flexible: input.walkTimeFlexible,
       care_schedule: input.careSchedule,
     })

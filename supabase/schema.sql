@@ -13,6 +13,11 @@ do $$ begin
 exception when duplicate_object then null; end $$;
 
 do $$ begin
+  create type yes_no_unsure as enum ('yes', 'no', 'unsure');
+exception when duplicate_object then null; end $$;
+
+
+do $$ begin
   create type task_status as enum ('pending', 'done', 'skipped', 'overdue');
 exception when duplicate_object then null; end $$;
 
@@ -35,6 +40,9 @@ create table if not exists dogs (
   walk_notes        text not null default '',
   emergency_notes   text not null default '',
   other_notes       text not null default '',
+  has_allergies     yes_no_unsure not null default 'unsure',
+  allergy_notes     text not null default '',
+  goes_to_dog_parks yes_no_unsure not null default 'unsure',
   walk_time_flexible boolean not null default false,
   care_schedule     jsonb not null default '[]'::jsonb,
   created_at        timestamptz not null default now(),
@@ -86,6 +94,9 @@ alter table tasks add column if not exists reminder_sent_at timestamptz;
 -- existed) — no-ops on a fresh install where the column above already covers this.
 alter table dogs add column if not exists other_notes text not null default '';
 alter table dogs add column if not exists walk_time_flexible boolean not null default false;
+alter table dogs add column if not exists has_allergies yes_no_unsure not null default 'unsure';
+alter table dogs add column if not exists allergy_notes text not null default '';
+alter table dogs add column if not exists goes_to_dog_parks yes_no_unsure not null default 'unsure';
 
 -- One row per browser/device that turned on push reminders in Settings —
 -- the endpoint/p256dh/auth triple is the Web Push subscription the browser

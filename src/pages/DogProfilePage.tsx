@@ -11,6 +11,8 @@ import {
   Clock,
   Trash2,
   StickyNote,
+  ShieldAlert,
+  Trees,
 } from 'lucide-react'
 import DogBowlIcon from '../components/icons/DogBowlIcon'
 import DogIcon from '../components/icons/DogIcon'
@@ -20,7 +22,7 @@ import Button from '../components/Button'
 import { getDog, deleteDog } from '../lib/dogs'
 import { listStays } from '../lib/stays'
 import { formatTime, formatShortDate } from '../utils/dateUtils'
-import type { Dog, Stay, TaskType } from '../types'
+import type { Dog, Stay, TaskType, YesNoUnsure } from '../types'
 
 const typeLabel: Record<TaskType, string> = {
   walk: 'Walk',
@@ -44,6 +46,40 @@ const typeIcon: Record<TaskType, React.ComponentType<{ size?: string | number; c
   medication: Pill,
   potty: PawPrint,
   other: PawPrint,
+}
+
+const yesNoUnsureLabel: Record<YesNoUnsure, string> = {
+  yes: 'Yes',
+  no: 'No',
+  unsure: 'Not sure',
+}
+
+function QuickFactRow({
+  icon,
+  label,
+  badgeLabel,
+  accent,
+}: {
+  icon: React.ReactNode
+  label: string
+  badgeLabel: string
+  accent: boolean
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-2 min-w-0">
+        <span className="text-coral shrink-0 flex">{icon}</span>
+        <span className="font-dm text-[14px] text-text-primary truncate">{label}</span>
+      </div>
+      <span
+        className={`font-dm font-bold text-[12px] uppercase tracking-widest px-2.5 py-1 rounded-full shrink-0 ${
+          accent ? 'bg-coral text-white' : 'bg-[#f2f2f2] text-text-secondary'
+        }`}
+      >
+        {badgeLabel}
+      </span>
+    </div>
+  )
 }
 
 export default function DogProfilePage() {
@@ -191,6 +227,27 @@ export default function DogProfilePage() {
             Start a Stay
           </Button>
         )}
+
+        {/* Quick Facts */}
+        <div className="bg-white border border-border-light rounded-[16px] p-4 flex flex-col gap-3">
+          <QuickFactRow
+            icon={<ShieldAlert size={16} />}
+            label="Allergies"
+            badgeLabel={yesNoUnsureLabel[dog.hasAllergies]}
+            accent={dog.hasAllergies === 'yes'}
+          />
+          {dog.hasAllergies === 'yes' && dog.allergyNotes && (
+            <p className="font-dm text-[13px] text-text-secondary leading-relaxed pl-6 -mt-1">
+              {dog.allergyNotes}
+            </p>
+          )}
+          <QuickFactRow
+            icon={<Trees size={16} />}
+            label="Goes to Dog Parks"
+            badgeLabel={yesNoUnsureLabel[dog.goesToDogParks]}
+            accent={dog.goesToDogParks === 'yes'}
+          />
+        </div>
 
         {/* Care Notes */}
         <CareNoteSection
