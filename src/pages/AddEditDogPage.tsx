@@ -596,7 +596,10 @@ export default function AddEditDogPage() {
       } else {
         await createDog(dogId, input)
       }
-      navigate(isEdit ? `/dogs/${dogId}` : '/dogs')
+      navigate(
+        isEdit ? `/dogs/${dogId}` : '/dogs',
+        isEdit ? undefined : { state: { justAddedName: form.name.trim() } },
+      )
     } catch (e) {
       const message =
         e instanceof Error

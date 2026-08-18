@@ -422,7 +422,7 @@ const FEATURES = [
   {
     Icon: Bell,
     title: 'Reminders that find you',
-    body: 'A push notification for each task, timed to the schedule — so a med window doesn’t slip by while you’re heads-down at work.',
+    body: 'A push notification for each task, timed to the schedule — so a med window doesn’t slip by while you’re heads-down at work. Add GoodPup to your home screen to get them.',
   },
   {
     Icon: CalendarDays,
@@ -439,7 +439,7 @@ const FEATURES = [
 const FAQS = [
   {
     q: 'Is GoodPup a mobile app I need to download?',
-    a: "No — GoodPup is a web app. Open it in your phone's browser, no App Store and nothing to install. Add it to your home screen if you want one-tap access, but that's optional.",
+    a: "No — GoodPup is a web app. Open it in your phone's browser, no App Store and nothing to install. Add it to your home screen for one-tap access — and if you want reminders, that step is required, not optional.",
   },
   {
     q: 'How many dogs can I track at once?',
@@ -447,7 +447,7 @@ const FAQS = [
   },
   {
     q: 'Does GoodPup send reminders?',
-    a: 'Yes — each task can send a push notification at its scheduled time, so a meal or a med window doesn’t slip by while you’re heads-down at work.',
+    a: 'Yes — each task can send a push notification at its scheduled time, so a meal or a med window doesn’t slip by while you’re heads-down at work. Reminders only work once GoodPup is added to your home screen, so do that first if you want them.',
   },
   {
     q: 'Do I need to connect Google Calendar?',

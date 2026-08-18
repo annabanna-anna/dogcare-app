@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Plus, Search } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { Plus, Search, Check } from 'lucide-react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import PageHeader from '../components/PageHeader'
 import DogCard from '../components/DogCard'
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
@@ -14,6 +14,7 @@ const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
 
 export default function DogListPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [query, setQuery] = useState('')
   const [dogs, setDogs] = useState<Dog[]>([])
   const [stays, setStays] = useState<Stay[]>([])
@@ -22,6 +23,18 @@ export default function DogListPage() {
   const [seeding, setSeeding] = useState(false)
   const letterRefs = useRef<Record<string, HTMLElement | null>>({})
   const now = new Date()
+
+  const justAddedName = (location.state as { justAddedName?: string } | null)?.justAddedName
+  const [addedBanner, setAddedBanner] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!justAddedName) return
+    setAddedBanner(justAddedName)
+    navigate(location.pathname, { replace: true, state: null })
+    const timer = setTimeout(() => setAddedBanner(null), 3500)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [justAddedName])
 
   function load() {
     return Promise.all([listDogs(), listStays()]).then(([dogRows, stayRows]) => {
@@ -118,6 +131,15 @@ export default function DogListPage() {
           </div>
         </div>
       </div>
+
+      {addedBanner && (
+        <div className="mx-6 mt-4 bg-[#dcfce7] rounded-[12px] px-4 py-3 flex items-center gap-2">
+          <Check size={16} className="text-[#15803d] shrink-0" />
+          <p className="font-dm text-[13px] text-[#15803d]">
+            {addedBanner} was added.
+          </p>
+        </div>
+      )}
 
       {error && (
         <div className="mx-6 mt-4 bg-[#fee2e2] rounded-[12px] px-4 py-3">
