@@ -633,14 +633,16 @@ export default function AddEditDogPage() {
 
   return (
     <div className="min-h-svh bg-cream pb-28">
-      <PageHeader sticky back title={isEdit ? `Edit ${existingName}` : 'Add Dog'} />
-
-      <div className="px-6 mt-4 flex flex-col gap-5">
+      <div className="sticky top-0 z-10 bg-cream">
+        <PageHeader back title={isEdit ? `Edit ${existingName}` : 'Add Dog'} />
         {error && (
-          <div className="bg-[#fee2e2] rounded-[12px] px-4 py-3">
+          <div className="mx-6 mb-2 bg-[#fee2e2] rounded-[12px] px-4 py-3">
             <p className="font-dm text-[13px] text-[#b91c1c]">{error}</p>
           </div>
         )}
+      </div>
+
+      <div className="px-6 mt-4 flex flex-col gap-5">
 
         {/* Photo */}
         <section>
