@@ -197,11 +197,13 @@ export default function StartStayPage() {
   const preselectedDogId = params.get('dog') ?? ''
 
   const now = new Date()
-  const weekLater = new Date(now)
-  weekLater.setDate(now.getDate() + 7)
+  const defaultStart = new Date(now)
+  defaultStart.setHours(9, 0, 0, 0)
+  const defaultEnd = new Date(now)
+  defaultEnd.setHours(17, 0, 0, 0)
 
-  const startParam = parseDateParam(params.get('start'), now)
-  const endParam = parseDateParam(params.get('end'), weekLater)
+  const startParam = parseDateParam(params.get('start'), defaultStart)
+  const endParam = parseDateParam(params.get('end'), defaultEnd)
 
   const [dogs, setDogs] = useState<Dog[]>([])
   const [loading, setLoading] = useState(true)
