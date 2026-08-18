@@ -257,8 +257,9 @@ function BreedField({ value, onChange }: { value: string; onChange: (v: string) 
         type="button"
         onClick={() => {
           setMixed(true)
-          setMixedBreeds(['', ''])
-          onChange('')
+          const seeded = [value.trim(), '']
+          setMixedBreeds(seeded)
+          onChange(formatMixedBreed(seeded))
         }}
         className="self-end font-dm font-medium text-[13px] text-coral underline"
       >
@@ -597,7 +598,13 @@ export default function AddEditDogPage() {
       }
       navigate(isEdit ? `/dogs/${dogId}` : '/dogs')
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save. Please try again.')
+      const message =
+        e instanceof Error
+          ? e.message
+          : e && typeof e === 'object' && 'message' in e && typeof e.message === 'string'
+            ? e.message
+            : 'Could not save. Please try again.'
+      setError(message)
     } finally {
       setSaving(false)
     }
@@ -626,7 +633,7 @@ export default function AddEditDogPage() {
 
   return (
     <div className="min-h-svh bg-cream pb-28">
-      <PageHeader back title={isEdit ? `Edit ${existingName}` : 'Add Dog'} />
+      <PageHeader sticky back title={isEdit ? `Edit ${existingName}` : 'Add Dog'} />
 
       <div className="px-6 mt-4 flex flex-col gap-5">
         {error && (

@@ -7,13 +7,18 @@ interface Props {
   subtitle?: string
   back?: boolean
   right?: ReactNode
+  sticky?: boolean
 }
 
-export default function PageHeader({ title, subtitle, back = false, right }: Props) {
+export default function PageHeader({ title, subtitle, back = false, right, sticky = false }: Props) {
   const navigate = useNavigate()
 
   return (
-    <div className="flex items-start gap-3 px-6 pt-6 pb-2 w-full">
+    <div
+      className={`flex items-start gap-3 px-6 pt-6 pb-2 w-full ${
+        sticky ? 'sticky top-0 z-10 bg-cream' : ''
+      }`}
+    >
       {back && (
         <button
           onClick={() => navigate(-1)}
