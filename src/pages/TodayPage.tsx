@@ -631,11 +631,12 @@ export default function TodayPage() {
               {showPastTasks &&
                 Object.entries(pastByDog).map(([dogName, dogTasks]) => (
                   <div key={dogName} className="mb-4 last:mb-0">
-                    {isMultiDog && (
-                      <p className="font-dm font-bold text-[12px] text-coral uppercase tracking-widest mb-3">
-                        {dogName}
-                      </p>
-                    )}
+                    {/* Always labeled, even for a single dog — once a stay ends,
+                        the Active Care card that named the dog is gone, so this
+                        is the only thing left saying whose tasks these were. */}
+                    <p className="font-dm font-bold text-[12px] text-coral uppercase tracking-widest mb-3">
+                      {dogName}
+                    </p>
                     {dogTasks.map((task, i) => (
                       <div
                         key={task.id}
