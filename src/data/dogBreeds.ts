@@ -1,4 +1,5 @@
 export const DOG_BREEDS: string[] = [
+  'Mixed',
   'Affenpinscher',
   'Afghan Hound',
   'Airedale Terrier',
@@ -100,6 +101,7 @@ export const DOG_BREEDS: string[] = [
   'Manchester Terrier',
   'Mastiff',
   'Miniature Pinscher',
+  'Miniature Poodle',
   'Miniature Schnauzer',
   'Neapolitan Mastiff',
   'Newfoundland',
