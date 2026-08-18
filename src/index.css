@@ -32,20 +32,21 @@ body {
   }
 }
 
-/* Full-row "Done!" celebration banner after a completed swipe */
-@keyframes swipe-celebrate {
-  0% { opacity: 0; transform: scale(0.94); }
-  18% { opacity: 1; transform: scale(1.02); }
-  30% { transform: scale(1); }
-  78% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(0.98); }
+/* Little paw prints that pop out of the checkmark badge when a swipe
+   commits a task to done, just before the row disappears. Each paw travels
+   from the badge center out to its own --tx/--ty offset. */
+@keyframes paw-burst {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.5) rotate(var(--rot, 0deg)); }
+  25% { opacity: 1; transform: translate(calc(var(--tx) * 0.4), calc(var(--ty) * 0.4)) scale(1.05) rotate(var(--rot, 0deg)); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(1) rotate(var(--rot, 0deg)); }
 }
-.swipe-celebrate {
-  animation: swipe-celebrate 0.7s cubic-bezier(0.2, 0.7, 0.4, 1) both;
+.paw-burst {
+  animation: paw-burst 1.1s cubic-bezier(0.2, 0.7, 0.3, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .swipe-celebrate { animation: none; }
+  .paw-burst { animation: none; opacity: 0; }
 }
 
 /* Hide scrollbars on wheel pickers */
@@ -84,50 +85,6 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .rise-in {
     animation: none;
-  }
-}
-
-/* Task-type icon badges drifting once from a scattered rest position to
-   dock exactly on their matching task's real icon, then staying put — no
-   loop, no fade-out. `top`/`left` are the target's CENTER point (both the
-   scattered start and the measured end), so every step also carries
-   translate(-50%,-50%) to recenter the badge's own box on that point —
-   without it the badge's top-left corner lands on the target instead of
-   its center, which reads as a second icon floating down-right of the
-   real one. End scale (0.55) shrinks the 44px badge to the real task
-   icon's 24px (1.5rem, dense mode) size, so it reads as docking into it,
-   not landing oversized beside it. */
-@keyframes icon-dock {
-  0% {
-    top: var(--s-top);
-    left: var(--s-left);
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.6);
-  }
-  14% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  75%,
-  100% {
-    top: var(--e-top);
-    left: var(--e-left);
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(0.55);
-  }
-}
-.hero-icon-dock {
-  animation: icon-dock 2.4s cubic-bezier(0.22, 1, 0.36, 1) both;
-  animation-iteration-count: 1;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hero-icon-dock {
-    animation: none;
-    top: var(--e-top);
-    left: var(--e-left);
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(0.55);
   }
 }
 

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { PawPrint, Pill, CheckCircle2, RotateCcw } from 'lucide-react'
 import DogBowlIcon from './icons/DogBowlIcon'
+import PawPrintFilled from './icons/PawPrintFilled'
 import type { Task, TaskType } from '../types'
 import { formatTime } from '../utils/dateUtils'
 
@@ -38,8 +39,10 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, den
   const isCompleted = isDone || isSkipped
   // Overdue isn't a status a task gets stuck in — it's just a pending task
   // whose time has already passed, so it's computed live off the clock
-  // rather than read off task.status.
-  const isOverdue = task.status === 'pending' && new Date(task.scheduledTime) < new Date()
+  // rather than read off task.status. Suppressed in dense mode (the
+  // marketing site's hero mockup), where the demo schedule drifting past
+  // "now" shouldn't start flagging tasks as overdue.
+  const isOverdue = !dense && task.status === 'pending' && new Date(task.scheduledTime) < new Date()
   const displayTime = dense
     ? formatTime(task.scheduledTime).replace(':00 ', ' ')
     : formatTime(task.scheduledTime)
@@ -59,20 +62,8 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, den
   // sliver. Kept inside the page's own side padding (TodayPage's sections
   // use px-6/24px) so the negative-margin clipping buffer below never
   // pushes the row wider than the screen.
-  const restPeek = dense ? 8 : 16
+  const restPeek = dense ? 22 : 16
   const restOffset = isSkipped ? 0 : isDone ? restPeek : -restPeek
-
-  const triggerComplete = () => {
-    if (isDone) {
-      onUndo(task.id)
-      return
-    }
-    setCelebrating(true)
-    window.setTimeout(() => {
-      onDone(task.id)
-      setCelebrating(false)
-    }, 700)
-  }
 
   // Swipe only — no tap fallback. Anything short of the threshold is just
   // an aborted drag and snaps back without triggering anything.
@@ -81,9 +72,26 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, den
     const triggered = Math.abs(dragX) > SWIPE_THRESHOLD
     startXRef.current = null
     setDragging(false)
-    setDragX(0)
 
-    if (triggered) triggerComplete()
+    if (!triggered) {
+      setDragX(0)
+      return
+    }
+
+    if (isDone) {
+      setDragX(0)
+      onUndo(task.id)
+      return
+    }
+
+    // Deliberately leave dragX as-is: the row is already fully slid off
+    // (swipeProgress clamps to 1 well before release), and resetting it
+    // here would snap the card back on screen right before it disappears
+    // from the pending list — reading as the swipe undoing itself.
+    setCelebrating(true)
+    window.setTimeout(() => {
+      onDone(task.id)
+    }, 1100)
   }
 
   const handlePointerDown = (e: React.PointerEvent) => {
@@ -122,7 +130,7 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, den
   // percentage for the endpoint — rather than tracking raw drag pixels —
   // is what makes it land exactly centered regardless of the row's actual
   // rendered width.
-  const badgeRestInset = dense ? 14 : 18
+  const badgeRestInset = dense ? 12 : 18
   const badgeLeftPercent = isDone
     ? 0 + swipeProgress * 50
     : 100 - swipeProgress * 50
@@ -138,7 +146,7 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, den
       onPointerUp={commitSwipe}
       onPointerCancel={handlePointerCancel}
       style={{ touchAction: 'pan-y' }}
-      className={`relative isolate overflow-hidden select-none pb-5 ${dense ? 'px-2 -mx-2' : 'px-4 -mx-4'}`}
+      className={`relative isolate overflow-hidden select-none pb-5 ${dense ? '' : 'px-4 -mx-4'}`}
     >
       {/* Reveal layer behind the row: pale at rest, ramping to a solid
           darker fill as the swipe approaches the commit threshold — green
@@ -170,23 +178,44 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, den
                 </>
               ) : (
                 <>
-                  <CheckCircle2 size={dense ? 12 : 16} className="text-green-vivid" style={{ opacity: 1 - swipeProgress, ...badgeTransition }} />
-                  <CheckCircle2 size={dense ? 12 : 16} className="absolute inset-0 text-white" style={{ opacity: swipeProgress, ...badgeTransition }} />
+                  <CheckCircle2 size={dense ? 15 : 16} className="text-green-vivid" style={{ opacity: 1 - swipeProgress, ...badgeTransition }} />
+                  <CheckCircle2 size={dense ? 15 : 16} className="absolute inset-0 text-white" style={{ opacity: swipeProgress, ...badgeTransition }} />
                 </>
               )}
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* Full-row "Done!" celebration banner after a completing swipe */}
-      {celebrating && (
-        <div
-          aria-hidden="true"
-          className="swipe-celebrate absolute inset-x-0 top-0 bottom-5 z-10 flex items-center justify-center gap-2 rounded-2xl bg-[#dcfce7] font-dm font-bold text-[#15803d]"
-        >
-          <CheckCircle2 size={dense ? 16 : 20} />
-          <span className={dense ? 'text-[13px]' : 'text-[16px]'}>Done!</span>
+            {/* Little paw prints popping out of the badge as a task commits
+                to done — a small, fun payoff for the swipe before the row
+                disappears from the list. */}
+            {celebrating && (
+              <div
+                aria-hidden="true"
+                className="absolute top-1/2 flex items-center justify-center pointer-events-none"
+                style={{ left: badgeLeft, transform: 'translate(-50%, -50%)' }}
+              >
+                <PawPrintFilled
+                  className="paw-burst absolute text-white"
+                  size={dense ? 13 : 16}
+                  style={{ '--tx': '-20px', '--ty': '-16px', '--rot': '-25deg', animationDelay: '0ms' } as React.CSSProperties}
+                />
+                <PawPrintFilled
+                  className="paw-burst absolute text-white"
+                  size={dense ? 13 : 16}
+                  style={{ '--tx': '18px', '--ty': '-18px', '--rot': '20deg', animationDelay: '70ms' } as React.CSSProperties}
+                />
+                <PawPrintFilled
+                  className="paw-burst absolute text-white"
+                  size={dense ? 13 : 16}
+                  style={{ '--tx': '-16px', '--ty': '18px', '--rot': '15deg', animationDelay: '140ms' } as React.CSSProperties}
+                />
+                <PawPrintFilled
+                  className="paw-burst absolute text-white"
+                  size={dense ? 13 : 16}
+                  style={{ '--tx': '20px', '--ty': '16px', '--rot': '-15deg', animationDelay: '40ms' } as React.CSSProperties}
+                />
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -200,12 +229,12 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, den
         }}
         className="relative overflow-hidden rounded-r-[10px] bg-cream"
       >
-        <div className={`relative flex ${dense ? 'gap-1' : 'gap-3'}`}>
+        <div className="relative flex gap-3">
         {/* Time column — narrower in dense mode: compact times ("8 AM", "12
             PM") never need the full 68px the app's longest label ("11:30
             AM") does. */}
-        <div className={`${dense ? 'w-9 pl-1' : 'w-[68px] pl-2'} shrink-0 pt-1 ${isCompleted ? 'opacity-50' : ''}`}>
-          <span className={`font-dm font-bold ${dense ? 'text-[12px]' : 'text-[13px]'} text-text-primary`}>
+        <div className={`${dense ? 'w-12 pl-6' : 'w-[68px] pl-2'} shrink-0 pt-1 ${isCompleted ? 'opacity-50' : ''}`}>
+          <span className={`font-dm font-bold whitespace-nowrap ${dense ? 'text-[12px]' : 'text-[13px]'} text-text-primary`}>
             {displayTime}
           </span>
         </div>
@@ -231,7 +260,7 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, den
             flex+justify-center keeps short content vertically balanced
             inside that reserved height instead of hugging the top. */}
         <div
-          className={`flex-1 min-w-0 flex flex-col justify-center ${dense ? 'min-h-9 pr-3' : 'min-h-16 pr-5'} py-1 ${
+          className={`flex-1 min-w-0 flex flex-col justify-center ${dense ? 'min-h-9 pr-3 max-w-[150px]' : 'min-h-16 pr-5'} py-1 ${
             isCompleted ? 'opacity-50' : ''
           }`}
         >
@@ -240,7 +269,7 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, den
               {task.dogName}
             </p>
           )}
-          <p className={`font-dm font-bold ${dense ? 'text-[14px]' : 'text-[16px]'} leading-tight text-text-primary`}>
+          <p className={`font-dm font-bold ${dense ? 'text-[14px] truncate' : 'text-[16px]'} leading-tight text-text-primary`}>
             {task.title}
             {isOverdue && (
               <span className="ml-2 px-1.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide text-coral bg-[#fdeee9]">
@@ -252,7 +281,7 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, den
               so every row reserves the same one-line-of-description height
               instead of shrinking when a task happens to have no note. */}
           <p
-            className={`font-dm ${dense ? 'text-[10px]' : 'text-[13px]'} text-text-secondary mt-1 leading-snug ${
+            className={`font-dm ${dense ? 'text-[10px] truncate' : 'text-[13px]'} text-text-secondary mt-1 leading-snug ${
               task.note ? '' : 'invisible'
             }`}
           >

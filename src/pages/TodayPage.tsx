@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, type PointerEvent } from 'react'
-import { CalendarPlus, UserPlus, CalendarDays, CalendarCheck2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { CalendarPlus, UserPlus, CalendarDays, CalendarCheck2, ChevronLeft, ChevronRight, PartyPopper } from 'lucide-react'
 import DogIcon from '../components/icons/DogIcon'
 import { Link, useNavigate } from 'react-router-dom'
 import Button from '../components/Button'
@@ -233,26 +233,29 @@ export default function TodayPage() {
   return (
     <div className="min-h-svh bg-cream pb-28">
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-cream px-6 pt-8 pb-4 flex items-end justify-between">
-        <div>
-          <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-1">
+      <div className="sticky top-0 z-30 bg-cream px-6 pt-8 pb-4">
+        <div className="flex items-center justify-between mb-1 h-[13px] leading-none">
+          <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest leading-none">
             {formatTodayHeading(selectedDate)}
           </p>
-          <h1 className="font-outfit font-bold text-[56px] leading-none text-cobalt tracking-tight">
-            {formatDayHeading(selectedDate.toISOString()).split(',')[0]}
-          </h1>
-        </div>
-        <div className="flex items-center gap-2">
           {!isTodaySelected && (
             <button
               type="button"
               onClick={() => setSelectedDate(new Date())}
               aria-label="Jump to today"
-              className="size-11 rounded-full flex items-center justify-center bg-coral text-white transition-colors active:scale-[0.94]"
+              className="flex items-center gap-1 text-coral active:scale-95 transition-transform leading-none"
             >
-              <CalendarCheck2 size={20} />
+              <CalendarCheck2 size={14} />
+              <span className="font-dm font-bold text-[13px] uppercase tracking-widest leading-none underline underline-offset-2">
+                Today
+              </span>
             </button>
           )}
+        </div>
+        <div className="flex items-end justify-between">
+          <h1 className="font-outfit font-bold text-[56px] leading-none text-cobalt tracking-tight">
+            {formatDayHeading(selectedDate.toISOString()).split(',')[0]}
+          </h1>
           <button
             type="button"
             onClick={() => setViewMode((m) => (m === 'week' ? 'month' : 'week'))}
@@ -599,6 +602,22 @@ export default function TodayPage() {
               </div>
             </section>
           ))}
+
+          {isTodaySelected && dayTasks.length > 0 && pendingTasks.length === 0 && (
+            <div className="px-6 mb-6">
+              <div className="rise-in bg-[#dcfce7] rounded-[20px] p-6 flex flex-col items-center text-center gap-2">
+                <div className="size-12 rounded-full bg-white flex items-center justify-center">
+                  <PartyPopper size={22} className="text-[#15803d]" />
+                </div>
+                <p className="font-outfit font-bold text-[20px] text-[#15803d] leading-tight">
+                  All done for today!
+                </p>
+                <p className="font-dm text-[13px] text-[#166534]">
+                  Every task is checked off — nice work.
+                </p>
+              </div>
+            </div>
+          )}
 
           {pastTasks.length > 0 && (
             <section className="px-6 mb-4">

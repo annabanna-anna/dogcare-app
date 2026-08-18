@@ -131,27 +131,26 @@ function demoTasks(): Task[] {
 // component, not a redrawn stand-in — so the hero reads as the real app.
 // Simplified from the full page on purpose: no calendar-view toggle and no
 // bottom nav (that's fixed-position and routed in the real app — pinning it
-// here would break out of the phone frame), so tapped Done just dims the
-// row in place rather than filing it under Past Tasks.
+// here would break out of the phone frame). Done tasks file under a
+// collapsed "Show past tasks" toggle, same as the real Today page's Past
+// Tasks section (single dog here, so no per-dog grouping needed).
 function HeroTodayScreen({
   tasks,
   onDone,
   onUndo,
-  rowRefs,
 }: {
   tasks: Task[]
   onDone: (id: string) => void
   onUndo: (id: string) => void
-  /** One ref per task row, in the same order as `tasks` — lets the parent
-   *  measure each row's real position so the hero icon animation can dock
-   *  at the task's actual icon instead of an estimated spot. */
-  rowRefs?: React.MutableRefObject<Array<HTMLDivElement | null>>
 }) {
+  const [showPastTasks, setShowPastTasks] = useState(false)
   const today = new Date()
   const untilDate = new Date(Date.now() + 6 * 86400000).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
   })
+  const pendingTasks = tasks.filter((t) => t.status !== 'done')
+  const pastTasks = tasks.filter((t) => t.status === 'done')
 
   return (
     <div className="pb-3">
@@ -185,21 +184,28 @@ function HeroTodayScreen({
       </div>
 
       {/* Tasks — the real TaskCard, single dog so no name eyebrow (matching
-          how the live app hides it once only one dog is active), and Done
-          just dims the row in place rather than filing it under Past Tasks
-          — easier to see working in a hero than the real hide-on-done. */}
+          how the live app hides it once only one dog is active). */}
       <div className="px-4">
-        {tasks.map((task, i) => (
-          <div
-            key={task.id}
-            ref={(el) => {
-              if (rowRefs) rowRefs.current[i] = el
-            }}
-          >
-            <TaskCard task={task} onDone={onDone} onUndo={onUndo} showDogName={false} dense />
-          </div>
+        {pendingTasks.map((task) => (
+          <TaskCard key={task.id} task={task} onDone={onDone} onUndo={onUndo} showDogName={false} dense />
         ))}
       </div>
+
+      {pastTasks.length > 0 && (
+        <div className="px-4">
+          <button
+            type="button"
+            onClick={() => setShowPastTasks((v) => !v)}
+            className="font-dm font-bold text-[10px] text-text-muted uppercase tracking-widest mb-2"
+          >
+            {showPastTasks ? 'Hide' : 'Show'} past tasks ({pastTasks.length})
+          </button>
+          {showPastTasks &&
+            pastTasks.map((task) => (
+              <TaskCard key={task.id} task={task} onDone={onDone} onUndo={onUndo} showDogName={false} dense />
+            ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -407,34 +413,6 @@ const STEPS = [
   },
 ]
 
-// Task-type badges that drift once from a scattered rest position to dock
-// exactly on their matching task's real icon — Structured's "one planner,
-// one timeline" convergence effect, run once rather than looped. Same icon
-// + color pairing as TaskCard's own typeConfig (white glyph on a filled
-// circle), so they read as the same four task types, not a redrawn set.
-// `start` sits in the visible margin beside the phone — the panel clips
-// with overflow-hidden, so anything outside 0–100% is invisible until the
-// animation carries it into view, which reads as "appearing from nowhere"
-// instead of drifting in from around the mockup. The docking point itself
-// is measured from the real DOM in AboutPage, not hardcoded, since
-// TaskCard's row height varies with note text.
-// Ordered to match demoTasks(): walk, meal, medication (ear drops, now
-// before potty since it's earlier in the day), potty.
-const HERO_ICON_BADGES = [
-  { Icon: PawPrint, bg: 'bg-green-vivid', start: { top: '4%', left: '3%' }, delay: '0.2s' },
-  { Icon: DogBowlIcon, bg: 'bg-coral', start: { top: '6%', left: '76%' }, delay: '0.9s' },
-  { Icon: Pill, bg: 'bg-blue-task', start: { top: '40%', left: '3%' }, delay: '1.6s' },
-  { Icon: PawPrint, bg: 'bg-green-vivid', start: { top: '44%', left: '76%' }, delay: '2.3s' },
-] as const
-
-// TaskCard's own layout in `dense` mode (used here): a 36px (2.25rem) time
-// column + 4px gap (gap-1, 0.25rem) puts the icon circle's horizontal
-// center at 36+4+12 = 52px from the row's left edge; the icon sits flush
-// at the row's top, so its vertical center is half its own 24px (size-6,
-// 1.5rem) height, ~12px down. Both are fixed px regardless of row width,
-// so this holds at any breakpoint.
-const TASK_ICON_OFFSET = { x: 52, y: 12 }
-
 const FEATURES = [
   {
     Icon: PawPrint,
@@ -518,39 +496,10 @@ export default function AboutPage() {
   const [tasks, setTasks] = useState<Task[]>(demoTasks)
   const [activeStep, setActiveStep] = useState(0)
   const stepRefs = useRef<Array<HTMLDivElement | null>>([])
-  const heroPanelRef = useRef<HTMLDivElement | null>(null)
-  const heroRowRefs = useRef<Array<HTMLDivElement | null>>([])
-  const [dockPositions, setDockPositions] = useState<Array<{ top: number; left: number } | null>>(
-    [],
-  )
 
   useEffect(() => {
     document.title = 'GoodPup — care tracking for dog sitters and boarders'
   }, [])
-
-  // Measures each task row's real icon position (not an estimate) so the
-  // hero animation can dock exactly on it — re-measures on resize since the
-  // panel's width, and therefore each row's position, changes per breakpoint.
-  useEffect(() => {
-    function measure() {
-      const panel = heroPanelRef.current
-      if (!panel) return
-      const panelRect = panel.getBoundingClientRect()
-      setDockPositions(
-        heroRowRefs.current.map((el) => {
-          if (!el) return null
-          const r = el.getBoundingClientRect()
-          return {
-            top: r.top - panelRect.top + TASK_ICON_OFFSET.y,
-            left: r.left - panelRect.left + TASK_ICON_OFFSET.x,
-          }
-        }),
-      )
-    }
-    measure()
-    window.addEventListener('resize', measure)
-    return () => window.removeEventListener('resize', measure)
-  }, [tasks])
 
   // Scroll-driven, not timer-driven: whichever step block crosses the
   // vertical middle of the viewport becomes active, so the mockup advances
@@ -629,15 +578,9 @@ export default function AboutPage() {
             Active Care chip, the actual TaskCard), sized as a modest mockup
             on a solid Cobalt backdrop — not a card that fills the panel —
             and cropped at the bottom edge so it reads as a phone caught
-            mid-shot. The four task-type badges (same icon + color as the
-            real task rows) drift once from a scattered rest position and
-            dock exactly on their matching row's icon — measured from the
-            real layout below, not estimated. */}
+            mid-shot. */}
         <div className="rise-in justify-self-center w-full max-w-[440px]" style={{ animationDelay: '260ms' }}>
-          <div
-            ref={heroPanelRef}
-            className="relative overflow-hidden rounded-[36px] bg-cobalt h-[520px] sm:h-[560px]"
-          >
+          <div className="relative overflow-hidden rounded-[36px] bg-cobalt h-[520px] sm:h-[560px]">
             {/* Decorative circles — sized and inset so nothing bleeds past
                 the panel's clipped edge. */}
             <div
@@ -651,39 +594,9 @@ export default function AboutPage() {
 
             <div className="absolute left-1/2 -translate-x-1/2 top-16" style={HERO_PHONE_SIZE}>
               <PhoneFrame>
-                <HeroTodayScreen
-                  tasks={tasks}
-                  onDone={markDone}
-                  onUndo={markUndone}
-                  rowRefs={heroRowRefs}
-                />
+                <HeroTodayScreen tasks={tasks} onDone={markDone} onUndo={markUndone} />
               </PhoneFrame>
             </div>
-
-            {HERO_ICON_BADGES.map(({ Icon, bg, start, delay }, i) => {
-              const dock = dockPositions[i]
-              const end = dock
-                ? { top: `${dock.top}px`, left: `${dock.left}px` }
-                : { top: '50%', left: '50%' }
-              return (
-                <span
-                  key={i}
-                  aria-hidden="true"
-                  className={`hero-icon-dock absolute size-11 rounded-full ${bg} flex items-center justify-center pointer-events-none`}
-                  style={
-                    {
-                      '--s-top': start.top,
-                      '--s-left': start.left,
-                      '--e-top': end.top,
-                      '--e-left': end.left,
-                      animationDelay: delay,
-                    } as unknown as React.CSSProperties
-                  }
-                >
-                  <Icon size={24} className="text-white" />
-                </span>
-              )
-            })}
           </div>
           <p className="font-dm text-[13px] text-text-muted text-center mt-4">
             Go ahead — tap a <span className="font-bold text-text-secondary">Done</span> button. It
