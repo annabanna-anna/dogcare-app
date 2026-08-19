@@ -138,6 +138,28 @@ export interface Database {
         }
         Update: Partial<Database['public']['Tables']['push_subscriptions']['Insert']>
       }
+      feedback_reports: {
+        Relationships: []
+        Row: {
+          id: string
+          owner_id: string
+          type: 'bug' | 'contact'
+          message: string
+          contact_email: string | null
+          page_context: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          owner_id: string
+          type: 'bug' | 'contact'
+          message: string
+          contact_email?: string | null
+          page_context?: string | null
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['feedback_reports']['Insert']>
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>

@@ -21,6 +21,10 @@ do $$ begin
   create type task_status as enum ('pending', 'done', 'skipped', 'overdue');
 exception when duplicate_object then null; end $$;
 
+do $$ begin
+  create type feedback_type as enum ('bug', 'contact');
+exception when duplicate_object then null; end $$;
+
 -- ── Tables ─────────────────────────────────────────────────────────────────
 -- owner_id ties every row to the signed-in user (auth.uid()); RLS below makes
 -- sure a user can only ever see or touch their own dogs/stays/tasks.
@@ -129,6 +133,20 @@ create table if not exists google_credentials (
   updated_at    timestamptz not null default now()
 );
 
+-- Bug reports and "contact us" messages sent from Settings. Owners can only
+-- insert their own — no select/update/delete from the client, so a
+-- submitted report can't be edited or read back (reviewed via the Supabase
+-- dashboard instead).
+create table if not exists feedback_reports (
+  id          uuid primary key default gen_random_uuid(),
+  owner_id    uuid not null references auth.users(id) on delete cascade,
+  type        feedback_type not null,
+  message     text not null,
+  contact_email text,
+  page_context  text,
+  created_at  timestamptz not null default now()
+);
+
 create index if not exists dogs_owner_idx on dogs(owner_id);
 create index if not exists stays_owner_idx on stays(owner_id);
 create index if not exists stays_dog_idx on stays(dog_id);
@@ -136,6 +154,7 @@ create index if not exists tasks_owner_idx on tasks(owner_id);
 create index if not exists tasks_stay_idx on tasks(stay_id);
 create index if not exists tasks_scheduled_idx on tasks(scheduled_time);
 create index if not exists push_subscriptions_owner_idx on push_subscriptions(owner_id);
+create index if not exists feedback_reports_owner_idx on feedback_reports(owner_id);
 -- The reminder sweep only ever looks at pending, not-yet-notified tasks.
 create index if not exists tasks_reminder_due_idx
   on tasks(scheduled_time) where status = 'pending' and reminder_sent_at is null;
@@ -163,6 +182,7 @@ alter table tasks enable row level security;
 alter table push_subscriptions enable row level security;
 -- No policies by design — see the table comment. Service role only.
 alter table google_credentials enable row level security;
+alter table feedback_reports enable row level security;
 
 -- Lets the app ask "is this user connected to Google Calendar?" without
 -- being able to read the refresh token itself. security definer so it can
@@ -190,6 +210,12 @@ create policy "Owners manage their stays" on stays
 drop policy if exists "Owners manage their tasks" on tasks;
 create policy "Owners manage their tasks" on tasks
   for all using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
+
+-- Insert-only: a submitted report can't be read, edited, or deleted by the
+-- client that sent it.
+drop policy if exists "Owners submit feedback reports" on feedback_reports;
+create policy "Owners submit feedback reports" on feedback_reports
+  for insert with check (auth.uid() = owner_id);
 
 -- ── Storage: dog photos ──────────────────────────────────────────────────────
 -- Public bucket (photos are shown via plain <img src>); write access is still

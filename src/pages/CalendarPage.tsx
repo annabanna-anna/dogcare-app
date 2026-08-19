@@ -151,8 +151,8 @@ export default function CalendarPage() {
                 Connect Google Calendar
               </p>
               <p className="font-dm text-[13px] text-text-secondary mt-0.5 leading-snug">
-                Works if Rover is already syncing to your Google Calendar. No Rover ↔ Google
-                connection means no bookings here either.
+                Works if Rover is already syncing to your Google Calendar. No Rover
+                ↔︎ Google connection means no bookings here either.
               </p>
               <div className="flex items-center gap-3 mt-2">
                 <button

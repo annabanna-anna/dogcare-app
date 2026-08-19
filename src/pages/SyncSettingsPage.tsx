@@ -11,6 +11,8 @@ import {
   AlertCircle,
   Info,
   ExternalLink,
+  Bug,
+  Mail,
 } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
@@ -101,6 +103,114 @@ function SettingRow({
   )
 }
 
+function FeedbackModal({
+  type,
+  defaultEmail,
+  onClose,
+}: {
+  type: 'bug' | 'contact'
+  defaultEmail: string | null
+  onClose: () => void
+}) {
+  const [message, setMessage] = useState('')
+  const [email, setEmail] = useState(defaultEmail ?? '')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [sent, setSent] = useState(false)
+
+  async function submit() {
+    if (!message.trim()) return
+    setSubmitting(true)
+    setError(null)
+    try {
+      const { data } = await supabase.auth.getUser()
+      const ownerId = data.user?.id
+      if (!ownerId) throw new Error('You need to be signed in to send this.')
+      const { error: insertError } = await supabase.from('feedback_reports').insert({
+        owner_id: ownerId,
+        type,
+        message: message.trim(),
+        contact_email: email.trim() || null,
+        page_context: window.location.pathname,
+      })
+      if (insertError) throw insertError
+      setSent(true)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not send this. Try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center px-6">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative w-full max-w-[380px] bg-cream rounded-[22px] p-6">
+        {sent ? (
+          <>
+            <p className="font-outfit font-bold text-[20px] text-text-primary leading-tight mb-2">
+              Thanks!
+            </p>
+            <p className="font-dm text-[14px] text-text-secondary leading-relaxed mb-5">
+              {type === 'bug'
+                ? "We've got your bug report and will look into it."
+                : "We've got your message and will get back to you if you left an email."}
+            </p>
+            <Button fullWidth variant="ghost" onClick={onClose}>
+              Done
+            </Button>
+          </>
+        ) : (
+          <>
+            <p className="font-outfit font-bold text-[20px] text-text-primary leading-tight mb-2">
+              {type === 'bug' ? 'Report a bug' : 'Contact us'}
+            </p>
+            <p className="font-dm text-[14px] text-text-secondary leading-relaxed mb-4">
+              {type === 'bug'
+                ? 'Tell us what happened and what you expected instead.'
+                : "Questions, feedback, anything — we'd love to hear it."}
+            </p>
+            {error && (
+              <div className="flex items-start gap-2 bg-[#fee2e2] rounded-[12px] px-3 py-2.5 mb-3">
+                <AlertCircle size={15} className="text-[#b91c1c] shrink-0 mt-0.5" />
+                <p className="font-dm text-[12px] text-[#b91c1c] leading-snug">{error}</p>
+              </div>
+            )}
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder={type === 'bug' ? "What went wrong?" : 'Your message'}
+              rows={4}
+              className="w-full font-dm text-[14px] text-text-primary bg-white border border-border-light rounded-[14px] px-4 py-3 mb-3 resize-none focus:outline-none focus:border-coral"
+            />
+            <label className="block font-dm font-bold text-[12px] text-text-secondary mb-1.5">
+              Your email (optional, so we can reply)
+            </label>
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              type="email"
+              className="w-full font-dm text-[14px] text-text-primary bg-white border border-border-light rounded-[14px] px-4 py-3 mb-5 focus:outline-none focus:border-coral"
+            />
+            <div className="flex flex-col gap-2">
+              <Button
+                fullWidth
+                onClick={() => void submit()}
+                disabled={!message.trim() || submitting}
+              >
+                {submitting ? 'Sending…' : 'Send'}
+              </Button>
+              <Button fullWidth variant="ghost" onClick={onClose}>
+                Cancel
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function SyncSettingsPage() {
   const [calendarConnected, setCalendarConnected] = useState(false)
   const [connecting, setConnecting] = useState(false)
@@ -114,6 +224,7 @@ export default function SyncSettingsPage() {
   const [reminderBusy, setReminderBusy] = useState(false)
   const [reminderError, setReminderError] = useState<string | null>(null)
   const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [feedbackModal, setFeedbackModal] = useState<'bug' | 'contact' | null>(null)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email ?? null))
@@ -214,12 +325,12 @@ export default function SyncSettingsPage() {
               }
             />
             <div className="pb-4 flex flex-col gap-3">
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1 pb-3 border-b border-border-light">
                 <PurposeRow done={calendarConnected} label="Shows your Rover bookings" />
                 <div className="flex items-start gap-2 pl-[26px]">
                   <p className="flex-1 font-dm text-[12px] text-text-secondary leading-snug">
-                    Works if Rover is already syncing to your Google Calendar. No Rover ↔
-                    Google connection means no data here either.
+                    Works if Rover is already syncing to your Google Calendar. No Rover
+                    ↔︎ Google connection means no data here either.
                   </p>
                   <button
                     type="button"
@@ -238,7 +349,7 @@ export default function SyncSettingsPage() {
                     <Circle size={16} className="text-[#d1d5db] shrink-0" />
                   )}
                   <p className="font-dm text-[13px] text-text-secondary">
-                    Adds tasks as events on your Google calendar
+                    Shows tasks on your Google calendar
                   </p>
                 </div>
                 <Toggle
@@ -312,6 +423,29 @@ export default function SyncSettingsPage() {
           </div>
         </section>
 
+        {/* Support */}
+        <section>
+          <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
+            Support
+          </p>
+          <div className="bg-white border border-border-light rounded-[16px] px-4 divide-y divide-border-faint">
+            <button className="w-full text-left" onClick={() => setFeedbackModal('bug')}>
+              <SettingRow
+                icon={<Bug size={18} />}
+                label="Report a Bug"
+                right={<ChevronRight size={18} className="text-[#d1d1d1]" />}
+              />
+            </button>
+            <button className="w-full text-left" onClick={() => setFeedbackModal('contact')}>
+              <SettingRow
+                icon={<Mail size={18} />}
+                label="Contact Us"
+                right={<ChevronRight size={18} className="text-[#d1d1d1]" />}
+              />
+            </button>
+          </div>
+        </section>
+
         {/* Privacy */}
         <section>
           <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
@@ -346,6 +480,14 @@ export default function SyncSettingsPage() {
           </div>
         </section>
       </div>
+
+      {feedbackModal && (
+        <FeedbackModal
+          type={feedbackModal}
+          defaultEmail={userEmail}
+          onClose={() => setFeedbackModal(null)}
+        />
+      )}
 
       {showCalendarInfo && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center px-6">
