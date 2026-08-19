@@ -1,6 +1,6 @@
 {
-  "name": "GoodPup",
-  "short_name": "GoodPup",
+  "name": "HeyPup",
+  "short_name": "HeyPup",
   "description": "Daily care tasks for the dogs in your care",
   "start_url": "/",
   "display": "standalone",

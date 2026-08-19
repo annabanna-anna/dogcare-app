@@ -22,7 +22,7 @@ export default function PublicPageShell({ children }: Props) {
             to="/about"
             className="font-outfit font-bold text-[22px] tracking-tight text-cobalt rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-coral"
           >
-            GoodPup
+            HeyPup
           </Link>
           <nav className="flex items-center gap-5" aria-label="Site">
             <Link
@@ -46,7 +46,7 @@ export default function PublicPageShell({ children }: Props) {
       <footer className="bg-text-primary text-white">
         <div className="mx-auto max-w-[1100px] px-6 py-12 flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="font-outfit font-bold text-[26px] tracking-tight leading-none">GoodPup</p>
+            <p className="font-outfit font-bold text-[26px] tracking-tight leading-none">HeyPup</p>
             <p className="font-dm text-[14px] text-[#a1a1a1] mt-2 max-w-[38ch] leading-relaxed">
               A task-tracking companion for dog sitters and boarders.
             </p>
@@ -65,7 +65,7 @@ export default function PublicPageShell({ children }: Props) {
               {CONTACT_EMAIL}
             </a>
             <p className="font-dm text-[13px] text-[#a1a1a1] mt-2">
-              © {new Date().getFullYear()} GoodPup
+              © {new Date().getFullYear()} HeyPup
             </p>
           </div>
         </div>

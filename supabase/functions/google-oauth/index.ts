@@ -1,4 +1,4 @@
-// google-oauth — the server half of GoodPup's Google Calendar connection.
+// google-oauth — the server half of HeyPup's Google Calendar connection.
 //
 // Google access tokens always expire after 1 hour and that isn't
 // configurable. The only way to stay connected is a refresh token, and

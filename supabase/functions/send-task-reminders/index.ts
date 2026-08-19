@@ -1,4 +1,4 @@
-// send-task-reminders — the sending half of GoodPup's push-reminder pipeline.
+// send-task-reminders — the sending half of HeyPup's push-reminder pipeline.
 //
 // Runs on a schedule (see supabase/reminders-cron.sql, every minute via
 // pg_cron). Each run:
@@ -51,7 +51,7 @@ Deno.serve(async () => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   )
   webpush.setVapidDetails(
-    Deno.env.get('VAPID_SUBJECT') ?? 'mailto:hello@goodpup.app',
+    Deno.env.get('VAPID_SUBJECT') ?? 'mailto:hello@heypup.app',
     Deno.env.get('VAPID_PUBLIC_KEY')!,
     Deno.env.get('VAPID_PRIVATE_KEY')!,
   )

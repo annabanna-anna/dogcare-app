@@ -1,4 +1,4 @@
-// GoodPup service worker — receives Web Push messages and shows them as
+// HeyPup service worker — receives Web Push messages and shows them as
 // system notifications, even when no tab is open. Kept dependency-free and
 // tiny on purpose: it does nothing else (no caching/offline).
 
@@ -11,7 +11,7 @@ self.addEventListener('activate', (event) => {
 })
 
 self.addEventListener('push', (event) => {
-  let payload = { title: 'GoodPup', body: 'You have an upcoming task.', url: '/today' }
+  let payload = { title: 'HeyPup', body: 'You have an upcoming task.', url: '/today' }
   try {
     payload = { ...payload, ...event.data.json() }
   } catch {

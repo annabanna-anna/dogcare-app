@@ -16,7 +16,7 @@ import type { Dog } from '../types'
  *  everything else, including pending tasks whose time has passed, is
  *  rebuilt, so removing a schedule entry also clears its leftover pending
  *  tasks. Tasks that were pushed to Google are cleaned up there first, and
- *  the rebuilt ones re-pushed, so the GoodPup calendar mirrors the change
+ *  the rebuilt ones re-pushed, so the HeyPup calendar mirrors the change
  *  instead of accumulating stale copies. */
 export async function regenerateFutureTasksForDog(dog: Dog): Promise<void> {
   const now = new Date()

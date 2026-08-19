@@ -28,7 +28,7 @@ export default function SplashScreen({ fading }: Props) {
 
       <div className="flex flex-col items-center gap-2">
         <p className="font-outfit font-bold text-[44px] leading-none text-text-primary tracking-tight">
-          GoodPup
+          HeyPup
         </p>
         <p className="font-dm font-bold text-[14px] text-coral uppercase tracking-widest">
           fetching your day…

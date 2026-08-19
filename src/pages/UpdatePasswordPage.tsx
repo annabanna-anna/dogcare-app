@@ -34,7 +34,7 @@ export default function UpdatePasswordPage({ onDone }: { onDone: () => void }) {
           Password updated
         </p>
         <p className="font-dm text-[14px] text-text-secondary max-w-[280px]">
-          You're all set — continue into GoodPup.
+          You're all set — continue into HeyPup.
         </p>
         <Button onClick={onDone} size="lg">
           Continue

@@ -60,7 +60,7 @@ export async function enablePushReminders(reminderMinutes: number): Promise<void
   if (!isPushSupported()) {
     throw new Error(
       isIosNeedingInstall()
-        ? 'On iPhone, add GoodPup to your Home Screen first (Share → Add to Home Screen), then enable reminders from there.'
+        ? 'On iPhone, add HeyPup to your Home Screen first (Share → Add to Home Screen), then enable reminders from there.'
         : 'This browser does not support push notifications.',
     )
   }

@@ -72,7 +72,7 @@ const CONTENTS = [
 
 export default function PrivacyPage() {
   useEffect(() => {
-    document.title = 'Privacy Policy — GoodPup'
+    document.title = 'Privacy Policy — HeyPup'
   }, [])
 
   return (
@@ -89,7 +89,7 @@ export default function PrivacyPage() {
 
         <div className="bg-card rounded-[18px] p-6 mt-9">
           <p className="font-dm text-[16px] text-text-primary leading-[1.7]">
-            GoodPup is a task-tracking app for dog sitters. It stores the dog and stay information
+            HeyPup is a task-tracking app for dog sitters. It stores the dog and stay information
             you enter so it can generate your care schedule, and — only if you connect it — reads
             your booking calendar and writes your care tasks to a calendar it creates. It does not
             sell your data, show you ads, or use your information to train AI models.
@@ -177,7 +177,7 @@ export default function PrivacyPage() {
 
           <H2 id="google-data">Google account data</H2>
           <P>
-            Connecting Google Calendar is entirely optional. GoodPup works without it. If you do
+            Connecting Google Calendar is entirely optional. HeyPup works without it. If you do
             connect it, we ask Google for permission to manage your calendars and your Google
             Tasks, and use that permission for exactly two things:
           </P>
@@ -185,13 +185,13 @@ export default function PrivacyPage() {
             <Item>
               <strong className="font-bold text-text-primary">Reading your bookings.</strong> We
               look for a calendar created by Rover's own calendar sync and read its confirmed
-              bookings so your stays appear in GoodPup. If there is no such calendar, we read
+              bookings so your stays appear in HeyPup. If there is no such calendar, we read
               upcoming events from your primary calendar instead. We display these; we do not copy
               them into our database.
             </Item>
             <Item>
               <strong className="font-bold text-text-primary">Writing your care tasks.</strong> We
-              create a separate calendar named “GoodPup” and write your meals, medications, and
+              create a separate calendar named “HeyPup” and write your meals, medications, and
               walks to it as timed events. We store the identifier Google returns for each event
               alongside the task, so that editing a task updates the same event instead of creating
               a duplicate. We do not write to your personal calendar.
@@ -199,7 +199,7 @@ export default function PrivacyPage() {
           </List>
           <P>
             The Google Tasks permission exists only to clean up to-do items created by an earlier
-            version of this feature. GoodPup no longer creates Google Tasks.
+            version of this feature. HeyPup no longer creates Google Tasks.
           </P>
 
           <H3>How your Google connection is stored</H3>
@@ -213,7 +213,7 @@ export default function PrivacyPage() {
 
           <H3>Limited Use</H3>
           <P>
-            GoodPup's use and transfer of information received from Google APIs to any other app
+            HeyPup's use and transfer of information received from Google APIs to any other app
             will adhere to the{' '}
             <a
               href="https://developers.google.com/terms/api-services-user-data-policy"
@@ -255,7 +255,7 @@ export default function PrivacyPage() {
           <P>
             We keep your information for as long as your account exists. Deleting a dog in the app
             deletes its stays, its tasks, and its photo. Disconnecting Google Calendar deletes the
-            stored refresh token immediately; events already written to your “GoodPup” calendar
+            stored refresh token immediately; events already written to your “HeyPup” calendar
             stay in your Google Calendar, and you can delete them there.
           </P>
           <P>
@@ -280,7 +280,7 @@ export default function PrivacyPage() {
               Settings.
             </Item>
             <Item>
-              Revoke GoodPup's access directly from your Google Account's third-party access page,
+              Revoke HeyPup's access directly from your Google Account's third-party access page,
               independently of this app.
             </Item>
             <Item>Turn reminder notifications on or off per device in Settings.</Item>
@@ -306,7 +306,7 @@ export default function PrivacyPage() {
             to="/about"
             className="font-dm font-bold text-[15px] text-coral hover:text-coral-deep transition-colors rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-coral"
           >
-            ← Back to GoodPup
+            ← Back to HeyPup
           </Link>
         </div>
       </article>

@@ -422,7 +422,7 @@ const FEATURES = [
   {
     Icon: Bell,
     title: 'Reminders that find you',
-    body: 'A push notification for each task, timed to the schedule — so a med window doesn’t slip by while you’re heads-down at work. Add GoodPup to your home screen to get them.',
+    body: 'A push notification for each task, timed to the schedule — so a med window doesn’t slip by while you’re heads-down at work. Add HeyPup to your home screen to get them.',
   },
   {
     Icon: CalendarDays,
@@ -438,28 +438,28 @@ const FEATURES = [
 
 const FAQS = [
   {
-    q: 'Is GoodPup a mobile app I need to download?',
-    a: "No — GoodPup is a web app. Open it in your phone's browser, no App Store and nothing to install. Add it to your home screen for one-tap access — and if you want reminders, that step is required, not optional.",
+    q: 'Is HeyPup a mobile app I need to download?',
+    a: "No — HeyPup is a web app. Open it in your phone's browser, no App Store and nothing to install. Add it to your home screen for one-tap access — and if you want reminders, that step is required, not optional.",
   },
   {
     q: 'How many dogs can I track at once?',
     a: 'As many as you’re actually sitting — tasks are grouped by dog, so a house full of concurrent stays stays scannable instead of turning into one long list.',
   },
   {
-    q: 'Does GoodPup send reminders?',
-    a: 'Yes — each task can send a push notification at its scheduled time, so a meal or a med window doesn’t slip by while you’re heads-down at work. Reminders only work once GoodPup is added to your home screen, so do that first if you want them.',
+    q: 'Does HeyPup send reminders?',
+    a: 'Yes — each task can send a push notification at its scheduled time, so a meal or a med window doesn’t slip by while you’re heads-down at work. Reminders only work once HeyPup is added to your home screen, so do that first if you want them.',
   },
   {
     q: 'Do I need to connect Google Calendar?',
-    a: 'No — calendar sync is optional. GoodPup works fully with tasks generated straight from a dog’s care schedule; connecting Google just saves you from re-typing bookings.',
+    a: 'No — calendar sync is optional. HeyPup works fully with tasks generated straight from a dog’s care schedule; connecting Google just saves you from re-typing bookings.',
   },
   {
     q: 'What happens to my Google access if I disconnect?',
-    a: 'Disconnecting in Settings deletes the access GoodPup was given, and you can also revoke it directly from your Google Account at any time.',
+    a: 'Disconnecting in Settings deletes the access HeyPup was given, and you can also revoke it directly from your Google Account at any time.',
   },
   {
     q: 'Is it free?',
-    a: "Free while GoodPup is finding its feet — bring your own dogs, no card required.",
+    a: "Free while HeyPup is finding its feet — bring your own dogs, no card required.",
   },
 ]
 
@@ -498,7 +498,7 @@ export default function AboutPage() {
   const stepRefs = useRef<Array<HTMLDivElement | null>>([])
 
   useEffect(() => {
-    document.title = 'GoodPup — care tracking for dog sitters and boarders'
+    document.title = 'HeyPup — care tracking for dog sitters and boarders'
   }, [])
 
   // Scroll-driven, not timer-driven: whichever step block crosses the
@@ -553,7 +553,7 @@ export default function AboutPage() {
             className="rise-in font-dm text-[17px] sm:text-[19px] text-text-secondary leading-relaxed mt-6 max-w-[52ch]"
             style={{ animationDelay: '90ms', textWrap: 'pretty' }}
           >
-            GoodPup turns every boarding stay into a schedule of care tasks, grouped by dog. Built
+            HeyPup turns every boarding stay into a schedule of care tasks, grouped by dog. Built
             for the sitter who checks things off standing in a kitchen with a leash in one hand —
             not sitting down to plan.
           </p>
@@ -807,7 +807,7 @@ export default function AboutPage() {
                   Your bookings come in. Your tasks go out.
                 </h2>
                 <p className="font-dm text-[16px] text-text-secondary leading-relaxed mt-4 max-w-[46ch]">
-                  Connecting Google Calendar is optional, and GoodPup asks for exactly what these two
+                  Connecting Google Calendar is optional, and HeyPup asks for exactly what these two
                   jobs need — nothing broader.
                 </p>
               </div>
@@ -823,7 +823,7 @@ export default function AboutPage() {
                     </span>
                   </dt>
                   <dd className="font-dm text-[15px] text-text-secondary leading-relaxed mt-2.5">
-                    If you use Rover's calendar sync, GoodPup finds that calendar automatically and
+                    If you use Rover's calendar sync, HeyPup finds that calendar automatically and
                     reads only its confirmed bookings — so a stay you accepted on Rover shows up here
                     without retyping it. No other calendar is read.
                   </dd>
@@ -838,7 +838,7 @@ export default function AboutPage() {
                   </dt>
                   <dd className="font-dm text-[15px] text-text-secondary leading-relaxed mt-2.5">
                     Meals, meds, and walks are written as timed events to a separate calendar called
-                    “GoodPup” that the app creates for you. Your personal calendar is never written
+                    “HeyPup” that the app creates for you. Your personal calendar is never written
                     to, and you can turn pushing off while staying connected.
                   </dd>
                 </div>
@@ -851,7 +851,7 @@ export default function AboutPage() {
                     </span>
                   </dt>
                   <dd className="font-dm text-[15px] text-text-secondary leading-relaxed mt-2.5">
-                    Disconnect in Settings and GoodPup deletes the access it was given. You can also
+                    Disconnect in Settings and HeyPup deletes the access it was given. You can also
                     revoke it from your Google Account at any time.{' '}
                     <Link
                       to="/privacy"
@@ -911,13 +911,13 @@ export default function AboutPage() {
             Zero missed meals. Zero missed meds.
           </h2>
           <p className="font-dm text-[17px] text-white/90 leading-relaxed mt-5 mx-auto max-w-[48ch]">
-            Free to use while GoodPup is finding its feet. Bring your own dogs.
+            Free to use while HeyPup is finding its feet. Bring your own dogs.
           </p>
           <Link
             to="/"
             className="inline-flex items-center gap-2 rounded-full bg-coral px-7 py-4 font-dm font-bold text-[16px] text-white mt-8 hover:bg-coral-deep transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
-            Open GoodPup
+            Open HeyPup
             <ArrowRight size={18} />
           </Link>
         </div>

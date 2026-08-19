@@ -21,7 +21,7 @@ import type { Task, TaskType } from '../types'
 //   bookings (Rover tags those "[B]", vs. "[U]" for a pending request). If no
 //   such calendar exists, we fall back to the primary calendar, unfiltered.
 // - Push: care tasks for a confirmed stay are written to a dedicated
-//   "GoodPup" calendar (created on first push if it doesn't exist yet), kept
+//   "HeyPup" calendar (created on first push if it doesn't exist yet), kept
 //   separate from the user's own events and from the Rover-synced one. Push
 //   is opt-out (on by default once connected). Everything is pushed as a
 //   timed Calendar event — an earlier per-type option to push as Google
@@ -29,15 +29,15 @@ import type { Task, TaskType } from '../types'
 //   time-of-day, only a due date. The Tasks scope and cleanup helpers are
 //   kept so to-dos pushed before the removal still get deleted when their
 //   task is re-pushed (converting it to an event) or discarded.
-const TOKEN_KEY = 'goodpup-google-calendar-token'
-const CONNECTED_KEY = 'goodpup-google-calendar-connected'
-const REQUEST_MARKER = 'goodpup-requesting-calendar-scope'
-const ROVER_CACHE_KEY = 'goodpup-google-calendar-rover-cache'
-const PUSH_CALENDAR_CACHE_KEY = 'goodpup-google-calendar-push-id'
-const PUSH_TASKLIST_CACHE_KEY = 'goodpup-google-tasklist-push-id'
-const PUSH_ENABLED_KEY = 'goodpup-google-calendar-push-enabled'
-const PUSH_ERROR_KEY = 'goodpup-google-calendar-push-error'
-const PUSH_CALENDAR_NAME = 'GoodPup'
+const TOKEN_KEY = 'heypup-google-calendar-token'
+const CONNECTED_KEY = 'heypup-google-calendar-connected'
+const REQUEST_MARKER = 'heypup-requesting-calendar-scope'
+const ROVER_CACHE_KEY = 'heypup-google-calendar-rover-cache'
+const PUSH_CALENDAR_CACHE_KEY = 'heypup-google-calendar-push-id'
+const PUSH_TASKLIST_CACHE_KEY = 'heypup-google-tasklist-push-id'
+const PUSH_ENABLED_KEY = 'heypup-google-calendar-push-enabled'
+const PUSH_ERROR_KEY = 'heypup-google-calendar-push-error'
+const PUSH_CALENDAR_NAME = 'HeyPup'
 const CALENDAR_SCOPE =
   'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/tasks'
 const ROVER_BOOKED_TAG = '[b]'
@@ -132,7 +132,7 @@ export async function connectGoogleCalendar(redirectPath = '/settings'): Promise
       // select_account forces Google's account chooser every time, even if
       // the browser only has one session — otherwise Google can silently
       // reuse whatever Google account is already active (e.g. the one used
-      // to log into GoodPup), which may not be the one Rover is synced to.
+      // to log into HeyPup), which may not be the one Rover is synced to.
       queryParams: { access_type: 'offline', prompt: 'consent select_account' },
     },
   })
@@ -359,10 +359,10 @@ export function parseRoverStyleTitle(title: string): { dogName: string; ownerNam
   return { dogName: parts[0], ownerName: parts[1] }
 }
 
-/** Finds (or creates, on first push) the dedicated "GoodPup" calendar that
+/** Finds (or creates, on first push) the dedicated "HeyPup" calendar that
  *  pushed care tasks are written to — kept separate from the user's own
  *  events and from the Rover-synced calendar used for pulling. */
-async function resolveGoodPupCalendarId(): Promise<string> {
+async function resolveHeyPupCalendarId(): Promise<string> {
   const cached = localStorage.getItem(PUSH_CALENDAR_CACHE_KEY)
   if (cached) {
     // Verify it still exists — the user may have deleted the calendar
@@ -385,22 +385,22 @@ async function resolveGoodPupCalendarId(): Promise<string> {
   const res = await googleFetch('https://www.googleapis.com/calendar/v3/calendars', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ summary: PUSH_CALENDAR_NAME, description: 'Care tasks from GoodPup.' }),
+    body: JSON.stringify({ summary: PUSH_CALENDAR_NAME, description: 'Care tasks from HeyPup.' }),
   })
-  if (!res.ok) throw new Error('Could not create the GoodPup calendar.')
+  if (!res.ok) throw new Error('Could not create the HeyPup calendar.')
   const created = (await res.json()) as { id: string }
   localStorage.setItem(PUSH_CALENDAR_CACHE_KEY, created.id)
   return created.id
 }
 
-/** Finds the dedicated "GoodPup" Google Tasks list — only used to clean up
+/** Finds the dedicated "HeyPup" Google Tasks list — only used to clean up
  *  to-dos pushed back when the per-type Tasks format still existed. Never
  *  creates new to-dos anymore. */
-async function resolveGoodPupTaskListId(): Promise<string> {
+async function resolveHeyPupTaskListId(): Promise<string> {
   const cached = localStorage.getItem(PUSH_TASKLIST_CACHE_KEY)
   if (cached) {
     // Same self-healing check as the calendar side — the user may have
-    // deleted the whole "GoodPup" list, not just the tasks inside it.
+    // deleted the whole "HeyPup" list, not just the tasks inside it.
     const check = await googleFetch(
       `https://tasks.googleapis.com/tasks/v1/users/@me/lists/${encodeURIComponent(cached)}`,
     )
@@ -424,7 +424,7 @@ async function resolveGoodPupTaskListId(): Promise<string> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title: PUSH_CALENDAR_NAME }),
   })
-  if (!createRes.ok) throw new Error('Could not create the GoodPup task list.')
+  if (!createRes.ok) throw new Error('Could not create the HeyPup task list.')
   const created = (await createRes.json()) as { id: string }
   localStorage.setItem(PUSH_TASKLIST_CACHE_KEY, created.id)
   return created.id
@@ -479,7 +479,7 @@ async function upsertCalendarEvent(calendarId: string, task: Task): Promise<stri
     // Legacy: this task was pushed as a Google Tasks to-do before the Tasks
     // format was removed — clean it up so it isn't left behind alongside
     // the event we're about to create.
-    const tasklistId = await resolveGoodPupTaskListId().catch(() => null)
+    const tasklistId = await resolveHeyPupTaskListId().catch(() => null)
     if (tasklistId) await deleteGoogleTaskBestEffort(tasklistId, task.googleExtId)
   }
 
@@ -504,7 +504,7 @@ export async function deletePushedTasksFromGoogle(tasks: Task[]): Promise<void> 
   const taskIds = pushed.filter((t) => t.googleExtKind === 'task')
 
   if (eventIds.length > 0) {
-    const calendarId = await resolveGoodPupCalendarId().catch(() => null)
+    const calendarId = await resolveHeyPupCalendarId().catch(() => null)
     if (calendarId) {
       for (const t of eventIds) {
         await deleteCalendarEventBestEffort(calendarId, t.googleExtId!)
@@ -512,7 +512,7 @@ export async function deletePushedTasksFromGoogle(tasks: Task[]): Promise<void> 
     }
   }
   if (taskIds.length > 0) {
-    const tasklistId = await resolveGoodPupTaskListId().catch(() => null)
+    const tasklistId = await resolveHeyPupTaskListId().catch(() => null)
     if (tasklistId) {
       for (const t of taskIds) {
         await deleteGoogleTaskBestEffort(tasklistId, t.googleExtId!)
@@ -521,7 +521,7 @@ export async function deletePushedTasksFromGoogle(tasks: Task[]): Promise<void> 
   }
 }
 
-/** Pushes a stay's care tasks to the GoodPup calendar as timed events.
+/** Pushes a stay's care tasks to the HeyPup calendar as timed events.
  *  Tasks that were already pushed get updated in place rather than
  *  duplicated, tracked via each task's stored googleExtId/googleExtKind —
  *  including legacy ones pushed as Google Tasks to-dos, which get converted
@@ -534,7 +534,7 @@ export async function pushTasksToGoogleCalendar(tasks: Task[]): Promise<void> {
 
   try {
     if (tasks.length > 0) {
-      const calendarId = await resolveGoodPupCalendarId()
+      const calendarId = await resolveHeyPupCalendarId()
       for (const task of tasks) {
         const id = await upsertCalendarEvent(calendarId, task)
         await setTaskGoogleRef(task.id, 'event', id)

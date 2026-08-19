@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-07-06T00:00:00Z",
-  "title": "Design System: GoodPup",
+  "title": "Design System: HeyPup",
   "extensions": {
     "colorMeta": {
       "ember": {
@@ -90,7 +90,7 @@
   ],
   "narrative": {
     "northStar": "The Good Boy Standard",
-    "overview": "GoodPup is confident, capable, and a little proud of itself — the visual equivalent of a sitter who has three dogs fed, walked, and medicated before 9am and isn't stressed about it. The system reads bold and poppy (Ember coral against a crisp white canvas, pastel accents for pastel dogs), but every playful choice — the Lottie dog mascot, the pill shapes — sits on top of a genuinely fast, glanceable task list. This is a working tool used mid-shift, one-handed, between a leash and a food bowl; it earns its warmth by staying legible under pressure, not by decoration alone. The system explicitly rejects the beige/neutral palette this app shipped with originally — that read as generic and \"AI-built.\" It also rejects both directions a dog-care app could drift toward: clinical SaaS-blue dashboard chrome, and cartoon-kitsch pet-app cuteness that undermines trust in a tool people rely on for medication timing.",
+    "overview": "HeyPup is confident, capable, and a little proud of itself — the visual equivalent of a sitter who has three dogs fed, walked, and medicated before 9am and isn't stressed about it. The system reads bold and poppy (Ember coral against a crisp white canvas, pastel accents for pastel dogs), but every playful choice — the Lottie dog mascot, the pill shapes — sits on top of a genuinely fast, glanceable task list. This is a working tool used mid-shift, one-handed, between a leash and a food bowl; it earns its warmth by staying legible under pressure, not by decoration alone. The system explicitly rejects the beige/neutral palette this app shipped with originally — that read as generic and \"AI-built.\" It also rejects both directions a dog-care app could drift toward: clinical SaaS-blue dashboard chrome, and cartoon-kitsch pet-app cuteness that undermines trust in a tool people rely on for medication timing.",
     "keyCharacteristics": [
       "One committed accent (Ember coral) carries all emphasis and status meaning — it is never \"just decorative\"",
       "Flat, color-blocked surfaces; depth comes from scale-press feedback, not shadows",

@@ -23,7 +23,7 @@ import {
   toLocalDateKey,
 } from '../utils/dateUtils'
 
-const DISMISSED_KEY = 'goodpup-dismissed-stay-suggestions'
+const DISMISSED_KEY = 'heypup-dismissed-stay-suggestions'
 const WEEKDAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
 export default function TodayPage() {

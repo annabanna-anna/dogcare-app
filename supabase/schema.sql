@@ -1,4 +1,4 @@
--- GoodPup database schema.
+-- HeyPup database schema.
 -- Run this once in the Supabase dashboard: SQL Editor → New query → paste → Run.
 -- Safe to re-run: every statement is guarded with IF NOT EXISTS / OR REPLACE.
 

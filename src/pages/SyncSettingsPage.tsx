@@ -455,7 +455,7 @@ export default function SyncSettingsPage() {
             <a className="block w-full text-left" href="/about" target="_blank" rel="noreferrer">
               <SettingRow
                 icon={<Info size={18} />}
-                label="About GoodPup"
+                label="About HeyPup"
                 right={<ExternalLink size={18} className="text-[#d1d1d1]" />}
               />
             </a>

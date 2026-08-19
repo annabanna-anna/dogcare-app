@@ -270,7 +270,7 @@ export default function AuthPage() {
           to="/about"
           className="font-dm text-[13px] text-text-muted hover:text-text-secondary transition-colors"
         >
-          What is GoodPup? <span aria-hidden="true">→</span>
+          What is HeyPup? <span aria-hidden="true">→</span>
         </Link>
         {!isReset && (
           <p className="font-dm text-[14px] text-text-secondary">
