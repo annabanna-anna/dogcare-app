@@ -26,15 +26,27 @@ export default function DogListPage() {
 
   const justAddedName = (location.state as { justAddedName?: string } | null)?.justAddedName
   const [addedBanner, setAddedBanner] = useState<string | null>(null)
+  const [bannerLeaving, setBannerLeaving] = useState(false)
 
   useEffect(() => {
     if (!justAddedName) return
     setAddedBanner(justAddedName)
+    setBannerLeaving(false)
     navigate(location.pathname, { replace: true, state: null })
-    const timer = setTimeout(() => setAddedBanner(null), 3500)
-    return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [justAddedName])
+
+  useEffect(() => {
+    if (!addedBanner) return
+    const timer = setTimeout(() => setBannerLeaving(true), 2000)
+    return () => clearTimeout(timer)
+  }, [addedBanner])
+
+  useEffect(() => {
+    if (!bannerLeaving) return
+    const timer = setTimeout(() => setAddedBanner(null), 200)
+    return () => clearTimeout(timer)
+  }, [bannerLeaving])
 
   function load() {
     return Promise.all([listDogs(), listStays()]).then(([dogRows, stayRows]) => {
@@ -133,11 +145,15 @@ export default function DogListPage() {
       </div>
 
       {addedBanner && (
-        <div className="mx-6 mt-4 bg-[#dcfce7] rounded-[12px] px-4 py-3 flex items-center gap-2">
-          <Check size={16} className="text-[#15803d] shrink-0" />
-          <p className="font-dm text-[13px] text-[#15803d]">
-            {addedBanner} was added.
-          </p>
+        <div
+          className={`${bannerLeaving ? 'toast-out' : 'toast-in'} fixed top-6 left-1/2 w-full max-w-[430px] px-6 z-50 pointer-events-none`}
+        >
+          <div className="bg-[#dcfce7] rounded-[12px] px-4 py-3 flex items-center gap-2 shadow-lg">
+            <Check size={16} className="text-[#15803d] shrink-0" />
+            <p className="font-dm text-[13px] text-[#15803d]">
+              {addedBanner} was successfully added.
+            </p>
+          </div>
         </div>
       )}
 
