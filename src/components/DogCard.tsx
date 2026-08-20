@@ -48,7 +48,7 @@ export default function DogCard({ dog, nextStay }: Props) {
             {formatShortDate(nextStay.startDate)} – {formatShortDate(nextStay.endDate)}
           </span>
         ) : (
-          <span className="inline-flex items-center mt-2 rounded-full bg-text-muted px-2.5 py-1 text-[11px] font-dm font-bold text-white">
+          <span className="inline-flex items-center mt-2 rounded-full bg-gray-200 px-2.5 py-1 text-[11px] font-dm font-bold text-gray-600">
             No upcoming stay
           </span>
         )}
