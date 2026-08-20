@@ -13,6 +13,7 @@ colors:
   mint: "#c9f0d5"
   green-vivid: "#18ba1d"
   cobalt: "#2344dd"
+  cobalt-soft: "#dee3fa"
   blue-task: "#2344dd"
   purple-task: "#9333ea"
   ink: "#141414"

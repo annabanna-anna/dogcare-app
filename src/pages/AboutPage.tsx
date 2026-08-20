@@ -390,10 +390,177 @@ function CheckOffMock() {
   )
 }
 
+// ── Alternate "how it works" visuals ────────────────────────────────────
+// A second, non-scrolling take on the same four steps for side-by-side
+// comparison against the scrollytelling version above — collage and
+// floating-card compositions in the vein of Partiful/Mindtrip's marketing
+// pages, built from HeyPup's own content and colors rather than borrowed
+// screenshots.
+function AddDogCollage() {
+  return (
+    <div className="relative mx-auto w-full max-w-[380px] aspect-square">
+      <span className="absolute left-0 top-3 rotate-[-6deg] rounded-full bg-white border border-border-light shadow-md px-4 py-2 font-dm font-bold text-[13px] text-text-primary">
+        🦴 Feeding notes
+      </span>
+      <span className="absolute right-0 top-16 rotate-[5deg] rounded-full bg-white border border-border-light shadow-md px-4 py-2 font-dm font-bold text-[13px] text-text-primary">
+        💊 Medication
+      </span>
+      <div className="absolute left-7 top-28 size-24 rounded-[20px] overflow-hidden shadow-lg rotate-[-4deg] border-4 border-white">
+        <img src={GEORGE_PHOTO_URL} alt="" className="size-full object-cover" />
+      </div>
+      <div className="absolute right-9 top-1/2 -translate-y-1/2 rounded-full size-28 overflow-hidden shadow-xl border-4 border-white">
+        <img src={GEORGE_PHOTO_URL} alt="George, a West Highland Terrier" className="size-full object-cover" />
+      </div>
+      <span className="absolute left-3 bottom-24 rotate-[4deg] rounded-full bg-peach px-4 py-2 font-dm font-bold text-[13px] text-text-primary shadow-md">
+        🚶 Walk routine
+      </span>
+      <span className="absolute right-2 bottom-16 rotate-[-5deg] rounded-full bg-lavender px-4 py-2 font-dm font-bold text-[13px] text-text-primary shadow-md">
+        🚨 Emergency contact
+      </span>
+      <div className="absolute inset-x-6 bottom-0 rounded-full border-2 border-text-primary bg-white shadow-lg flex items-center px-5 py-3.5">
+        <span className="font-dm text-[14px] text-text-muted">Tell us about your dog…</span>
+      </div>
+    </div>
+  )
+}
+
+function StartStayStack() {
+  return (
+    <div className="relative mx-auto w-full max-w-[380px] aspect-square">
+      <div className="absolute left-0 top-8 w-[78%] rounded-[20px] bg-white border border-border-faint shadow-xl rotate-[-3deg] p-4">
+        <p className="font-dm font-bold text-[11px] uppercase tracking-wide text-coral">
+          Which dog?
+        </p>
+        <div className="flex items-center gap-2.5 mt-2">
+          <img
+            src={GEORGE_PHOTO_URL}
+            alt="George"
+            className="size-11 rounded-[10px] object-cover shrink-0"
+          />
+          <div>
+            <p className="font-dm font-bold text-[14px] text-text-primary leading-none">George</p>
+            <p className="font-dm text-[12px] text-text-secondary mt-1">West Highland Terrier</p>
+          </div>
+        </div>
+        <div className="mt-3.5 grid grid-cols-2 gap-2">
+          <div className="rounded-[10px] border border-border-light px-2.5 py-2">
+            <p className="font-dm font-bold text-[9px] text-text-muted uppercase tracking-widest">
+              Start
+            </p>
+            <p className="font-dm text-[12px] text-text-primary mt-0.5">Fri, Aug 14</p>
+          </div>
+          <div className="rounded-[10px] border border-border-light px-2.5 py-2">
+            <p className="font-dm font-bold text-[9px] text-text-muted uppercase tracking-widest">
+              End
+            </p>
+            <p className="font-dm text-[12px] text-text-primary mt-0.5">Wed, Aug 20</p>
+          </div>
+        </div>
+      </div>
+      <div className="absolute right-0 bottom-8 w-[62%] rounded-[18px] bg-cobalt shadow-xl rotate-[4deg] p-4">
+        <p className="font-dm font-bold text-[10px] uppercase tracking-wide text-white/70">
+          Auto-filled
+        </p>
+        <p className="font-outfit font-bold text-[17px] text-white leading-tight mt-1">
+          George's regular schedule comes with him
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function TasksGenerateOrbit() {
+  const badges: Array<{
+    Icon: React.ComponentType<{ size?: string | number; className?: string }>
+    bg: string
+    style: React.CSSProperties
+  }> = [
+    { Icon: DogBowlIcon, bg: 'bg-coral', style: { left: '2%', top: '8%' } },
+    { Icon: Pill, bg: 'bg-blue-task', style: { right: '0%', top: '2%' } },
+    { Icon: PawPrint, bg: 'bg-green-vivid', style: { left: '-2%', bottom: '14%' } },
+    { Icon: Bell, bg: 'bg-[#9333ea]', style: { right: '2%', bottom: '4%' } },
+  ]
+  return (
+    <div className="relative mx-auto w-full max-w-[380px] aspect-square">
+      {badges.map(({ Icon, bg, style }, i) => (
+        <span
+          key={i}
+          className={`absolute size-14 rounded-full shadow-lg flex items-center justify-center ${bg}`}
+          style={style}
+        >
+          <Icon size={22} className="text-white" />
+        </span>
+      ))}
+      <div className="absolute inset-x-8 top-1/2 -translate-y-1/2 rounded-[20px] bg-white border border-border-faint shadow-xl p-5">
+        <p className="font-dm font-bold text-[11px] uppercase tracking-wide text-coral">
+          This stay
+        </p>
+        <p className="font-outfit font-bold text-[20px] text-cobalt leading-tight mt-0.5">
+          9 tasks, 2 dogs
+        </p>
+        <div className="mt-2.5 divide-y divide-border-faint">
+          <MockTaskRow time="8:00" title="Breakfast" dog="Barkley" type="meal" />
+          <MockTaskRow time="9:15" title="Morning walk" dog="Barkley" type="walk" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CheckOffFeed() {
+  return (
+    <div className="relative mx-auto w-full max-w-[380px] aspect-square">
+      <div className="absolute left-0 top-4 w-[80%] rounded-[20px] bg-[#1a1730] shadow-xl rotate-[-2deg] p-4">
+        <div className="flex items-center gap-2.5">
+          <span className="size-8 rounded-full bg-coral flex items-center justify-center shrink-0">
+            <DogBowlIcon size={15} className="text-white" />
+          </span>
+          <p className="font-dm text-[13px] text-white">
+            <span className="font-bold">Breakfast</span> marked done for Barkley
+          </p>
+        </div>
+        <div className="flex items-center gap-2 mt-3">
+          <span className="rounded-full bg-white/10 text-white px-2.5 py-1 text-[12px] font-dm font-bold">
+            ✅ Done
+          </span>
+          <span className="rounded-full bg-white/10 text-white px-2.5 py-1 text-[12px] font-dm font-bold">
+            8:02am
+          </span>
+        </div>
+      </div>
+      <div className="absolute right-0 top-[38%] w-[72%] rounded-[20px] bg-white border border-border-faint shadow-xl rotate-[3deg] p-4">
+        <div className="flex items-center gap-2.5">
+          <span className="size-8 rounded-full bg-blue-task flex items-center justify-center shrink-0">
+            <Pill size={14} className="text-white" />
+          </span>
+          <p className="font-dm text-[13px] text-text-primary">
+            <span className="font-bold">Ear drops</span> due for Mochi
+          </p>
+        </div>
+        <div className="flex items-center gap-2 mt-3">
+          <span className="rounded-full bg-card text-text-secondary px-2.5 py-1 text-[12px] font-dm font-bold">
+            One tap
+          </span>
+        </div>
+      </div>
+      <div className="absolute left-6 bottom-2 w-[70%] rounded-[20px] bg-white border border-border-faint shadow-xl rotate-[-3deg] p-4">
+        <div className="flex items-center gap-2.5">
+          <span className="size-8 rounded-full bg-green-vivid flex items-center justify-center shrink-0">
+            <PawPrint size={14} className="text-white" />
+          </span>
+          <p className="font-dm text-[13px] text-text-primary">
+            <span className="font-bold">Morning walk</span> up next for Barkley
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const STEPS = [
   {
     title: 'Add the dog',
-    body: 'Breed, size, owner contact, and the care notes you actually need at 6am — food, meds, behaviour, emergencies.',
+    body: 'Breed, size, owner contact, and the care notes you actually need at 6am: food, meds, behaviour, emergencies.',
     Mock: AddDogMock,
   },
   {
@@ -413,16 +580,23 @@ const STEPS = [
   },
 ]
 
+const ALT_STEPS = [
+  { title: 'Add the dog', body: STEPS[0].body, Visual: AddDogCollage },
+  { title: 'Start a stay', body: STEPS[1].body, Visual: StartStayStack },
+  { title: 'Tasks generate', body: STEPS[2].body, Visual: TasksGenerateOrbit },
+  { title: 'Check off as you go', body: STEPS[3].body, Visual: CheckOffFeed },
+]
+
 const FEATURES = [
   {
     Icon: PawPrint,
     title: 'Grouped by dog',
-    body: 'Every task lives under the dog it’s for — even with three overlapping stays, nothing gets crossed with the wrong bowl.',
+    body: 'Every task lives under the dog it’s for, even with three overlapping stays, so nothing gets crossed with the wrong bowl.',
   },
   {
     Icon: Bell,
     title: 'Reminders that find you',
-    body: 'A push notification for each task, timed to the schedule — so a med window doesn’t slip by while you’re heads-down at work. Add HeyPup to your home screen to get them.',
+    body: 'A push notification for each task, timed to the schedule, so a med window doesn’t slip by while you’re heads-down at work. Add HeyPup to your home screen to get them.',
   },
   {
     Icon: CalendarDays,
@@ -439,19 +613,19 @@ const FEATURES = [
 const FAQS = [
   {
     q: 'Is HeyPup a mobile app I need to download?',
-    a: "No — HeyPup is a web app. Open it in your phone's browser, no App Store and nothing to install. Add it to your home screen for one-tap access — and if you want reminders, that step is required, not optional.",
+    a: "No. HeyPup is a web app. Open it in your phone's browser, no App Store and nothing to install. Add it to your home screen for one-tap access, and if you want reminders, that step is required, not optional.",
   },
   {
     q: 'How many dogs can I track at once?',
-    a: 'As many as you’re actually sitting — tasks are grouped by dog, so a house full of concurrent stays stays scannable instead of turning into one long list.',
+    a: 'As many as you’re actually sitting. Tasks are grouped by dog, so a house full of concurrent stays stays scannable instead of turning into one long list.',
   },
   {
     q: 'Does HeyPup send reminders?',
-    a: 'Yes — each task can send a push notification at its scheduled time, so a meal or a med window doesn’t slip by while you’re heads-down at work. Reminders only work once HeyPup is added to your home screen, so do that first if you want them.',
+    a: 'Yes. Each task can send a push notification at its scheduled time, so a meal or a med window doesn’t slip by while you’re heads-down at work. Reminders only work once HeyPup is added to your home screen, so do that first if you want them.',
   },
   {
     q: 'Do I need to connect Google Calendar?',
-    a: 'No — calendar sync is optional. HeyPup works fully with tasks generated straight from a dog’s care schedule; connecting Google just saves you from re-typing bookings.',
+    a: 'No, calendar sync is optional. HeyPup works fully with tasks generated straight from a dog’s care schedule; connecting Google just saves you from re-typing bookings.',
   },
   {
     q: 'What happens to my Google access if I disconnect?',
@@ -459,7 +633,7 @@ const FAQS = [
   },
   {
     q: 'Is it free?',
-    a: "Free while HeyPup is finding its feet — bring your own dogs, no card required.",
+    a: "Free while HeyPup is finding its feet. Bring your own dogs, no card required.",
   },
 ]
 
@@ -498,25 +672,53 @@ export default function AboutPage() {
   const stepRefs = useRef<Array<HTMLDivElement | null>>([])
 
   useEffect(() => {
-    document.title = 'HeyPup — care tracking for dog sitters and boarders'
+    document.title = 'HeyPup: care tracking for dog sitters and boarders'
   }, [])
 
-  // Scroll-driven, not timer-driven: whichever step block crosses the
-  // vertical middle of the viewport becomes active, so the mockup advances
-  // in step with scrolling instead of on its own clock.
+  // Scroll-driven, not timer-driven: whichever step marker sits closest to
+  // the vertical middle of the viewport becomes active, so the mockup
+  // advances in step with scrolling instead of on its own clock.
+  //
+  // Deliberately not an IntersectionObserver watching a thin band around the
+  // center: each marker is only 1px tall, so on a fast scroll it can pass
+  // entirely through a narrow band between two observer callbacks and never
+  // register as intersecting, leaving activeStep stuck on a stale step until
+  // scrolling catches another marker. Recomputing the closest marker on every
+  // scroll frame can't skip a step like that.
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (!entry.isIntersecting) continue
-          const idx = Number((entry.target as HTMLElement).dataset.stepIndex)
-          setActiveStep(idx)
+    function updateActiveStep() {
+      const viewportCenter = window.innerHeight / 2
+      let closestIdx = 0
+      let closestDist = Infinity
+      for (let i = 0; i < stepRefs.current.length; i++) {
+        const el = stepRefs.current[i]
+        if (!el) continue
+        const dist = Math.abs(el.getBoundingClientRect().top - viewportCenter)
+        if (dist < closestDist) {
+          closestDist = dist
+          closestIdx = i
         }
-      },
-      { rootMargin: '-45% 0px -45% 0px', threshold: 0 },
-    )
-    for (const el of stepRefs.current) if (el) observer.observe(el)
-    return () => observer.disconnect()
+      }
+      setActiveStep(closestIdx)
+    }
+
+    let ticking = false
+    function onScroll() {
+      if (ticking) return
+      ticking = true
+      requestAnimationFrame(() => {
+        updateActiveStep()
+        ticking = false
+      })
+    }
+
+    updateActiveStep()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
   }, [])
 
   function scrollToStep(i: number) {
@@ -542,11 +744,12 @@ export default function AboutPage() {
       {/* ── Hero ───────────────────────────────────────────────────────── */}
       <section className="mx-auto max-w-[1100px] px-6 pt-14 pb-20 sm:pt-24 sm:pb-28 grid gap-14 lg:grid-cols-[1.05fr_1fr] lg:gap-16 lg:items-center">
         <div>
-          {/* Grounded in the mockup beside it: one dog (George), his four
-              tasks today — not an abstract multi-dog tally. */}
+          {/* Escalating headcount building overwhelm before the resolution —
+              deliberately not tied to the single-dog hero mockup beside it. */}
           <h1 className="rise-in font-outfit font-bold text-cobalt leading-[0.95] tracking-[-0.03em] text-[clamp(2.5rem,7vw,4.5rem)]">
-            <span className="block">One dog.</span>
-            <span className="block">Four tasks.</span>
+            <span className="block">Two dogs.</span>
+            <span className="block">Four meals.</span>
+            <span className="block">Eight walks.</span>
             <span className="block text-coral">One list.</span>
           </h1>
           <p
@@ -554,7 +757,7 @@ export default function AboutPage() {
             style={{ animationDelay: '90ms', textWrap: 'pretty' }}
           >
             HeyPup turns every boarding stay into a schedule of care tasks, grouped by dog. Built
-            for the sitter who checks things off standing in a kitchen with a leash in one hand —
+            for the sitter who checks things off standing in a kitchen with a leash in one hand,
             not sitting down to plan.
           </p>
           <div className="rise-in flex flex-wrap gap-3 mt-8" style={{ animationDelay: '180ms' }}>
@@ -599,8 +802,8 @@ export default function AboutPage() {
             </div>
           </div>
           <p className="font-dm text-[13px] text-text-muted text-center mt-4">
-            Go ahead — tap a <span className="font-bold text-text-secondary">Done</span> button. It
-            works right in your browser — nothing to download.
+            Go ahead, swipe a task to mark it <span className="font-bold text-text-secondary">Done</span>. It
+            works right in your browser, nothing to download.
           </p>
         </div>
       </section>
@@ -609,23 +812,23 @@ export default function AboutPage() {
           The "why this exists" beat, between the hero's demo and the
           product walkthrough — a plain, centered editorial block for
           contrast against the two-column sections around it. */}
-      <section className="border-t border-border-faint bg-card">
+      <section className="border-t border-border-faint bg-coral">
         <div className="mx-auto max-w-[760px] px-6 py-20 text-center">
-          <p className="font-dm font-bold text-[12px] uppercase tracking-wide text-coral">
+          <p className="font-dm font-bold text-[12px] uppercase tracking-wide text-white/80">
             The problem
           </p>
           <h2
-            className="font-outfit font-bold text-text-primary text-[clamp(2rem,5vw,3.25rem)] leading-[1.1] tracking-[-0.02em] mt-3"
+            className="font-outfit font-bold text-white text-[clamp(2rem,5vw,3.25rem)] leading-[1.1] tracking-[-0.02em] mt-3"
             style={{ textWrap: 'balance' }}
           >
-            Every dog runs on its own clock — and yours doesn't stop for it.
+            Every dog runs on its own clock, and yours doesn't stop for it.
           </h2>
-          <p className="font-dm text-[18px] text-text-secondary leading-relaxed mt-6 max-w-[60ch] mx-auto">
-            One wants breakfast at seven. Another needs a thyroid pill at noon —{' '}
-            <em className="not-italic font-bold text-text-primary">exactly</em> at noon, not
-            "sometime around lunch." You're heads-down on a work call, and by the time you look
-            up, there's a very unimpressed nose parked on your knee. Now multiply that by three
-            dogs, three schedules, and a sticky note that fell off the fridge.
+          <p className="font-dm text-[18px] text-white/90 leading-relaxed mt-6 max-w-[60ch] mx-auto">
+            One wants breakfast at seven. Another needs a thyroid pill at noon,{' '}
+            <em className="not-italic font-bold text-white">exactly</em> at noon, not "sometime
+            around lunch." You're heads-down on a work call, and by the time you look up, there's
+            a very unimpressed nose parked on your knee. Now multiply that by three dogs, three
+            schedules, and a sticky note that fell off the fridge.
           </p>
         </div>
       </section>
@@ -754,6 +957,52 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* ── How it works, take two ────────────────────────────────────────
+          A second pass at the same four steps for side-by-side comparison
+          against the scrollytelling version above: no scroll rig, no sticky
+          panel — a plain stacked layout with a distinct floating-card/
+          collage visual per step, in the vein of Partiful and Mindtrip's
+          marketing pages. Delete whichever direction loses. */}
+      <section id="how-it-works-alt" className="border-t border-border-faint bg-card">
+        <div className="mx-auto max-w-[1100px] px-6 py-20">
+          <div className="max-w-[640px]">
+            <p className="font-dm font-bold text-[12px] uppercase tracking-wide text-coral">
+              How it works — option B
+            </p>
+            <h2 className="font-outfit font-bold text-cobalt text-[clamp(2.25rem,5.5vw,3.5rem)] leading-tight tracking-[-0.02em] mt-2">
+              Same four steps, a different shape
+            </h2>
+            <p className="font-dm text-[16px] text-text-secondary leading-relaxed mt-4 max-w-[52ch]">
+              No scroll-pinned mockup here — each step gets its own floating-card visual instead.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-20 sm:gap-28 mt-16">
+            {ALT_STEPS.map((step, i) => (
+              <div
+                key={step.title}
+                className={`grid gap-10 items-center lg:grid-cols-2 lg:gap-16 ${
+                  i % 2 === 1 ? 'lg:[&>*:first-child]:order-2' : ''
+                }`}
+              >
+                <div>
+                  <span className="font-dm font-bold text-[13px] uppercase tracking-[0.1em] text-coral">
+                    Step {i + 1}
+                  </span>
+                  <p className="font-outfit font-bold text-cobalt text-[clamp(1.75rem,3.2vw,2.5rem)] leading-[1.05] tracking-[-0.02em] mt-1.5">
+                    {step.title}
+                  </p>
+                  <p className="font-dm text-[17px] leading-relaxed text-text-secondary mt-3 max-w-[40ch]">
+                    {step.body}
+                  </p>
+                </div>
+                <step.Visual />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── Features ───────────────────────────────────────────────────────
           Calendar sync used to get its own section as if it were the whole
           pitch; it's one of four things worth knowing, so it's a grid entry
@@ -791,7 +1040,7 @@ export default function AboutPage() {
             is the sub-section a Google OAuth reviewer reads, and the one a
             sitter reads before granting calendar permission — the hero's
             "How calendar sync works" link jumps straight here. */}
-        <div id="calendar-sync" className="bg-card border-t border-border-faint pt-20 pb-20 scroll-mt-16">
+        <div id="calendar-sync" className="bg-cobalt-soft border-t border-border-faint pt-20 pb-20 scroll-mt-16">
           <div className="mx-auto max-w-[1100px] px-6">
             <div className="grid gap-12 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
               {/* Centered against the taller list beside it — top-aligning left
@@ -808,7 +1057,7 @@ export default function AboutPage() {
                 </h2>
                 <p className="font-dm text-[16px] text-text-secondary leading-relaxed mt-4 max-w-[46ch]">
                   Connecting Google Calendar is optional, and HeyPup asks for exactly what these two
-                  jobs need — nothing broader.
+                  jobs need, nothing broader.
                 </p>
               </div>
 
@@ -824,7 +1073,7 @@ export default function AboutPage() {
                   </dt>
                   <dd className="font-dm text-[15px] text-text-secondary leading-relaxed mt-2.5">
                     If you use Rover's calendar sync, HeyPup finds that calendar automatically and
-                    reads only its confirmed bookings — so a stay you accepted on Rover shows up here
+                    reads only its confirmed bookings, so a stay you accepted on Rover shows up here
                     without retyping it. No other calendar is read.
                   </dd>
                 </div>

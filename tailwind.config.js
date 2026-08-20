@@ -16,6 +16,7 @@ export default {
         'green-vivid': '#18ba1d',
         'blue-task': '#2344dd',
         cobalt: '#2344dd',
+        'cobalt-soft': '#dee3fa',
         'purple-task': '#9333ea',
         'text-primary': '#141414',
         'text-secondary': '#5c5c5c',

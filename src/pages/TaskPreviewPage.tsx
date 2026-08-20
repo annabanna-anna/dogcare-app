@@ -9,7 +9,7 @@ import { createStay } from '../lib/stays'
 import { createTasks } from '../lib/tasks'
 import { generateTasksForStay } from '../utils/taskGenerator'
 import { isGoogleCalendarConnected, pushTasksToGoogleCalendar } from '../lib/googleCalendar'
-import { formatDayHeading, formatTime, toDateKey } from '../utils/dateUtils'
+import { formatDayHeading, formatTime, toLocalDateKey } from '../utils/dateUtils'
 import type { Dog, Task, TaskType } from '../types'
 
 const typeIcon: Record<TaskType, React.ComponentType<{ size?: string | number; className?: string }>> = {
@@ -76,7 +76,7 @@ export default function TaskPreviewPage() {
   const grouped = useMemo(() => {
     const map = new Map<string, Task[]>()
     for (const task of tasks) {
-      const key = toDateKey(task.scheduledTime)
+      const key = toLocalDateKey(new Date(task.scheduledTime))
       if (!map.has(key)) map.set(key, [])
       map.get(key)!.push(task)
     }

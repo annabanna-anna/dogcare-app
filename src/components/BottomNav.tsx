@@ -62,34 +62,38 @@ export default function BottomNav() {
             }}
           />
         )}
-        {navItems.map(({ to, label, Icon }, i) => (
-          <NavLink
-            key={to}
-            ref={(el) => {
-              itemRefs.current[i] = el
-            }}
-            to={to}
-            end={to === '/'}
-            className="relative z-10 flex flex-col items-center gap-1 py-2.5 rounded-full text-nav-inactive"
-          >
-            {({ isActive }) => (
-              <>
-                <Icon
-                  size={20}
-                  strokeWidth={isActive ? 2.5 : 2}
-                  className={`transition-colors duration-300 ${isActive ? 'text-white' : ''}`}
-                />
-                <span
-                  className={`font-dm text-[11px] leading-none transition-colors duration-300 ${
-                    isActive ? 'font-bold text-white' : 'font-medium'
-                  }`}
-                >
-                  {label}
-                </span>
-              </>
-            )}
-          </NavLink>
-        ))}
+        {navItems.map(({ to, label, Icon }, i) => {
+          // Driven by activeIndex (which the pill also uses), not NavLink's own
+          // isActive — activeIndex falls back to "Today" on routes that don't
+          // match any tab (e.g. Edit Stay), and the icon/label need to agree
+          // with wherever the pill actually rendered, or the icon reads grey
+          // against the blue pill.
+          const active = i === activeIndex
+          return (
+            <NavLink
+              key={to}
+              ref={(el) => {
+                itemRefs.current[i] = el
+              }}
+              to={to}
+              end={to === '/'}
+              className="relative z-10 flex flex-col items-center gap-1 py-2.5 rounded-full text-nav-inactive"
+            >
+              <Icon
+                size={20}
+                strokeWidth={active ? 2.5 : 2}
+                className={`transition-colors duration-300 ${active ? 'text-white' : ''}`}
+              />
+              <span
+                className={`font-dm text-[11px] leading-none transition-colors duration-300 ${
+                  active ? 'font-bold text-white' : 'font-medium'
+                }`}
+              >
+                {label}
+              </span>
+            </NavLink>
+          )
+        })}
       </div>
     </div>
   )
