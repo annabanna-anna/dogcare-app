@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BrowserRouter, Routes, Route, Outlet, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase'
 import {
@@ -39,6 +39,7 @@ export default function App() {
 
 function AppRoutes() {
   const { pathname } = useLocation()
+  const navigate = useNavigate()
   const isPublicRoute = PUBLIC_PATHS.includes(pathname)
 
   const [splash, setSplash] = useState<'visible' | 'fading' | 'gone'>('visible')
@@ -111,7 +112,12 @@ function AppRoutes() {
     return (
       <>
         {splashOverlay}
-        <UpdatePasswordPage onDone={() => setPasswordRecovery(false)} />
+        <UpdatePasswordPage
+          onDone={() => {
+            setPasswordRecovery(false)
+            navigate('/', { replace: true })
+          }}
+        />
       </>
     )
   }

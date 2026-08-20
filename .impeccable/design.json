@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-07-06T00:00:00Z",
+  "generatedAt": "2026-08-20T00:00:00Z",
   "title": "Design System: HeyPup",
   "extensions": {
     "colorMeta": {
@@ -22,14 +22,11 @@
         "canonical": "oklch(96% 0.003 100)",
         "tonalRamp": ["#232320", "#454540", "#67675f", "#8a8a80", "#adada2", "#cfcfc5", "#e2e2da", "#f4f4ef"]
       },
-      "peach": { "role": "accent", "displayName": "Peach", "canonical": "oklch(89% 0.06 40)" },
-      "lavender": { "role": "accent", "displayName": "Lavender", "canonical": "oklch(83% 0.07 295)" },
-      "lemon": { "role": "accent", "displayName": "Lemon", "canonical": "oklch(92% 0.14 100)" },
-      "mint": { "role": "accent", "displayName": "Mint", "canonical": "oklch(90% 0.08 155)" },
       "green-vivid": { "role": "semantic", "displayName": "Walk Green", "canonical": "oklch(63% 0.19 138)" },
       "cobalt": { "role": "accent", "displayName": "Cobalt", "canonical": "oklch(47% 0.24 268)" },
       "blue-task": { "role": "semantic", "displayName": "Medication Blue (= Cobalt)", "canonical": "oklch(47% 0.24 268)" },
-      "purple-task": { "role": "semantic", "displayName": "Groom Purple", "canonical": "oklch(48% 0.22 302)" },
+      "meal-task": { "role": "semantic", "displayName": "Meal Ember (= Ember)", "canonical": "oklch(63% 0.22 33)" },
+      "other-task": { "role": "semantic", "displayName": "Other Gray (= Ink Muted)", "canonical": "oklch(55% 0.02 258)" },
       "ink": { "role": "neutral", "displayName": "Ink", "canonical": "oklch(20% 0 0)" }
     },
     "typographyMeta": {
@@ -75,9 +72,9 @@
       "name": "Dog Card",
       "kind": "card",
       "refersTo": "card-dog",
-      "description": "Tappable list row: pastel avatar block, name, breed/owner, next-stay pill.",
-      "html": "<button class=\"ds-card-dog\"><span class=\"ds-card-dog-avatar\">🐾</span><span class=\"ds-card-dog-info\"><span class=\"ds-card-dog-name\">Barkley</span><span class=\"ds-card-dog-meta\">Golden Retriever · Anna</span></span></button>",
-      "css": ".ds-card-dog { width: 100%; background: #fcfcfc; border: 1px solid #d1d1d1; border-radius: 22px; padding: 16px; display: flex; align-items: center; gap: 16px; text-align: left; transition: transform 0.1s; } .ds-card-dog:active { transform: scale(0.98); } .ds-card-dog-avatar { display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 18px; background: #f3f4f6; font-size: 24px; } .ds-card-dog-name { display: block; font-family: Outfit, sans-serif; font-weight: 700; font-size: 20px; color: #141414; } .ds-card-dog-meta { display: block; font-family: 'DM Sans', sans-serif; font-size: 13px; color: #5c5c5c; margin-top: 2px; }"
+      "description": "Tappable list row: neutral gray avatar block with the dog-face glyph (photo if available), name, breed/owner, next-stay pill.",
+      "html": "<button class=\"ds-card-dog\"><span class=\"ds-card-dog-avatar\"><svg viewBox=\"0 0 16 16\" width=\"30\" height=\"30\" fill=\"none\" stroke=\"#6b7280\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M7.26 2.74H8.74M13.19 7.93C12.69 11.88 11.46 13.85 9.48 13.85H6.52C4.54 13.85 3.31 11.88 2.81 7.93\"/><path d=\"M8 12.37V13.85M6.52 7.19V7.19M9.48 7.19V7.19M7.26 10.89C7.26 11.38 7.51 11.63 8 11.63C8.74 11.63 8.74 11.38 8.74 10.89H7.26ZM2.81 2L7.26 2.72 2.64 7.67C2.37 7.97 1.9 8.01 1.59 7.75 1.36 7.55 1.28 7.24 1.35 6.99L2.81 2ZM13.19 2L8.74 2.72 13.36 7.67C13.63 7.97 14.09 8.01 14.41 7.75 14.64 7.55 14.72 7.24 14.65 6.99L13.19 2Z\"/></svg></span><span class=\"ds-card-dog-info\"><span class=\"ds-card-dog-name\">Barkley</span><span class=\"ds-card-dog-meta\">Golden Retriever · Anna</span></span></button>",
+      "css": ".ds-card-dog { width: 100%; background: #fcfcfc; border: 1px solid #d1d1d1; border-radius: 22px; padding: 16px; display: flex; align-items: center; gap: 16px; text-align: left; transition: transform 0.1s; } .ds-card-dog:active { transform: scale(0.98); } .ds-card-dog-avatar { display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 18px; background: #f3f4f6; } .ds-card-dog-name { display: block; font-family: Outfit, sans-serif; font-weight: 700; font-size: 20px; color: #141414; } .ds-card-dog-meta { display: block; font-family: 'DM Sans', sans-serif; font-size: 13px; color: #5c5c5c; margin-top: 2px; }"
     },
     {
       "name": "Bottom Nav",
@@ -90,7 +87,7 @@
   ],
   "narrative": {
     "northStar": "The Good Boy Standard",
-    "overview": "HeyPup is confident, capable, and a little proud of itself — the visual equivalent of a sitter who has three dogs fed, walked, and medicated before 9am and isn't stressed about it. The system reads bold and poppy (Ember coral against a crisp white canvas, pastel accents for pastel dogs), but every playful choice — the Lottie dog mascot, the pill shapes — sits on top of a genuinely fast, glanceable task list. This is a working tool used mid-shift, one-handed, between a leash and a food bowl; it earns its warmth by staying legible under pressure, not by decoration alone. The system explicitly rejects the beige/neutral palette this app shipped with originally — that read as generic and \"AI-built.\" It also rejects both directions a dog-care app could drift toward: clinical SaaS-blue dashboard chrome, and cartoon-kitsch pet-app cuteness that undermines trust in a tool people rely on for medication timing.",
+    "overview": "HeyPup is confident, capable, and a little proud of itself — the visual equivalent of a sitter who has three dogs fed, walked, and medicated before 9am and isn't stressed about it. The system reads bold and poppy (Ember coral against a crisp white canvas), but every playful choice — the Lottie dog mascot, the pill shapes — sits on top of a genuinely fast, glanceable task list. This is a working tool used mid-shift, one-handed, between a leash and a food bowl; it earns its warmth by staying legible under pressure, not by decoration alone. The system explicitly rejects the beige/neutral palette this app shipped with originally — that read as generic and \"AI-built.\" It also rejects both directions a dog-care app could drift toward: clinical SaaS-blue dashboard chrome, and cartoon-kitsch pet-app cuteness that undermines trust in a tool people rely on for medication timing.",
     "keyCharacteristics": [
       "One committed accent (Ember coral) carries all emphasis and status meaning — it is never \"just decorative\"",
       "Flat, color-blocked surfaces; depth comes from scale-press feedback, not shadows",
@@ -98,8 +95,8 @@
       "A warm, dog-forward voice (paw prints, a wagging mascot) kept in check by a display font with real gravity"
     ],
     "rules": [
-      { "name": "The One Voice Rule", "body": "Ember is the only color that means something (status, action, active state). Pastels (Peach, Lavender, Lemon, Mint) exist purely to differentiate dogs and never carry semantic weight — if a pastel starts meaning \"done\" or \"urgent,\" that's a bug.", "section": "colors" },
-      { "name": "The Avatar Rule", "body": "Photo-less dog avatars are neutral: light gray (#f3f4f6) blocks with the Icon/dog face glyph in Ink Muted — never the paw icon, never a pastel. The earlier pastel rotation is retired.", "section": "colors" },
+      { "name": "The One Voice Rule", "body": "Ember is the only color that carries free-floating meaning (status, action, active state) outside the fixed task-type set (green/ember/blue/gray) — if a color starts meaning \"done\" or \"urgent\" on its own, that's a bug.", "section": "colors" },
+      { "name": "The Avatar Rule", "body": "Photo-less dog avatars are neutral: light gray (#f3f4f6) blocks with the Icon/dog face glyph in Ink Muted — never the paw icon, never a color. There is no pastel identity-accent bench.", "section": "colors" },
       { "name": "The Eyebrow Restraint Rule", "body": "Uppercase tracked labels are reserved for section headers and status metadata — never used as decorative kicker text above every block.", "section": "typography" },
       { "name": "The Flat Rule", "body": "Depth cues come from a flatter/lighter background color (Card vs Studio White) and press feedback, never from shadows. No element in the system — including the bottom nav — carries a drop shadow.", "section": "elevation" }
     ],
@@ -114,7 +111,7 @@
       "Don't reintroduce a beige/cream/parchment-tinted background — the base surface is Studio White (#fcfcfc), a true near-white.",
       "Don't drift toward clinical SaaS-dashboard chrome (cold blues/grays, dense data-table density).",
       "Don't tip into cartoon-kitsch cuteness (mascot dominating a whole screen, baby-talk copy).",
-      "Don't use a pastel avatar color to signal status or urgency — those are identity-only colors.",
+      "Don't color a dog avatar to signal status or identity — every photo-less avatar is the same neutral gray glyph.",
       "Don't add drop shadows to inline cards or buttons — shadow is reserved for the floating bottom nav only."
     ]
   }

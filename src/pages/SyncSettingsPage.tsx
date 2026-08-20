@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import {
   CalendarDays,
@@ -212,6 +213,7 @@ function FeedbackModal({
 }
 
 export default function SyncSettingsPage() {
+  const navigate = useNavigate()
   const [calendarConnected, setCalendarConnected] = useState(false)
   const [connecting, setConnecting] = useState(false)
   const [connectError, setConnectError] = useState<string | null>(null)
@@ -468,7 +470,10 @@ export default function SyncSettingsPage() {
             </a>
             <button
               className="w-full text-left"
-              onClick={() => void supabase.auth.signOut()}
+              onClick={() => {
+                navigate('/', { replace: true })
+                void supabase.auth.signOut()
+              }}
             >
               <SettingRow
                 icon={<LogOut size={18} />}

@@ -7,15 +7,10 @@ colors:
   ember-soft: "#ffe4da"
   studio-white: "#fcfcfc"
   card: "#f4f4ef"
-  peach: "#ffd7c6"
-  lavender: "#c9c6f2"
-  lemon: "#f4ec6a"
-  mint: "#c9f0d5"
   green-vivid: "#18ba1d"
   cobalt: "#2344dd"
   cobalt-soft: "#dee3fa"
   blue-task: "#2344dd"
-  purple-task: "#9333ea"
   ink: "#141414"
   ink-secondary: "#5c5c5c"
   ink-muted: "#6b7280"
@@ -110,7 +105,7 @@ The system explicitly rejects the beige/neutral palette this app shipped with or
 
 ## 2. Colors
 
-Four roles: Ember orange as the brand color, Cobalt blue as the secondary accent, and two neutrals — Studio White and warm Card gray — as the canvas. A bench of soft pastels exists only as dog-identity accents. The palette reads bold in small, deliberate doses rather than saturating every surface.
+Four roles: Ember orange as the brand color, Cobalt blue as the secondary accent, and two neutrals — Studio White and warm Card gray — as the canvas. The palette reads bold in small, deliberate doses rather than saturating every surface.
 
 ### Brand
 - **Ember** (#ff4514): The brand color and the system's voice for action, status, and metadata emphasis — progress bar fill, primary buttons, "done" states, overdue emphasis, selection states, and the uppercase eyebrows/subheads above headings (dates like "Saturday, July 4", breed lines like "Golden Retriever · Large", the "Active" label). If it's coral, it's important.
@@ -128,14 +123,15 @@ Four roles: Ember orange as the brand color, Cobalt blue as the secondary accent
 - **Border Light** (#d1d1d1) / **Border Faint** (#e5e7eb): Hairline dividers (Care Note card border, task timeline connector). Used sparingly — most separation comes from color-blocking, not strokes.
 
 ### Named Rules
-**The One Voice Rule.** Ember is the only color that means something (status, action, active state). Pastels (Peach, Lavender, Lemon, Mint) exist purely to differentiate dogs and never carry semantic weight — if a pastel starts meaning "done" or "urgent," that's a bug.
+**The One Voice Rule.** Ember is the only color that means something (status, action, active state) outside of the fixed task-type set below — if a color starts meaning "done" or "urgent" on its own, that's a bug.
 
-**The Avatar Rule.** Photo-less dog avatars are neutral: a light gray block (#f3f4f6) with the `Icon/dog` face glyph in Ink Muted — never the paw icon, never a pastel. (The earlier pastel deck-of-cards rotation is retired; Peach/Lavender/Lemon/Mint remain available as identity accents but are unused in the current screens.)
+**The Avatar Rule.** Photo-less dog avatars are neutral: a light gray block (#f3f4f6) with the `Icon/dog` face glyph in Ink Muted — never the paw icon, never a color. There is no pastel identity-accent bench; every dog without a photo gets the same neutral glyph.
 
 ### Semantic accents (status & task type only)
 - **Green Vivid** (#18ba1d): Walk/potty task icons, "done" pills, positive toggles.
+- **Ember** (#ff4514): Meal task icons — the brand color doing double duty as the meal semantic, since feeding is the app's other everyday-frequency task alongside walks.
 - **Blue Task** (= Cobalt #2344dd): Medication — the one task type that gets a ring-highlight treatment, because missing it matters more than missing a walk. Shares the Cobalt accent value so the system has exactly one blue.
-- **Purple Task** (#9333ea): Reserved task-type accent (grooming and similar).
+- **Ink Muted** (#6b7280): Other/uncategorized task icons — the fallback for any task type outside walk, meal, potty, and medication.
 
 ## 3. Typography
 
@@ -200,7 +196,7 @@ A single looping Lottie dog animation (`public/splash.lottie`, rendered via `Dot
 ## 6. Do's and Don'ts
 
 ### Do:
-- **Do** use Ember (#ff4514) as the only color that carries meaning — status, emphasis, active state. Everything else is identity (pastel avatars) or structure (Ink, Card, White).
+- **Do** use Ember (#ff4514) as the only color that carries free-floating meaning — status, emphasis, active state. Everything else is either a fixed task-type color or structure (Ink, Card, White).
 - **Do** keep surfaces flat; express depth with `Card` (#f4f4ef) vs `Studio White` (#fcfcfc) layering and `active:scale` press feedback, not shadows.
 - **Do** default to full pill shapes (`rounded-full`) for anything tappable: buttons, chips, nav, avatars.
 - **Do** keep uppercase tracked labels reserved for real section eyebrows and status chips, not decorative kickers.
@@ -210,5 +206,5 @@ A single looping Lottie dog animation (`public/splash.lottie`, rendered via `Dot
 - **Don't** reintroduce a beige/cream/parchment-tinted background. The base surface is Studio White (#fcfcfc) — a true near-white, chosen explicitly because cream/beige read as generic and "AI-built."
 - **Don't** drift toward clinical SaaS-dashboard chrome (cold blues/grays, dense data-table density) — this is a warm, hands-on tool, not an enterprise console.
 - **Don't** tip into cartoon-kitsch cuteness (mascot dominating a whole screen, baby-talk copy) — the mascot is an accent, and the display font's weight is what keeps the system feeling like a serious tool.
-- **Don't** use a pastel avatar color (Peach/Lavender/Lemon/Mint) to signal status or urgency — those are identity-only colors; Ember and the semantic task-type colors (green/blue/purple) own meaning.
+- **Don't** color a dog avatar to signal status or identity — every photo-less avatar is the same neutral gray glyph; Ember and the semantic task-type colors (green/ember/blue/gray) own meaning.
 - **Don't** add drop shadows anywhere — the system is fully flat, including the bottom nav.
