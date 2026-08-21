@@ -28,7 +28,10 @@ export function generateTasksForStay(dog: Dog, stay: Stay): Task[] {
       // Skip tasks before stay start or after stay end
       if (scheduledTime < start || scheduledTime > end) continue
 
-      const title = TASK_TITLES[entry.taskType] || 'Care task'
+      const title =
+        entry.taskType === 'other'
+          ? entry.customTitle?.trim() || TASK_TITLES.other
+          : TASK_TITLES[entry.taskType] || 'Care task'
 
       tasks.push({
         id: `generated-${stay.id}-${taskIndex++}`,

@@ -552,8 +552,12 @@ export default function AddEditDogPage() {
 
   const [scheduleWarning, setScheduleWarning] = useState<'empty' | 'no-walk' | null>(null)
   const [nameTouched, setNameTouched] = useState(false)
+  const [otherTitleTouched, setOtherTitleTouched] = useState(false)
   const scheduleSectionRef = useRef<HTMLElement>(null)
   const hasWalkEntry = schedule.some((e) => e.taskType === 'walk')
+  const hasMissingOtherTitle = schedule.some(
+    (e) => e.taskType === 'other' && !e.customTitle?.trim(),
+  )
 
   function handleSubmit() {
     if (!form.name.trim()) {
@@ -566,6 +570,10 @@ export default function AddEditDogPage() {
     }
     if (!hasWalkEntry && !form.walkTimeFlexible) {
       setScheduleWarning('no-walk')
+      return
+    }
+    if (hasMissingOtherTitle) {
+      setOtherTitleTouched(true)
       return
     }
     void doSave()
@@ -916,6 +924,32 @@ export default function AddEditDogPage() {
                     <X size={14} />
                   </button>
                 </div>
+                {entry.taskType === 'other' && (
+                  <div>
+                    <input
+                      type="text"
+                      value={entry.customTitle ?? ''}
+                      onChange={(e) => {
+                        const v = e.target.value.slice(0, 30)
+                        setSchedule((prev) =>
+                          prev.map((en, j) => (j === i ? { ...en, customTitle: v } : en)),
+                        )
+                      }}
+                      maxLength={30}
+                      placeholder="Task title — e.g. Nail trim"
+                      className={`w-full bg-white border rounded-[10px] px-3 py-2 font-dm font-bold text-[13px] text-text-primary placeholder:text-[#c4c4c4] placeholder:font-normal focus:outline-none focus:border-coral transition-colors ${
+                        otherTitleTouched && !entry.customTitle?.trim()
+                          ? 'border-red-400'
+                          : 'border-border-light'
+                      }`}
+                    />
+                    {otherTitleTouched && !entry.customTitle?.trim() && (
+                      <p className="font-dm text-[12px] text-red-500 mt-1 px-1">
+                        Give this task a short title
+                      </p>
+                    )}
+                  </div>
+                )}
                 <textarea
                   value={entry.note ?? ''}
                   onChange={(e) => {

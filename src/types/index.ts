@@ -8,6 +8,7 @@ export interface CareScheduleEntry {
   time: string     // e.g. "08:00"
   taskType: TaskType
   note?: string
+  customTitle?: string   // required when taskType is 'other' — short task title, e.g. "Nail trim"
 }
 
 export interface Dog {
