@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { CalendarDays, ChevronDown, Check, Search, X } from 'lucide-react'
+import { CalendarDays, ChevronDown, Check, Plus, Search, X } from 'lucide-react'
 import DogIcon from '../components/icons/DogIcon'
 import { TimePickerButton } from '../components/TimePicker'
 import PageHeader from '../components/PageHeader'
@@ -52,11 +52,13 @@ function DogPickerSheet({
   selectedDogId,
   onSelect,
   onClose,
+  onAddDog,
 }: {
   dogs: Dog[]
   selectedDogId: string
   onSelect: (id: string) => void
   onClose: () => void
+  onAddDog: () => void
 }) {
   const [query, setQuery] = useState('')
 
@@ -88,7 +90,6 @@ function DogPickerSheet({
             <Search size={18} className="text-text-muted shrink-0" />
             <input
               type="search"
-              autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search dogs"
@@ -128,6 +129,18 @@ function DogPickerSheet({
               No dogs match “{query}”.
             </p>
           )}
+        </div>
+
+        <div className="px-6 pt-3 shrink-0">
+          <button
+            onClick={onAddDog}
+            className="w-full flex items-center gap-3 p-3 rounded-[14px] border border-dashed border-coral/40 text-left active:bg-[#fff5f3] transition-colors"
+          >
+            <div className="size-11 rounded-[10px] bg-[#fff5f3] shrink-0 flex items-center justify-center">
+              <Plus size={20} className="text-coral" />
+            </div>
+            <p className="font-dm font-semibold text-[15px] text-coral">Add New Dog</p>
+          </button>
         </div>
       </div>
     </div>
@@ -421,6 +434,7 @@ export default function StartStayPage() {
             setPickerOpen(false)
           }}
           onClose={() => setPickerOpen(false)}
+          onAddDog={() => navigate('/dogs/new')}
         />
       )}
     </div>
