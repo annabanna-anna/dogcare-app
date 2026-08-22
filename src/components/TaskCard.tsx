@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { PawPrint, Pill, CheckCircle2, RotateCcw } from 'lucide-react'
+import { PawPrint, Pill, Bone, CheckCircle2, RotateCcw } from 'lucide-react'
 import DogBowlIcon from './icons/DogBowlIcon'
 import PawPrintFilled from './icons/PawPrintFilled'
 import type { Task, TaskType } from '../types'
@@ -29,7 +29,7 @@ const typeConfig: Record<TaskType, { icon: React.ComponentType<{ size?: string |
   meal:       { icon: DogBowlIcon,   bg: 'bg-coral',       iconColor: 'text-white' },
   medication: { icon: Pill,           bg: 'bg-blue-task',   iconColor: 'text-white' },
   potty:      { icon: PawPrint,       bg: 'bg-green-vivid', iconColor: 'text-white' },
-  other:      { icon: PawPrint,       bg: 'bg-[#6b7280]',   iconColor: 'text-white' },
+  other:      { icon: Bone,           bg: 'bg-[#6b7280]',   iconColor: 'text-white' },
 }
 
 export default function TaskCard({ task, onDone, onUndo, showDogName = true, dense = false }: Props) {
@@ -256,11 +256,9 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, den
         </div>
 
         {/* Content — min-height keeps every row (even a bare title with no
-            dog name or note) as tall as the icon badge beside it, and
-            flex+justify-center keeps short content vertically balanced
-            inside that reserved height instead of hugging the top. */}
+            dog name or note) as tall as the icon badge beside it. */}
         <div
-          className={`flex-1 min-w-0 flex flex-col justify-center ${dense ? 'min-h-9 pr-3 max-w-[150px]' : 'min-h-16 pr-5'} py-1 ${
+          className={`flex-1 min-w-0 flex flex-col justify-start ${dense ? 'min-h-9 pr-3 max-w-[150px]' : 'min-h-16 pr-5'} py-1 ${
             isCompleted ? 'opacity-50' : ''
           }`}
         >
