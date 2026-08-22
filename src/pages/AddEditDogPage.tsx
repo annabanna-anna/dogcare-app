@@ -606,7 +606,7 @@ export default function AddEditDogPage() {
       }
       navigate(
         isEdit ? `/dogs/${dogId}` : '/dogs',
-        isEdit ? undefined : { state: { justAddedName: form.name.trim() } },
+        isEdit ? { replace: true } : { state: { justAddedName: form.name.trim() } },
       )
     } catch (e) {
       const message =
