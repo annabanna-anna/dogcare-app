@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BrowserRouter, Routes, Route, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase'
 import {
@@ -147,6 +147,7 @@ function AppRoutes() {
         <Route path="/dogs/new" element={<AddEditDogPage />} />
         <Route path="/dogs/:id/edit" element={<AddEditDogPage />} />
         <Route path="/stays/preview" element={<TaskPreviewPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
   )

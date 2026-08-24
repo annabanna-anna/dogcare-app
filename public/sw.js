@@ -11,7 +11,7 @@ self.addEventListener('activate', (event) => {
 })
 
 self.addEventListener('push', (event) => {
-  let payload = { title: 'HeyPup', body: 'You have an upcoming task.', url: '/today' }
+  let payload = { title: 'HeyPup', body: 'You have an upcoming task.', url: '/' }
   try {
     payload = { ...payload, ...event.data.json() }
   } catch {
@@ -45,15 +45,18 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const url = event.notification.data?.url || '/today'
+  const url = event.notification.data?.url || '/'
+  const fullUrl = new URL(url, self.registration.scope).href
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
       const existing = clients.find((c) => 'focus' in c)
-      if (existing) {
-        existing.navigate(url)
-        return existing.focus()
+      // WindowClient.navigate() isn't supported on iOS/WebKit, so open a
+      // fresh window there instead of silently failing to bring one forward.
+      if (existing && 'navigate' in existing) {
+        return existing.navigate(fullUrl).then((client) => client.focus())
       }
-      return self.clients.openWindow(url)
+      if (existing) return existing.focus()
+      return self.clients.openWindow(fullUrl)
     }),
   )
 })
