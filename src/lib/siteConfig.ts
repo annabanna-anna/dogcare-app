@@ -4,11 +4,7 @@
 // review reads the privacy policy against what the app actually does, so
 // stale contact details here are a review risk, not a cosmetic one.
 
-// TODO(anna): replace once the custom domain is registered. Google's
-// verification flow requires the privacy policy to live on a domain you've
-// verified in Search Console, and a *.vercel.app subdomain can't be
-// verified — so this has to be a domain you own.
-export const SITE_DOMAIN = 'heypup.app'
+export const SITE_DOMAIN = 'heypup.annaoshiro.com'
 
 /** Where users reach a human about their data. Must be a working inbox
  *  before the verification request is submitted. */

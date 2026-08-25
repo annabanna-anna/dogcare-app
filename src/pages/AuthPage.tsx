@@ -256,7 +256,7 @@ export default function AuthPage() {
             By signing up you agree to our{' '}
             <Link
               to="/privacy"
-              className="font-bold text-text-secondary underline underline-offset-2"
+              className="text-text-secondary hover:text-text-primary underline underline-offset-2 transition-colors"
             >
               Privacy Policy
             </Link>
@@ -268,9 +268,9 @@ export default function AuthPage() {
             the app is without making an account. */}
         <Link
           to="/about"
-          className="font-dm text-[13px] text-text-muted hover:text-text-secondary transition-colors"
+          className="font-dm text-[13px] text-text-muted hover:text-text-secondary underline underline-offset-2 transition-colors"
         >
-          What is HeyPup? <span aria-hidden="true">→</span>
+          What is HeyPup?
         </Link>
         {!isReset && (
           <p className="font-dm text-[14px] text-text-secondary">
@@ -280,7 +280,7 @@ export default function AuthPage() {
                 setMode(isLogin ? 'signup' : 'login')
                 setError(null)
               }}
-              className="font-bold text-coral"
+              className="font-bold text-coral underline underline-offset-2"
             >
               {isLogin ? 'Sign up' : 'Log in'}
             </button>
