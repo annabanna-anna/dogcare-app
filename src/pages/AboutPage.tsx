@@ -252,10 +252,10 @@ const DOG_PHOTO_LABELS = [
   {
     id: 'george',
     photo: { src: '/how-it-works/step1-george.png', left: 17.74, top: 64.11, size: 27.61 },
-    label: { left: 0, top: 88.46, width: 35.58 },
+    label: { left: -7, top: 53, width: 35.58 },
     Icon: DogBowlIcon,
     bg: 'bg-coral',
-    text: 'Allergic to chicken, turkey',
+    text: 'Allergic to chicken & dairy',
   },
 ]
 
@@ -286,22 +286,33 @@ function AddDogPhotoCollage() {
         </div>
       ))}
       {DOG_PHOTO_LABELS.map(({ id, label, Icon, bg, text }, i) => (
+        // Outer div: position + a static 1.25x enlarge, anchored top-left.
+        // Kept separate from the inner pop-in div because the entrance
+        // animation sets its own `transform` (translateY/scale) via CSS —
+        // putting both transforms on one element would let the animation's
+        // `transform: none` end state silently override the enlarge scale.
         <div
           key={id}
-          className={`pop-in-target absolute flex items-center gap-1.5 rounded-full bg-white border-[1.5px] border-border-light shadow-md pl-2 pr-3 py-2 ${inView ? 'pop-in' : ''}`}
+          className="absolute"
           style={{
             left: `${label.left}%`,
             top: `${label.top}%`,
             width: `${label.width}%`,
-            animationDelay: `${i * ADD_DOG_STAGGER_MS}ms`,
+            transform: 'scale(1.25)',
+            transformOrigin: 'top left',
           }}
         >
-          <span className={`inline-flex items-center justify-center rounded-full size-7 shrink-0 ${bg}`}>
-            <Icon size={14} className="text-white" />
-          </span>
-          <span className="font-dm font-bold text-[11px] tracking-wide text-text-primary leading-tight">
-            {text}
-          </span>
+          <div
+            className={`pop-in-target flex items-center gap-1.5 rounded-full bg-white border-[1.5px] border-border-light pl-2 pr-3 py-2 ${inView ? 'pop-in' : ''}`}
+            style={{ animationDelay: `${i * ADD_DOG_STAGGER_MS}ms` }}
+          >
+            <span className={`inline-flex items-center justify-center rounded-full size-7 shrink-0 ${bg}`}>
+              <Icon size={14} className="text-white" />
+            </span>
+            <span className="font-dm font-bold text-[11px] tracking-wide text-text-primary leading-tight">
+              {text}
+            </span>
+          </div>
         </div>
       ))}
     </div>
@@ -652,18 +663,58 @@ function CheckOffTaskRow({
   )
 }
 
+// The real app removes a task from the list 1100ms after the swipe commits
+// (src/components/TaskCard.tsx's commitSwipe: the paw-burst celebration
+// plays out, then onDone fires) — matched here so the row collapses out of
+// the list at the same beat, instead of just sitting there checked off.
+const TASK_REMOVE_DELAY_MS = SWIPE_SETTLE_MS + 1100
+
+const CHECK_OFF_ROW_HEIGHT = 72
+const CHECK_OFF_ROW_GAP = 12
+// Only this many rows are ever visible at once — the 4th task starts
+// parked in the slot just past the bottom, clipped by the card's own
+// overflow-hidden, and slides up into view once the first task's spot
+// opens up (same slot math handles both moves).
+const CHECK_OFF_VISIBLE_ROWS = 3
+const CHECK_OFF_TASKS = [
+  { key: 'walk', time: '7:00 AM', title: 'Morning Walk', subtitle: 'Take him to the large dog park', type: 'walk' as const },
+  {
+    key: 'meal',
+    time: '7:30 AM',
+    title: 'Breakfast',
+    subtitle: '1/2 cup kibble with 1 tsp probiotic powder',
+    type: 'meal' as const,
+  },
+  { key: 'potty', time: '11:00 AM', title: 'Potty Break', type: 'potty' as const },
+  {
+    key: 'afternoon-walk',
+    time: '3:00 AM',
+    title: 'Afternoon Walk',
+    subtitle: 'a short 10–15 minute walk',
+    type: 'walk' as const,
+  },
+]
+
 // Step 4: the first task row auto-swipes left once the visual scrolls into
 // view, revealing the "Done" background — a one-shot demo of the app's
 // real swipe-to-complete gesture (src/components/TaskCard.tsx), not the
-// live drag-driven component itself.
+// live drag-driven component itself. It's then removed from the list,
+// same as a real completed task.
 function CheckOffCollage() {
   const [ref, inView] = useInView<HTMLDivElement>()
+  const [taskGone, setTaskGone] = useState(false)
+
+  useEffect(() => {
+    if (!inView) return
+    const t = setTimeout(() => setTaskGone(true), TASK_REMOVE_DELAY_MS)
+    return () => clearTimeout(t)
+  }, [inView])
 
   return (
     <div ref={ref} className="mx-auto w-full max-w-[380px] rounded-[20px] bg-white border border-border-faint overflow-hidden">
       <div className="px-6 pt-6 pb-3">
         <p className="font-dm font-bold text-[12px] uppercase tracking-[0.05em] text-coral">
-          Saturday, August 22
+          {formatTodayHeading()}
         </p>
         <div className="flex items-center justify-between mt-1">
           <p className="font-outfit font-bold text-[40px] text-blue-task leading-none">Today</p>
@@ -672,28 +723,143 @@ function CheckOffCollage() {
       </div>
       <div className="px-6 pb-4">
         <div className="inline-flex items-center gap-2.5 rounded-full border border-border-light pl-1.5 pr-4 py-1.5">
-          <img src="/how-it-works/step4-rusty.png" alt="" className="size-9 rounded-full object-cover" />
+          <img src="/how-it-works/step5-rusty.png" alt="" className="size-9 rounded-full object-cover" />
           <div>
             <p className="font-dm font-bold text-[13px] text-text-primary leading-none">Rusty</p>
             <p className="font-dm text-[11px] text-text-secondary mt-1">Until Aug 25</p>
           </div>
         </div>
       </div>
-      <div className="px-6 pb-6 flex flex-col gap-3">
-        <CheckOffTaskRow
-          time="7:00 AM"
-          title="Morning Walk"
-          subtitle="20-30 mins"
-          type="walk"
-          swipe={inView}
-        />
-        <CheckOffTaskRow
-          time="7:30 AM"
-          title="Breakfast"
-          subtitle="1/2 cup kibble with 1 tsp probiotic powder"
-          type="meal"
-        />
-        <CheckOffTaskRow time="11:00 AM" title="Potty Break" type="potty" last />
+      {/* Fixed height (3 visible rows + gaps) so the card never resizes —
+          rows 2 and 3 slide up into the freed slot once the first task
+          fades out, and the 4th task slides up from just below the
+          card's own overflow-hidden edge into the newly-freed last slot. */}
+      <div
+        className="relative overflow-hidden"
+        style={{
+          height:
+            CHECK_OFF_ROW_HEIGHT * CHECK_OFF_VISIBLE_ROWS + CHECK_OFF_ROW_GAP * (CHECK_OFF_VISIBLE_ROWS - 1) + 24,
+        }}
+      >
+        {CHECK_OFF_TASKS.map((task, i) => {
+          const isFirst = i === 0
+          const slot = taskGone && !isFirst ? i - 1 : i
+          return (
+            <div
+              key={task.key}
+              className={`absolute inset-x-6 transition-all duration-500 ease-in-out ${
+                isFirst && taskGone ? 'opacity-0 pointer-events-none' : 'opacity-100'
+              }`}
+              style={{ top: slot * (CHECK_OFF_ROW_HEIGHT + CHECK_OFF_ROW_GAP) }}
+            >
+              <CheckOffTaskRow
+                time={task.time}
+                title={task.title}
+                subtitle={task.subtitle}
+                type={task.type}
+                swipe={isFirst ? inView : false}
+                last={i === CHECK_OFF_TASKS.length - 1}
+              />
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// Step 4's notification stack (Figma "Notification" components, node-ids
+// 117:1691, 117:1670, 117:1699 — the three actually stacked together in
+// the file, at identical 328.04×58.99 dimensions): three push-notification
+// banners that start tucked into a slightly rotated, offset stack — like a
+// pile of notices — then settle into a plain vertical list once the
+// visual scrolls into view. Card size is kept exactly as designed, not
+// stretched to the surrounding card's width.
+const NOTIFICATIONS = [
+  {
+    id: 'luna',
+    photo: '/how-it-works/step4-luna.png',
+    message: "Don't forget, it's time for Luna's walk 🐾",
+    time: '3m ago',
+  },
+  {
+    id: 'puffin',
+    photo: '/how-it-works/step4-puffin.png',
+    message: "Puffin's breakfast time is coming up 🥣",
+    time: '12m ago',
+  },
+  {
+    id: 'poppy',
+    photo: '/how-it-works/step4-poppy.png',
+    message: 'Poppy might need a potty break soon 🚽',
+    time: '25m ago',
+  },
+]
+const NOTIFICATION_CARD_WIDTH = 306
+// Height isn't fixed — the card sizes to its content (image + padding).
+// This is that natural height (2.5rem/40px image + 12px vertical padding
+// on each side), reused only for spacing the stack, not applied directly.
+const NOTIFICATION_CARD_HEIGHT = 64
+const NOTIFICATION_GAP = 10
+const NOTIFICATION_SETTLE_DELAY_MS = 600
+
+function NotificationCard({ n }: { n: (typeof NOTIFICATIONS)[number] }) {
+  return (
+    <div
+      className="flex items-start gap-3 rounded-[14px] border border-border-light bg-white p-3"
+      style={{ width: NOTIFICATION_CARD_WIDTH }}
+    >
+      <img src={n.photo} alt="" className="w-10 h-10 rounded-[8px] object-cover shrink-0" />
+      <p className="flex-1 min-w-0 font-dm font-medium text-[13px] text-text-primary leading-snug">{n.message}</p>
+      <span className="shrink-0 font-dm text-[11px] text-text-muted">{n.time}</span>
+    </div>
+  )
+}
+
+// Scales the whole stack up uniformly (text, image, padding, radius, gaps
+// included) via a CSS transform on an unscaled inner wrapper, rather than
+// recalculating every pixel value — guarantees the enlarged version stays
+// exactly proportional to the 306px-wide design.
+const NOTIFICATION_SCALE = 1.5 * 0.8
+
+function NotificationStackCollage() {
+  const [ref, inView] = useInView<HTMLDivElement>()
+  const [settled, setSettled] = useState(false)
+
+  useEffect(() => {
+    if (!inView) return
+    const t = setTimeout(() => setSettled(true), NOTIFICATION_SETTLE_DELAY_MS)
+    return () => clearTimeout(t)
+  }, [inView])
+
+  const baseWidth = NOTIFICATION_CARD_WIDTH
+  const baseHeight = NOTIFICATION_CARD_HEIGHT * NOTIFICATIONS.length + NOTIFICATION_GAP * (NOTIFICATIONS.length - 1)
+
+  return (
+    <div
+      ref={ref}
+      className="relative mx-auto"
+      style={{ width: baseWidth * NOTIFICATION_SCALE, height: baseHeight * NOTIFICATION_SCALE }}
+    >
+      <div
+        className="relative"
+        style={{ width: baseWidth, height: baseHeight, transform: `scale(${NOTIFICATION_SCALE})`, transformOrigin: 'top left' }}
+      >
+        {NOTIFICATIONS.map((n, i) => (
+          <div
+            key={n.id}
+            className="absolute inset-x-0 transition-all ease-out"
+            style={{
+              top: settled ? i * (NOTIFICATION_CARD_HEIGHT + NOTIFICATION_GAP) : i * 8,
+              transform: settled ? 'none' : `scale(${1 - i * 0.03}) rotate(${i % 2 === 0 ? -2 : 2}deg)`,
+              transitionDuration: '700ms',
+              transitionDelay: `${i * 100}ms`,
+              zIndex: NOTIFICATIONS.length - i,
+            }}
+          >
+            <NotificationCard n={n} />
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -714,6 +880,11 @@ const ALT_STEPS = [
     title: 'Tasks generate',
     body: 'Every meal, med, and walk for the whole stay, laid out on a timeline and grouped by dog.',
     Visual: TasksGenerateCollage,
+  },
+  {
+    title: 'Reminders find you',
+    body: "A push notification for each task, timed to the schedule. Add HeyPup to your home screen first — that's what turns notifications on your phone.",
+    Visual: NotificationStackCollage,
   },
   {
     title: 'Check off as you go',
