@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { PawPrint, Pill } from 'lucide-react'
+import { PawPrint, Pill, Toilet } from 'lucide-react'
 import DogBowlIcon from '../components/icons/DogBowlIcon'
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
@@ -16,7 +16,7 @@ const typeIcon: Record<TaskType, React.ComponentType<{ size?: string | number; c
   walk: PawPrint,
   meal: DogBowlIcon,
   medication: Pill,
-  potty: PawPrint,
+  potty: Toilet,
   other: PawPrint,
 }
 
@@ -24,7 +24,7 @@ const typeBg: Record<TaskType, string> = {
   walk: 'bg-green-vivid',
   meal: 'bg-coral',
   medication: 'bg-blue-task',
-  potty: 'bg-green-vivid',
+  potty: 'bg-purple-task',
   other: 'bg-[#6b7280]',
 }
 

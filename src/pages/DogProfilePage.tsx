@@ -13,6 +13,7 @@ import {
   StickyNote,
   ShieldAlert,
   Trees,
+  Toilet,
 } from 'lucide-react'
 import DogBowlIcon from '../components/icons/DogBowlIcon'
 import DogIcon from '../components/icons/DogIcon'
@@ -36,7 +37,7 @@ const typeBg: Record<TaskType, string> = {
   walk: '#18ba1d',
   meal: '#ff4514',
   medication: '#2344dd',
-  potty: '#18ba1d',
+  potty: '#9333ea',
   other: '#6b7280',
 }
 
@@ -44,7 +45,7 @@ const typeIcon: Record<TaskType, React.ComponentType<{ size?: string | number; c
   walk: PawPrint,
   meal: DogBowlIcon,
   medication: Pill,
-  potty: PawPrint,
+  potty: Toilet,
   other: PawPrint,
 }
 

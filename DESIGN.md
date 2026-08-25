@@ -128,9 +128,10 @@ Four roles: Ember orange as the brand color, Cobalt blue as the secondary accent
 **The Avatar Rule.** Photo-less dog avatars are neutral: a light gray block (#f3f4f6) with the `Icon/dog` face glyph in Ink Muted — never the paw icon, never a color. There is no pastel identity-accent bench; every dog without a photo gets the same neutral glyph.
 
 ### Semantic accents (status & task type only)
-- **Green Vivid** (#18ba1d): Walk/potty task icons, "done" pills, positive toggles.
+- **Green Vivid** (#18ba1d): Walk task icons, "done" pills, positive toggles.
 - **Ember** (#ff4514): Meal task icons — the brand color doing double duty as the meal semantic, since feeding is the app's other everyday-frequency task alongside walks.
 - **Blue Task** (= Cobalt #2344dd): Medication — the one task type that gets a ring-highlight treatment, because missing it matters more than missing a walk. Shares the Cobalt accent value so the system has exactly one blue.
+- **Purple Task** (#9333ea): Potty break task icons — kept distinct from Walk's green so the two everyday task types don't share a color.
 - **Ink Muted** (#6b7280): Other/uncategorized task icons — the fallback for any task type outside walk, meal, potty, and medication.
 
 ## 3. Typography
