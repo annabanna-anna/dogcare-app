@@ -88,6 +88,80 @@ body {
   }
 }
 
+/* Scroll-triggered entrance for below-the-fold content (marketing page step
+   visuals). Base state is hidden — unlike .rise-in, which is always visible
+   with the animation as a bonus — because these only start once a JS
+   IntersectionObserver adds .pop-in, and prefers-reduced-motion needs an
+   explicit opacity:1 fallback so content isn't stuck invisible. */
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.pop-in-target {
+  opacity: 0;
+}
+.pop-in-target.pop-in {
+  animation: pop-in 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pop-in-target {
+    opacity: 1;
+  }
+  .pop-in-target.pop-in {
+    animation: none;
+  }
+}
+
+/* Step 4's task-row swipe reveal (About page "how it works"). Every row
+   rests with a pale-green "Done" sliver peeking out on the right (matching
+   src/components/TaskCard.tsx's resting state for a pending task); the
+   first row's whole white content additionally slides fully off to the
+   left, and the dark-green committed fill fades in underneath it at the
+   same time — a one-shot demo of the real app's fully-committed swipe,
+   replayed on a loop by remounting rather than looping the CSS itself.
+   Delay (1.3s) is kept in sync with SWIPE_DELAY_MS in AboutPage.tsx. */
+@keyframes swipe-reveal {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+.swipe-reveal {
+  animation: swipe-reveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 1.3s both;
+}
+
+@keyframes swipe-fill-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.swipe-fill {
+  animation: swipe-fill-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) 1.3s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swipe-reveal {
+    animation: none;
+    transform: translateX(-100%);
+  }
+  .swipe-fill {
+    animation: none;
+    opacity: 1;
+  }
+}
+
 @keyframes toast-in {
   from {
     opacity: 0;

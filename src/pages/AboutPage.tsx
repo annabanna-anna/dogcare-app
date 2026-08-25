@@ -2,46 +2,64 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowRight,
-  ArrowLeft,
   Bell,
   CalendarDays,
   ChevronDown,
   Download,
   Upload,
   ShieldCheck,
-  Pill,
-  Circle,
   CheckCircle2,
+  Pill,
   PawPrint,
+  Toilet,
 } from 'lucide-react'
 import PublicPageShell from '../components/PublicPageShell'
 import PhoneFrame from '../components/PhoneFrame'
 import TaskCard from '../components/TaskCard'
-import DogIcon from '../components/icons/DogIcon'
+import Button from '../components/Button'
 import DogBowlIcon from '../components/icons/DogBowlIcon'
+import PawPrintFilled from '../components/icons/PawPrintFilled'
 import type { Task } from '../types'
 import { formatTodayHeading } from '../utils/dateUtils'
 
-// Both keep the iPhone 15 Plus / 14 Pro Max aspect ratio (402×874). The
-// hero's is scaled down to ~67% so the phone reads as a mockup sitting
-// inside its section, not a card that fills it — the modest phone-to-page
-// ratio a real device photo gets on a hero. "How it works" runs larger
-// (~90%) since that section is a sticky, vertically-centered stage built
-// around the mockup — it should fill the viewport, not sit small inside
-// it. Content past each height is cropped by PhoneFrame's own height, not
-// left to overflow; `maxWidth`/`maxHeight` keep either from overflowing a
-// smaller viewport.
+/** Fires once, the first time the returned ref is (almost) fully within the
+ *  viewport — used to trigger the step visuals' entrance animations only
+ *  once a visitor has actually scrolled to where the whole card is on
+ *  screen, not the moment its top edge first peeks into view. */
+function useInView<T extends HTMLElement>(threshold = 0.95) {
+  const ref = useRef<T | null>(null)
+  const [inView, setInView] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true)
+          observer.disconnect()
+        }
+      },
+      { threshold },
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [threshold])
+
+  return [ref, inView] as const
+}
+
+// Keeps the iPhone 15 Plus / 14 Pro Max aspect ratio (402×874), scaled down
+// to ~67% so the phone reads as a mockup sitting inside its section, not a
+// card that fills it — the modest phone-to-page ratio a real device photo
+// gets on a hero. Content past this height is cropped by PhoneFrame's own
+// height, not left to overflow; `maxWidth`/`maxHeight` keep it from
+// overflowing a smaller viewport.
 const HERO_PHONE_SIZE: React.CSSProperties = {
   width: 270,
   height: 587,
   maxWidth: '100%',
   maxHeight: '80vh',
-}
-const STEPS_PHONE_SIZE: React.CSSProperties = {
-  width: 360,
-  height: 783,
-  maxWidth: '100%',
-  maxHeight: '85vh',
 }
 
 /** Builds an ISO datetime at a fixed clock time today, so the demo schedule
@@ -210,381 +228,498 @@ function HeroTodayScreen({
   )
 }
 
-// ── Tiny, static preview row used inside the "how it works" mockups ────────
-// A hand-built stand-in for TaskCard: those two mockups are frozen snapshots
-// (one dog mid-tap, one dog before any taps), not the live interactive card.
-const MOCK_TYPE_CONFIG: Record<
-  'meal' | 'medication' | 'walk',
+// Step 1's care-note pill labels pop in top-to-bottom, one after another,
+// while the dog photos underneath stay put — the photos are the fixed
+// backdrop, the labels are what's "arriving." Positions are percentages of
+// the 434.646×407.125 Figma frame so the whole thing scales as one block.
+const DOG_PHOTO_LABELS = [
+  {
+    id: 'merline',
+    photo: { src: '/how-it-works/step1-merline.png', left: 27.15, top: 5.9, size: 27.61 },
+    label: { left: 46.71, top: 0, width: 35.58 },
+    Icon: Pill,
+    bg: 'bg-blue-task',
+    text: 'One tablet with evening meal',
+  },
+  {
+    id: 'nino',
+    photo: { src: '/how-it-works/step1-nino-2.png', left: 51.08, top: 43.23, size: 27.61 },
+    label: { left: 64.42, top: 67.31, width: 35.58 },
+    Icon: PawPrint,
+    bg: 'bg-green-vivid',
+    text: 'Avoid the dog park on Elm St',
+  },
+  {
+    id: 'george',
+    photo: { src: '/how-it-works/step1-george.png', left: 17.74, top: 64.11, size: 27.61 },
+    label: { left: 0, top: 88.46, width: 35.58 },
+    Icon: DogBowlIcon,
+    bg: 'bg-coral',
+    text: 'Allergic to chicken, turkey',
+  },
+]
+
+// Stagger between each label's entrance.
+const ADD_DOG_STAGGER_MS = 450
+
+function AddDogPhotoCollage() {
+  const [ref, inView] = useInView<HTMLDivElement>()
+
+  return (
+    <div
+      ref={ref}
+      className="relative mx-auto w-full max-w-[420px]"
+      style={{ aspectRatio: '434.646 / 407.125' }}
+    >
+      {DOG_PHOTO_LABELS.map(({ id, photo }) => (
+        <div
+          key={id}
+          className="absolute"
+          style={{
+            left: `${photo.left}%`,
+            top: `${photo.top}%`,
+            width: `${photo.size}%`,
+            aspectRatio: '1 / 1',
+          }}
+        >
+          <img src={photo.src} alt="" className="size-full object-contain" />
+        </div>
+      ))}
+      {DOG_PHOTO_LABELS.map(({ id, label, Icon, bg, text }, i) => (
+        <div
+          key={id}
+          className={`pop-in-target absolute flex items-center gap-1.5 rounded-full bg-white border-[1.5px] border-border-light shadow-md pl-2 pr-3 py-2 ${inView ? 'pop-in' : ''}`}
+          style={{
+            left: `${label.left}%`,
+            top: `${label.top}%`,
+            width: `${label.width}%`,
+            animationDelay: `${i * ADD_DOG_STAGGER_MS}ms`,
+          }}
+        >
+          <span className={`inline-flex items-center justify-center rounded-full size-7 shrink-0 ${bg}`}>
+            <Icon size={14} className="text-white" />
+          </span>
+          <span className="font-dm font-bold text-[11px] tracking-wide text-text-primary leading-tight">
+            {text}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// Step 2's time wheel (matches the Figma "step 2 animation" reference,
+// node 114:1528: three keyframes — static fields showing 9:00 AM, a wheel
+// stopped on 8:30 am, then the same wheel stopped on 9:00 am). Both the
+// hour and minute columns move, so this jumps between two known values
+// rather than looping continuously — each wheel is 3 back-to-back copies
+// of its value list so the current value can always sit centered with a
+// row of "neighbors" above and below, and so the 8:30→9:00 move can always
+// animate forward (never backward) even when it crosses a cycle boundary.
+const pad = (n: number) => String(n).padStart(2, '0')
+const WHEEL_HOURS = Array.from({ length: 12 }, (_, i) => String(i + 1))
+const WHEEL_MINUTES = Array.from({ length: 12 }, (_, i) => pad(i * 5))
+const WHEEL_HOURS_STRIP = [...WHEEL_HOURS, ...WHEEL_HOURS, ...WHEEL_HOURS]
+const WHEEL_MINUTES_STRIP = [...WHEEL_MINUTES, ...WHEEL_MINUTES, ...WHEEL_MINUTES]
+const WHEEL_ROW = 32
+
+const WHEEL_HOUR_IDX_8 = WHEEL_HOURS.length + WHEEL_HOURS.indexOf('8')
+const WHEEL_HOUR_IDX_9 = WHEEL_HOURS.length + WHEEL_HOURS.indexOf('9')
+const WHEEL_MINUTE_IDX_30 = WHEEL_MINUTES.length + WHEEL_MINUTES.indexOf('30')
+// The next cycle's "00" (not this cycle's) so the minute column always
+// scrolls forward past 55, the same way a real minute hand would.
+const WHEEL_MINUTE_IDX_00 = WHEEL_MINUTES.length * 2 + WHEEL_MINUTES.indexOf('00')
+
+function WheelColumn({ stripValues, index, width }: { stripValues: string[]; index: number; width: number }) {
+  return (
+    <div className="relative overflow-hidden" style={{ width, height: WHEEL_ROW * 3 }}>
+      <div
+        style={{
+          transform: `translateY(-${(index - 1) * WHEEL_ROW}px)`,
+          transition: 'transform 0.7s cubic-bezier(0.4, 0, 0.2, 1)',
+        }}
+      >
+        {stripValues.map((v, i) => (
+          <div
+            key={i}
+            className="flex items-center justify-center font-dm font-bold text-[18px] text-text-primary"
+            style={{ height: WHEEL_ROW }}
+          >
+            {v}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function TimeWheelDemo({ showFinal }: { showFinal: boolean }) {
+  const hourIdx = showFinal ? WHEEL_HOUR_IDX_9 : WHEEL_HOUR_IDX_8
+  const minuteIdx = showFinal ? WHEEL_MINUTE_IDX_00 : WHEEL_MINUTE_IDX_30
+
+  return (
+    <div className="relative w-full rounded-[12px]" style={{ height: WHEEL_ROW * 3 + 16 }}>
+      <div
+        className="absolute inset-x-2 rounded-[8px] bg-card pointer-events-none"
+        style={{ top: '50%', height: WHEEL_ROW + 4, transform: 'translateY(-50%)' }}
+      />
+      <div className="relative flex items-center justify-center h-full gap-1">
+        <WheelColumn stripValues={WHEEL_HOURS_STRIP} index={hourIdx} width={32} />
+        <span className="font-dm font-bold text-[18px] text-text-primary">:</span>
+        <WheelColumn stripValues={WHEEL_MINUTES_STRIP} index={minuteIdx} width={36} />
+        <div className="flex flex-col items-center justify-center w-[40px]" style={{ height: WHEEL_ROW * 3 }}>
+          <span style={{ height: WHEEL_ROW }} />
+          <span className="flex items-center justify-center font-dm font-bold text-[18px] text-text-primary" style={{ height: WHEEL_ROW }}>
+            am
+          </span>
+          <span className="flex items-center justify-center font-dm text-[14px] text-text-muted" style={{ height: WHEEL_ROW }}>
+            pm
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Fixed height for the fields↔wheel swap area so the card never resizes
+// when it switches between them, regardless of which is naturally taller.
+const STAY_DATES_HEIGHT = 160
+// Both layers (fields and wheel) are always mounted, stacked, and
+// crossfaded via opacity — smoother and slower than an instant swap, and
+// avoids the pop of mounting/unmounting the wheel outright.
+const CROSSFADE_MS = 700
+
+// Timeline (all relative to the visual scrolling into view), one-shot:
+//   0                    → fields showing
+//   OPEN_MS              → crossfade begins: fields out, wheel in (already on 8:30)
+//   OPEN_MS+FADE         → wheel fully visible on 8:30
+//   ...+HOLD_830_MS      → value flips to 9:00 (WheelColumn's own 0.7s transition scrolls it there)
+//   ...+SCROLL+HOLD_900  → crossfade begins: wheel out, fields in (now showing 9:00 AM)
+const START_STAY_OPEN_MS = 700
+const WHEEL_SCROLL_MS = 700
+const WHEEL_HOLD_830_MS = 700
+const WHEEL_HOLD_900_MS = 1000
+const START_STAY_SHOW_FINAL_MS = START_STAY_OPEN_MS + CROSSFADE_MS + WHEEL_HOLD_830_MS
+const START_STAY_CLOSE_MS = START_STAY_SHOW_FINAL_MS + WHEEL_SCROLL_MS + WHEEL_HOLD_900_MS
+
+function StartStayCollage() {
+  const [ref, inView] = useInView<HTMLDivElement>()
+  const [picking, setPicking] = useState(false)
+  const [showFinal, setShowFinal] = useState(false)
+
+  useEffect(() => {
+    if (!inView) return
+    const openTimer = setTimeout(() => setPicking(true), START_STAY_OPEN_MS)
+    const flipTimer = setTimeout(() => setShowFinal(true), START_STAY_SHOW_FINAL_MS)
+    const closeTimer = setTimeout(() => setPicking(false), START_STAY_CLOSE_MS)
+    return () => {
+      clearTimeout(openTimer)
+      clearTimeout(flipTimer)
+      clearTimeout(closeTimer)
+    }
+  }, [inView])
+
+  return (
+    <div ref={ref} className="mx-auto w-full max-w-[380px] rounded-[20px] bg-white border border-border-faint px-[18px] py-5">
+      <div className="flex items-center gap-4">
+        <div className="size-[80px] shrink-0">
+          <img src="/how-it-works/step2-marjorie-2.png" alt="" className="size-full object-contain" />
+        </div>
+        <div>
+          <p className="font-outfit font-bold text-[22px] text-text-primary leading-none">Marjorie</p>
+          <p className="font-dm text-[14px] text-text-secondary mt-1">Miniature Poodle, Mixed</p>
+        </div>
+      </div>
+
+      {/* Fixed height so swapping to the wheel and back never resizes the
+          card; both layers stay mounted and crossfade via opacity instead
+          of an instant conditional swap. */}
+      <div className="mt-5 relative overflow-hidden" style={{ height: STAY_DATES_HEIGHT }}>
+        <div
+          className="absolute inset-0 flex flex-col justify-center gap-3 transition-opacity ease-in-out"
+          style={{ transitionDuration: `${CROSSFADE_MS}ms`, opacity: picking ? 0 : 1 }}
+        >
+          <div>
+            <p className="font-dm font-bold text-[12px] text-text-secondary tracking-[0.05em] mb-1.5">START</p>
+            <div className="flex gap-2">
+              <div className="flex-1 flex items-center justify-between rounded-[12px] border border-border-light px-4 py-3">
+                <span className="font-dm text-[15px] text-text-primary">Aug 20, 2026</span>
+                <CalendarDays size={18} className="text-text-muted" />
+              </div>
+              <div className="shrink-0 w-[108px] rounded-[12px] border border-border-light px-4 py-3">
+                <span className="font-dm text-[15px] text-text-primary">9:00 AM</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p className="font-dm font-bold text-[12px] text-text-secondary tracking-[0.05em] mb-1.5">END</p>
+            <div className="flex gap-2">
+              <div className="flex-1 flex items-center justify-between rounded-[12px] border border-border-light px-4 py-3">
+                <span className="font-dm text-[15px] text-text-primary">Aug 25, 2026</span>
+                <CalendarDays size={18} className="text-text-muted" />
+              </div>
+              <div className="shrink-0 w-[108px] rounded-[12px] border border-border-light px-4 py-3">
+                <span className="font-dm text-[15px] text-text-primary">5:00 PM</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          className="absolute inset-0 flex flex-col justify-center transition-opacity ease-in-out"
+          style={{ transitionDuration: `${CROSSFADE_MS}ms`, opacity: picking ? 1 : 0 }}
+        >
+          <TimeWheelDemo showFinal={showFinal} />
+        </div>
+      </div>
+
+      <Button fullWidth size="lg" className="mt-5 pointer-events-none" tabIndex={-1} aria-hidden="true">
+        <CalendarDays size={16} />
+        Start a Stay
+      </Button>
+    </div>
+  )
+}
+
+const TASK_BADGE_CONFIG: Record<
+  'meal' | 'medication' | 'walk' | 'potty',
   { icon: React.ComponentType<{ size?: string | number; className?: string }>; bg: string }
 > = {
   meal: { icon: DogBowlIcon, bg: 'bg-coral' },
   medication: { icon: Pill, bg: 'bg-blue-task' },
   walk: { icon: PawPrint, bg: 'bg-green-vivid' },
+  potty: { icon: Toilet, bg: 'bg-purple-task' },
 }
 
-function MockTaskRow({
+function GeneratedTaskRow({
   time,
   title,
-  dog,
+  subtitle,
   type,
-  done,
+  divider = true,
 }: {
   time: string
   title: string
-  dog: string
-  type: 'meal' | 'medication' | 'walk'
-  done?: boolean
+  subtitle?: string
+  type: 'meal' | 'medication' | 'walk' | 'potty'
+  divider?: boolean
 }) {
-  const { icon: Icon, bg } = MOCK_TYPE_CONFIG[type]
+  const { icon: Icon, bg } = TASK_BADGE_CONFIG[type]
   return (
-    <div className={`flex items-center gap-3 py-2.5 ${done ? 'opacity-45' : ''}`}>
-      <span className="w-9 shrink-0 font-dm font-bold text-[12px] text-text-primary">{time}</span>
-      <span className={`size-7 rounded-full flex items-center justify-center shrink-0 ${bg}`}>
-        <Icon size={14} className="text-white" />
-      </span>
-      <span className="flex-1 min-w-0">
-        <span className="block font-dm text-[10px] text-text-muted leading-none">{dog}</span>
-        <span className="block font-dm font-bold text-[14px] text-text-primary leading-tight mt-0.5 truncate">
-          {title}
+    <div className={divider ? 'border-b border-border-faint' : ''}>
+      <div className="flex items-start gap-3 p-4">
+        <span className={`inline-flex items-center justify-center rounded-[16px] size-8 shrink-0 ${bg}`}>
+          <Icon size={16} className="text-white" />
         </span>
-      </span>
-      {done ? (
-        <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-[#dcfce7] text-[#15803d] px-2 py-1 text-[10px] font-dm font-bold">
-          <CheckCircle2 size={11} />
-          Done
-        </span>
-      ) : (
-        <span className="shrink-0 inline-flex items-center gap-1 rounded-full border border-border-light text-text-muted px-2 py-1 text-[10px] font-dm font-bold">
-          <Circle size={11} />
-          Done
-        </span>
-      )}
+        <div className="flex-1 min-w-0">
+          <p className="font-dm font-bold text-[15px] text-text-primary leading-tight">{title}</p>
+          {subtitle && <p className="font-dm text-[13px] text-text-secondary mt-1">{subtitle}</p>}
+        </div>
+        <span className="font-dm font-bold text-[13px] text-text-muted shrink-0">{time}</span>
+      </div>
     </div>
   )
 }
 
-// ── The four "how it works" mockup screens ──────────────────────────────
-function AddDogMock() {
+// Step 3's TODAY and TOMORROW day cards pop in as a pair once the visual
+// scrolls into view — same .pop-in-target/.pop-in mechanism as step 1's
+// labels, just two targets instead of three.
+// TODAY plays first; TOMORROW's delay (1200ms) starts only after TODAY's
+// own 1000ms animation fully finishes, so they read as sequential — "today
+// shows up, then tomorrow" — not two things fading in at once. Plays once,
+// when the visual first scrolls into view.
+const TASKS_GENERATE_SECOND_DELAY_MS = 1200
+
+function TasksGenerateCollage() {
+  const [ref, inView] = useInView<HTMLDivElement>()
+
   return (
-    <div className="px-5 pt-4 pb-5 flex flex-col gap-4">
-      <div>
-        <p className="font-dm font-bold text-[11px] uppercase tracking-wide text-coral">New dog</p>
-        <p className="font-outfit font-bold text-[22px] text-cobalt leading-tight mt-0.5">Barkley</p>
-      </div>
-      <div className="flex items-center gap-3">
-        <div className="size-14 rounded-[16px] bg-[#f3f4f6] flex items-center justify-center shrink-0">
-          <DogIcon size={26} className="text-text-muted" />
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          <span className="rounded-full bg-card px-2.5 py-1 text-[11px] font-dm font-bold text-text-secondary">
-            Golden Retriever
-          </span>
-          <span className="rounded-full bg-card px-2.5 py-1 text-[11px] font-dm font-bold text-text-secondary">
-            Large
-          </span>
+    <div
+      ref={ref}
+      className="mx-auto w-full max-w-[380px] rounded-[20px] bg-white border border-border-faint p-5 flex flex-col gap-3"
+    >
+      <p className="font-dm font-bold text-[13px] uppercase tracking-[0.03em] text-coral">
+        Harry・5 tasks
+      </p>
+
+      <div className={`pop-in-target flex flex-col gap-2 ${inView ? 'pop-in' : ''}`}>
+        <p className="font-dm text-[13px] text-text-secondary">TODAY</p>
+        <div className="rounded-[16px] border border-border-light overflow-hidden">
+          <GeneratedTaskRow time="5:00 PM" title="Dinner" subtitle="One cups of dry kibble" type="meal" />
+          <GeneratedTaskRow time="8:00 PM" title="Evening Walk" type="walk" divider={false} />
         </div>
       </div>
-      <div className="rounded-[16px] border border-border-faint bg-white p-3.5">
-        <p className="font-dm font-bold text-[11px] uppercase tracking-wide text-text-muted">
-          Care notes
-        </p>
-        <div className="mt-2.5 space-y-1.5">
-          <div className="h-2 rounded-full bg-border-faint w-full" />
-          <div className="h-2 rounded-full bg-border-faint w-4/5" />
-          <div className="h-2 rounded-full bg-border-faint w-3/5" />
+
+      <div
+        className={`pop-in-target flex flex-col gap-2 ${inView ? 'pop-in' : ''}`}
+        style={{ animationDelay: `${TASKS_GENERATE_SECOND_DELAY_MS}ms` }}
+      >
+        <p className="font-dm text-[13px] text-text-secondary">TOMORROW</p>
+        <div className="rounded-[16px] border border-border-light overflow-hidden">
+          <GeneratedTaskRow time="8:30 AM" title="Morning Walk" type="walk" />
+          <GeneratedTaskRow time="9:00 AM" title="Breakfast" subtitle="One cups of dry kibble" type="meal" />
+          <GeneratedTaskRow time="12:00 AM" title="Medication" subtitle="Ear drops" type="medication" divider={false} />
         </div>
       </div>
-      <span className="mt-auto inline-flex items-center justify-center rounded-full bg-coral py-2.5 font-dm font-bold text-[13px] text-white">
-        Save dog
-      </span>
+
+      <Button fullWidth size="lg" className="mt-2 pointer-events-none" tabIndex={-1} aria-hidden="true">
+        Confirm Stay
+      </Button>
     </div>
   )
 }
 
-// A faithful small replica of the real Start Stay page — same back-arrow
-// header, dog selector, Start/End date+time fields, notes, and CTA — not a
-// redrawn calendar-grid stand-in.
-function StartStayMock() {
+// swipe-reveal/swipe-fill (index.css) share a 1.3s delay + 0.6s duration,
+// so the row is fully off and the dark-green fill settled at 1.9s — that's
+// when the paw-burst celebration (same effect and timing offsets as the
+// real app's TaskCard) fires from the checkmark's position. Delay starts
+// later, and the post-settle hold is longer, than the other three steps'
+// loops — this one has more to read (the peek, then the full commit).
+const SWIPE_DELAY_MS = 1300
+const SWIPE_DURATION_MS = 600
+const SWIPE_SETTLE_MS = SWIPE_DELAY_MS + SWIPE_DURATION_MS
+const PAW_BURST_CONFIGS = [
+  { tx: '-20px', ty: '-16px', rot: '-25deg', delay: 0 },
+  { tx: '18px', ty: '-18px', rot: '20deg', delay: 70 },
+  { tx: '-16px', ty: '18px', rot: '15deg', delay: 140 },
+  { tx: '20px', ty: '16px', rot: '-15deg', delay: 40 },
+]
+
+// Step 4's first task row — a timeline entry with a connector line down to
+// the next row, plus a reveal layer behind it that only the first row's
+// swipe exposes; the other two stay put. Every row rests with a pale-green
+// peek on the right (matches TaskCard.tsx's resting state for a pending
+// task — the content row is inset from the full width, always exposing a
+// sliver of the reveal layer and its check icon, not just during a swipe).
+// The swiping row's content additionally slides fully off, uncovering a
+// dark-green fill, a centered white checkmark, and a paw-print burst.
+function CheckOffTaskRow({
+  time,
+  title,
+  subtitle,
+  type,
+  swipe = false,
+  last = false,
+}: {
+  time: string
+  title: string
+  subtitle?: string
+  type: 'meal' | 'medication' | 'walk' | 'potty'
+  swipe?: boolean
+  last?: boolean
+}) {
+  const { icon: Icon, bg } = TASK_BADGE_CONFIG[type]
   return (
-    <div className="px-4 pt-4 pb-4 flex flex-col gap-3.5">
-      <div className="flex items-center gap-2">
-        <ArrowLeft size={15} className="text-text-secondary" />
-        <p className="font-outfit font-bold text-[19px] text-cobalt leading-none">Start Stay</p>
+    <div className="relative h-[72px] rounded-[10px] overflow-hidden">
+      <div className="absolute inset-0 rounded-[10px] bg-[#dcfce7] flex items-center justify-end pr-[6px]">
+        <CheckCircle2 size={20} className="text-green-vivid" />
       </div>
-
-      <div>
-        <p className="font-dm font-bold text-[9px] text-text-secondary uppercase tracking-widest mb-1.5">
-          Which dog?
-        </p>
-        <div className="flex items-center gap-2.5 rounded-[12px] border border-coral bg-[#fff5f3] p-2">
-          <img
-            src={GEORGE_PHOTO_URL}
-            alt="George, a West Highland Terrier"
-            className="size-9 rounded-[8px] object-cover shrink-0"
-          />
-          <div className="min-w-0">
-            <p className="font-dm font-semibold text-[13px] text-text-primary leading-none">George</p>
-            <p className="font-dm text-[11px] text-text-secondary mt-0.5 truncate">
-              West Highland Terrier
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <p className="font-dm font-bold text-[9px] text-text-secondary uppercase tracking-widest mb-1.5">
-          Stay Dates
-        </p>
-        <div className="flex flex-col gap-2">
-          {[
-            { label: 'Start', date: 'Fri, Aug 14' },
-            { label: 'End', date: 'Wed, Aug 20' },
-          ].map(({ label, date }) => (
-            <div key={label}>
-              <p className="font-dm font-bold text-[8px] text-text-muted uppercase tracking-widest mb-1">
-                {label}
-              </p>
-              <div className="flex items-center justify-between rounded-[10px] border border-border-light bg-white px-2.5 py-2">
-                <span className="font-dm text-[11px] text-text-primary">{date}</span>
-                <CalendarDays size={12} className="text-text-muted" />
-              </div>
-            </div>
+      {swipe && (
+        <div className="swipe-fill absolute inset-0 rounded-[10px] bg-[#166534] flex items-center justify-center">
+          <CheckCircle2 size={20} className="text-white" />
+          {PAW_BURST_CONFIGS.map((p, i) => (
+            <PawPrintFilled
+              key={i}
+              className="paw-burst absolute text-white"
+              size={16}
+              style={
+                {
+                  '--tx': p.tx,
+                  '--ty': p.ty,
+                  '--rot': p.rot,
+                  animationDelay: `${SWIPE_SETTLE_MS + p.delay}ms`,
+                } as React.CSSProperties
+              }
+            />
           ))}
         </div>
-      </div>
-
-      <span className="mt-auto inline-flex items-center justify-center rounded-full bg-coral py-2.5 font-dm font-bold text-[12px] text-white">
-        Generate Care Tasks
-      </span>
-    </div>
-  )
-}
-
-function TasksGenerateMock() {
-  return (
-    <div className="px-5 pt-4 pb-5">
-      <p className="font-dm font-bold text-[11px] uppercase tracking-wide text-coral">This stay</p>
-      <p className="font-outfit font-bold text-[22px] text-cobalt leading-tight mt-0.5">
-        9 tasks, 2 dogs
-      </p>
-      <div className="mt-3 divide-y divide-border-faint">
-        <MockTaskRow time="8:00" title="Breakfast" dog="Barkley" type="meal" />
-        <MockTaskRow time="8:30" title="Ear drops" dog="Mochi" type="medication" />
-        <MockTaskRow time="9:15" title="Morning walk" dog="Barkley" type="walk" />
+      )}
+      <div
+        className={`relative bg-white flex gap-3 p-2 h-full w-[calc(100%-32px)] rounded-[10px] ${swipe ? 'swipe-reveal' : ''}`}
+      >
+        <span className="font-dm font-bold text-[13px] text-text-primary shrink-0 pt-1">{time}</span>
+        <div className="flex flex-col items-center shrink-0">
+          <span className={`inline-flex items-center justify-center rounded-[16px] size-8 shrink-0 ${bg}`}>
+            <Icon size={16} className="text-white" />
+          </span>
+          {!last && <span className="flex-1 w-0.5 bg-border-faint rounded mt-1" />}
+        </div>
+        <div className="flex-1 min-w-0 pt-0.5">
+          <p className="font-dm font-bold text-[16px] text-text-primary leading-tight">{title}</p>
+          {subtitle && <p className="font-dm text-[13px] text-text-secondary mt-0.5">{subtitle}</p>}
+        </div>
       </div>
     </div>
   )
 }
 
-function CheckOffMock() {
-  return (
-    <div className="px-5 pt-4 pb-5">
-      <p className="font-outfit font-bold text-[26px] text-cobalt leading-none">Today</p>
-      <p className="font-dm text-[12px] text-text-secondary mt-1.5">2 left across 2 dogs</p>
-      <div className="mt-3 divide-y divide-border-faint">
-        <MockTaskRow time="8:00" title="Breakfast" dog="Barkley" type="meal" done />
-        <MockTaskRow time="8:30" title="Ear drops" dog="Mochi" type="medication" />
-        <MockTaskRow time="9:15" title="Morning walk" dog="Barkley" type="walk" />
-      </div>
-    </div>
-  )
-}
+// Step 4: the first task row auto-swipes left once the visual scrolls into
+// view, revealing the "Done" background — a one-shot demo of the app's
+// real swipe-to-complete gesture (src/components/TaskCard.tsx), not the
+// live drag-driven component itself.
+function CheckOffCollage() {
+  const [ref, inView] = useInView<HTMLDivElement>()
 
-// ── Alternate "how it works" visuals ────────────────────────────────────
-// A second, non-scrolling take on the same four steps for side-by-side
-// comparison against the scrollytelling version above — collage and
-// floating-card compositions in the vein of Partiful/Mindtrip's marketing
-// pages, built from HeyPup's own content and colors rather than borrowed
-// screenshots.
-function AddDogCollage() {
   return (
-    <div className="relative mx-auto w-full max-w-[380px] aspect-square">
-      <span className="absolute left-0 top-3 rotate-[-6deg] rounded-full bg-white border border-border-light shadow-md px-4 py-2 font-dm font-bold text-[13px] text-text-primary">
-        🦴 Feeding notes
-      </span>
-      <span className="absolute right-0 top-16 rotate-[5deg] rounded-full bg-white border border-border-light shadow-md px-4 py-2 font-dm font-bold text-[13px] text-text-primary">
-        💊 Medication
-      </span>
-      <div className="absolute left-7 top-28 size-24 rounded-[20px] overflow-hidden shadow-lg rotate-[-4deg] border-4 border-white">
-        <img src={GEORGE_PHOTO_URL} alt="" className="size-full object-cover" />
-      </div>
-      <div className="absolute right-9 top-1/2 -translate-y-1/2 rounded-full size-28 overflow-hidden shadow-xl border-4 border-white">
-        <img src={GEORGE_PHOTO_URL} alt="George, a West Highland Terrier" className="size-full object-cover" />
-      </div>
-      <span className="absolute left-3 bottom-24 rotate-[4deg] rounded-full bg-peach px-4 py-2 font-dm font-bold text-[13px] text-text-primary shadow-md">
-        🚶 Walk routine
-      </span>
-      <span className="absolute right-2 bottom-16 rotate-[-5deg] rounded-full bg-lavender px-4 py-2 font-dm font-bold text-[13px] text-text-primary shadow-md">
-        🚨 Emergency contact
-      </span>
-      <div className="absolute inset-x-6 bottom-0 rounded-full border-2 border-text-primary bg-white shadow-lg flex items-center px-5 py-3.5">
-        <span className="font-dm text-[14px] text-text-muted">Tell us about your dog…</span>
-      </div>
-    </div>
-  )
-}
-
-function StartStayStack() {
-  return (
-    <div className="relative mx-auto w-full max-w-[380px] aspect-square">
-      <div className="absolute left-0 top-8 w-[78%] rounded-[20px] bg-white border border-border-faint shadow-xl rotate-[-3deg] p-4">
-        <p className="font-dm font-bold text-[11px] uppercase tracking-wide text-coral">
-          Which dog?
+    <div ref={ref} className="mx-auto w-full max-w-[380px] rounded-[20px] bg-white border border-border-faint overflow-hidden">
+      <div className="px-6 pt-6 pb-3">
+        <p className="font-dm font-bold text-[12px] uppercase tracking-[0.05em] text-coral">
+          Saturday, August 22
         </p>
-        <div className="flex items-center gap-2.5 mt-2">
-          <img
-            src={GEORGE_PHOTO_URL}
-            alt="George"
-            className="size-11 rounded-[10px] object-cover shrink-0"
-          />
+        <div className="flex items-center justify-between mt-1">
+          <p className="font-outfit font-bold text-[40px] text-blue-task leading-none">Today</p>
+          <CalendarDays size={18} className="text-blue-task shrink-0" />
+        </div>
+      </div>
+      <div className="px-6 pb-4">
+        <div className="inline-flex items-center gap-2.5 rounded-full border border-border-light pl-1.5 pr-4 py-1.5">
+          <img src="/how-it-works/step4-rusty.png" alt="" className="size-9 rounded-full object-cover" />
           <div>
-            <p className="font-dm font-bold text-[14px] text-text-primary leading-none">George</p>
-            <p className="font-dm text-[12px] text-text-secondary mt-1">West Highland Terrier</p>
-          </div>
-        </div>
-        <div className="mt-3.5 grid grid-cols-2 gap-2">
-          <div className="rounded-[10px] border border-border-light px-2.5 py-2">
-            <p className="font-dm font-bold text-[9px] text-text-muted uppercase tracking-widest">
-              Start
-            </p>
-            <p className="font-dm text-[12px] text-text-primary mt-0.5">Fri, Aug 14</p>
-          </div>
-          <div className="rounded-[10px] border border-border-light px-2.5 py-2">
-            <p className="font-dm font-bold text-[9px] text-text-muted uppercase tracking-widest">
-              End
-            </p>
-            <p className="font-dm text-[12px] text-text-primary mt-0.5">Wed, Aug 20</p>
+            <p className="font-dm font-bold text-[13px] text-text-primary leading-none">Rusty</p>
+            <p className="font-dm text-[11px] text-text-secondary mt-1">Until Aug 25</p>
           </div>
         </div>
       </div>
-      <div className="absolute right-0 bottom-8 w-[62%] rounded-[18px] bg-cobalt shadow-xl rotate-[4deg] p-4">
-        <p className="font-dm font-bold text-[10px] uppercase tracking-wide text-white/70">
-          Auto-filled
-        </p>
-        <p className="font-outfit font-bold text-[17px] text-white leading-tight mt-1">
-          George's regular schedule comes with him
-        </p>
+      <div className="px-6 pb-6 flex flex-col gap-3">
+        <CheckOffTaskRow
+          time="7:00 AM"
+          title="Morning Walk"
+          subtitle="20-30 mins"
+          type="walk"
+          swipe={inView}
+        />
+        <CheckOffTaskRow
+          time="7:30 AM"
+          title="Breakfast"
+          subtitle="1/2 cup kibble with 1 tsp probiotic powder"
+          type="meal"
+        />
+        <CheckOffTaskRow time="11:00 AM" title="Potty Break" type="potty" last />
       </div>
     </div>
   )
 }
 
-function TasksGenerateOrbit() {
-  const badges: Array<{
-    Icon: React.ComponentType<{ size?: string | number; className?: string }>
-    bg: string
-    style: React.CSSProperties
-  }> = [
-    { Icon: DogBowlIcon, bg: 'bg-coral', style: { left: '2%', top: '8%' } },
-    { Icon: Pill, bg: 'bg-blue-task', style: { right: '0%', top: '2%' } },
-    { Icon: PawPrint, bg: 'bg-green-vivid', style: { left: '-2%', bottom: '14%' } },
-    { Icon: Bell, bg: 'bg-[#9333ea]', style: { right: '2%', bottom: '4%' } },
-  ]
-  return (
-    <div className="relative mx-auto w-full max-w-[380px] aspect-square">
-      {badges.map(({ Icon, bg, style }, i) => (
-        <span
-          key={i}
-          className={`absolute size-14 rounded-full shadow-lg flex items-center justify-center ${bg}`}
-          style={style}
-        >
-          <Icon size={22} className="text-white" />
-        </span>
-      ))}
-      <div className="absolute inset-x-8 top-1/2 -translate-y-1/2 rounded-[20px] bg-white border border-border-faint shadow-xl p-5">
-        <p className="font-dm font-bold text-[11px] uppercase tracking-wide text-coral">
-          This stay
-        </p>
-        <p className="font-outfit font-bold text-[20px] text-cobalt leading-tight mt-0.5">
-          9 tasks, 2 dogs
-        </p>
-        <div className="mt-2.5 divide-y divide-border-faint">
-          <MockTaskRow time="8:00" title="Breakfast" dog="Barkley" type="meal" />
-          <MockTaskRow time="9:15" title="Morning walk" dog="Barkley" type="walk" />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function CheckOffFeed() {
-  return (
-    <div className="relative mx-auto w-full max-w-[380px] aspect-square">
-      <div className="absolute left-0 top-4 w-[80%] rounded-[20px] bg-[#1a1730] shadow-xl rotate-[-2deg] p-4">
-        <div className="flex items-center gap-2.5">
-          <span className="size-8 rounded-full bg-coral flex items-center justify-center shrink-0">
-            <DogBowlIcon size={15} className="text-white" />
-          </span>
-          <p className="font-dm text-[13px] text-white">
-            <span className="font-bold">Breakfast</span> marked done for Barkley
-          </p>
-        </div>
-        <div className="flex items-center gap-2 mt-3">
-          <span className="rounded-full bg-white/10 text-white px-2.5 py-1 text-[12px] font-dm font-bold">
-            ✅ Done
-          </span>
-          <span className="rounded-full bg-white/10 text-white px-2.5 py-1 text-[12px] font-dm font-bold">
-            8:02am
-          </span>
-        </div>
-      </div>
-      <div className="absolute right-0 top-[38%] w-[72%] rounded-[20px] bg-white border border-border-faint shadow-xl rotate-[3deg] p-4">
-        <div className="flex items-center gap-2.5">
-          <span className="size-8 rounded-full bg-blue-task flex items-center justify-center shrink-0">
-            <Pill size={14} className="text-white" />
-          </span>
-          <p className="font-dm text-[13px] text-text-primary">
-            <span className="font-bold">Ear drops</span> due for Mochi
-          </p>
-        </div>
-        <div className="flex items-center gap-2 mt-3">
-          <span className="rounded-full bg-card text-text-secondary px-2.5 py-1 text-[12px] font-dm font-bold">
-            One tap
-          </span>
-        </div>
-      </div>
-      <div className="absolute left-6 bottom-2 w-[70%] rounded-[20px] bg-white border border-border-faint shadow-xl rotate-[-3deg] p-4">
-        <div className="flex items-center gap-2.5">
-          <span className="size-8 rounded-full bg-green-vivid flex items-center justify-center shrink-0">
-            <PawPrint size={14} className="text-white" />
-          </span>
-          <p className="font-dm text-[13px] text-text-primary">
-            <span className="font-bold">Morning walk</span> up next for Barkley
-          </p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-const STEPS = [
+const ALT_STEPS = [
   {
     title: 'Add the dog',
     body: 'Breed, size, owner contact, and the care notes you actually need at 6am: food, meds, behaviour, emergencies.',
-    Mock: AddDogMock,
+    Visual: AddDogPhotoCollage,
   },
   {
     title: 'Start a stay',
     body: 'Pick the dates. Their regular daily schedule comes along with them.',
-    Mock: StartStayMock,
+    Visual: StartStayCollage,
   },
   {
     title: 'Tasks generate',
     body: 'Every meal, med, and walk for the whole stay, laid out on a timeline and grouped by dog.',
-    Mock: TasksGenerateMock,
+    Visual: TasksGenerateCollage,
   },
   {
     title: 'Check off as you go',
     body: 'One tap per task, one hand, mid-shift. Skip or reschedule when the day moves.',
-    Mock: CheckOffMock,
+    Visual: CheckOffCollage,
   },
-]
-
-const ALT_STEPS = [
-  { title: 'Add the dog', body: STEPS[0].body, Visual: AddDogCollage },
-  { title: 'Start a stay', body: STEPS[1].body, Visual: StartStayStack },
-  { title: 'Tasks generate', body: STEPS[2].body, Visual: TasksGenerateOrbit },
-  { title: 'Check off as you go', body: STEPS[3].body, Visual: CheckOffFeed },
 ]
 
 const FEATURES = [
@@ -668,62 +803,10 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 
 export default function AboutPage() {
   const [tasks, setTasks] = useState<Task[]>(demoTasks)
-  const [activeStep, setActiveStep] = useState(0)
-  const stepRefs = useRef<Array<HTMLDivElement | null>>([])
 
   useEffect(() => {
     document.title = 'HeyPup: care tracking for dog sitters and boarders'
   }, [])
-
-  // Scroll-driven, not timer-driven: whichever step marker sits closest to
-  // the vertical middle of the viewport becomes active, so the mockup
-  // advances in step with scrolling instead of on its own clock.
-  //
-  // Deliberately not an IntersectionObserver watching a thin band around the
-  // center: each marker is only 1px tall, so on a fast scroll it can pass
-  // entirely through a narrow band between two observer callbacks and never
-  // register as intersecting, leaving activeStep stuck on a stale step until
-  // scrolling catches another marker. Recomputing the closest marker on every
-  // scroll frame can't skip a step like that.
-  useEffect(() => {
-    function updateActiveStep() {
-      const viewportCenter = window.innerHeight / 2
-      let closestIdx = 0
-      let closestDist = Infinity
-      for (let i = 0; i < stepRefs.current.length; i++) {
-        const el = stepRefs.current[i]
-        if (!el) continue
-        const dist = Math.abs(el.getBoundingClientRect().top - viewportCenter)
-        if (dist < closestDist) {
-          closestDist = dist
-          closestIdx = i
-        }
-      }
-      setActiveStep(closestIdx)
-    }
-
-    let ticking = false
-    function onScroll() {
-      if (ticking) return
-      ticking = true
-      requestAnimationFrame(() => {
-        updateActiveStep()
-        ticking = false
-      })
-    }
-
-    updateActiveStep()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('resize', onScroll)
-    return () => {
-      window.removeEventListener('scroll', onScroll)
-      window.removeEventListener('resize', onScroll)
-    }
-  }, [])
-
-  function scrollToStep(i: number) {
-    stepRefs.current[i]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  }
 
   function markDone(id: string) {
     setTasks((prev) =>
@@ -833,12 +916,11 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ── How it works: scroll pins the mockup, each step block scrolling
-          past drives which one is showing — Structured's scrollytelling
-          pattern, an interactive mockup in place of their video. Steps are
-          still clickable and jump straight there. ──────────────────────── */}
-      <section className="border-t border-border-faint">
-        <div className="mx-auto max-w-[1100px] px-6 pt-20">
+      {/* ── How it works ──────────────────────────────────────────────────
+          Four steps, each with its own floating-card visual pulled from the
+          Figma design system. */}
+      <section id="how-it-works" className="border-t border-border-faint bg-card">
+        <div className="mx-auto max-w-[1100px] px-6 py-20">
           <div className="max-w-[640px]">
             <p className="font-dm font-bold text-[12px] uppercase tracking-wide text-coral">
               How it works
@@ -846,135 +928,6 @@ export default function AboutPage() {
             <h2 className="font-outfit font-bold text-cobalt text-[clamp(2.25rem,5.5vw,3.5rem)] leading-tight tracking-[-0.02em] mt-2">
               From “can you take him this weekend?” to a checklist
             </h2>
-          </div>
-
-          <div className="grid lg:grid-cols-[1fr_420px] lg:gap-16 mt-8">
-            {/* Text column. Mobile: a normal stacked list, each step with its
-                own inline mockup. Desktop: the visible text is a single
-                sticky, crossfading panel — like Structured's "split your day
-                into tasks" section — driven by four invisible scroll markers
-                spread across a tall relative track underneath it. */}
-            <div className="relative lg:min-h-[280vh]">
-              {STEPS.map((_, i) => (
-                <div
-                  key={i}
-                  ref={(el) => {
-                    stepRefs.current[i] = el
-                  }}
-                  data-step-index={i}
-                  aria-hidden="true"
-                  className="hidden lg:block absolute inset-x-0 h-px"
-                  style={{ top: `${(i / STEPS.length) * 100}%` }}
-                />
-              ))}
-
-              <div className="lg:hidden flex flex-col gap-14 py-8">
-                {STEPS.map((step, i) => (
-                  <div key={step.title}>
-                    <button
-                      type="button"
-                      onClick={() => scrollToStep(i)}
-                      className="w-full text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-coral rounded-sm"
-                    >
-                      <span className="block font-dm font-bold text-[13px] uppercase tracking-[0.1em] text-coral">
-                        Step {i + 1}
-                      </span>
-                      <span className="block font-outfit font-bold text-cobalt text-[clamp(1.75rem,3.2vw,2.5rem)] leading-[1.05] tracking-[-0.02em] mt-1.5">
-                        {step.title}
-                      </span>
-                      <span className="block font-dm text-[17px] leading-relaxed text-text-secondary mt-3 max-w-[40ch]">
-                        {step.body}
-                      </span>
-                    </button>
-                    <div className="mt-6" style={STEPS_PHONE_SIZE}>
-                      <PhoneFrame>
-                        <step.Mock />
-                      </PhoneFrame>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Desktop: vertically centered in the viewport while pinned,
-                  like Structured's own switching text — not stuck near the
-                  top of the fold. */}
-              <div className="hidden lg:flex lg:sticky lg:top-0 lg:h-screen lg:items-center">
-                <div className="grid w-full">
-                  {STEPS.map((step, i) => (
-                    <button
-                      key={step.title}
-                      type="button"
-                      onClick={() => scrollToStep(i)}
-                      aria-current={i === activeStep}
-                      aria-hidden={i !== activeStep}
-                      className={`[grid-area:1/1] w-full text-left transition-all duration-500 motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-coral rounded-sm ${
-                        i === activeStep
-                          ? 'opacity-100 translate-y-0'
-                          : 'opacity-0 translate-y-3 pointer-events-none'
-                      }`}
-                    >
-                      {/* Cobalt marks "which step you're on," the same job it
-                          does for the active bottom-nav tab in the app —
-                          wayfinding, not action, so it stays off-limits to
-                          Ember. No card behind it — weight and the crossfade
-                          alone carry the switch, bare on the page. */}
-                      <span className="block font-dm font-bold text-[13px] uppercase tracking-[0.1em] text-coral">
-                        Step {i + 1}
-                      </span>
-                      <span className="block font-outfit font-bold text-cobalt text-[clamp(2rem,3.5vw,2.75rem)] leading-[1.05] tracking-[-0.02em] mt-2">
-                        {step.title}
-                      </span>
-                      <span className="block font-dm text-[18px] leading-relaxed text-text-secondary mt-3 max-w-[40ch]">
-                        {step.body}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Mockup column: pinned and vertically centered, crossfading
-                as scroll crosses steps — sized to fill the viewport rather
-                than sit small inside it. */}
-            <div className="hidden lg:flex lg:sticky lg:top-0 lg:h-screen lg:items-center">
-              <div className="grid" style={STEPS_PHONE_SIZE}>
-                {STEPS.map((step, i) => (
-                  <div
-                    key={step.title}
-                    aria-hidden={i !== activeStep}
-                    className={`[grid-area:1/1] transition-opacity duration-500 motion-reduce:transition-none ${
-                      i === activeStep ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                    }`}
-                  >
-                    <PhoneFrame>
-                      <step.Mock />
-                    </PhoneFrame>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── How it works, take two ────────────────────────────────────────
-          A second pass at the same four steps for side-by-side comparison
-          against the scrollytelling version above: no scroll rig, no sticky
-          panel — a plain stacked layout with a distinct floating-card/
-          collage visual per step, in the vein of Partiful and Mindtrip's
-          marketing pages. Delete whichever direction loses. */}
-      <section id="how-it-works-alt" className="border-t border-border-faint bg-card">
-        <div className="mx-auto max-w-[1100px] px-6 py-20">
-          <div className="max-w-[640px]">
-            <p className="font-dm font-bold text-[12px] uppercase tracking-wide text-coral">
-              How it works — option B
-            </p>
-            <h2 className="font-outfit font-bold text-cobalt text-[clamp(2.25rem,5.5vw,3.5rem)] leading-tight tracking-[-0.02em] mt-2">
-              Same four steps, a different shape
-            </h2>
-            <p className="font-dm text-[16px] text-text-secondary leading-relaxed mt-4 max-w-[52ch]">
-              No scroll-pinned mockup here — each step gets its own floating-card visual instead.
-            </p>
           </div>
 
           <div className="flex flex-col gap-20 sm:gap-28 mt-16">

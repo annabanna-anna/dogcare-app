@@ -28,12 +28,23 @@ const MAX_LEAD_MINUTES = 60 // largest lead time offered in the app's Settings
 // rather than never.
 const GRACE_MINUTES = 10
 
+type TaskType = 'walk' | 'meal' | 'medication' | 'potty' | 'other'
+
 interface TaskRow {
   id: string
   owner_id: string
   dog_name: string
   title: string
+  type: TaskType
   scheduled_time: string
+}
+
+const TASK_EMOJI: Record<TaskType, string> = {
+  walk: '🐾',
+  meal: '🥣',
+  medication: '💊',
+  potty: '🚽',
+  other: '🦴',
 }
 
 interface SubscriptionRow {
@@ -62,7 +73,7 @@ Deno.serve(async () => {
 
   const { data: tasks, error: tasksError } = await supabase
     .from('tasks')
-    .select('id, owner_id, dog_name, title, scheduled_time')
+    .select('id, owner_id, dog_name, title, type, scheduled_time')
     .eq('status', 'pending')
     .is('reminder_sent_at', null)
     .gt('scheduled_time', graceFloor.toISOString())
@@ -104,7 +115,9 @@ Deno.serve(async () => {
       // No body text here — the service worker formats "Coming up at 3:30 PM"
       // on the device, so the time renders in the device's own timezone.
       const payload = JSON.stringify({
-        title: `${task.title} — ${task.dog_name}`,
+        title: `${TASK_EMOJI[task.type] ?? TASK_EMOJI.other} ${task.title} — ${task.dog_name}`,
+        dogName: task.dog_name,
+        taskType: task.type,
         scheduledTime: task.scheduled_time,
         tag: `task-${task.id}`,
         url: '/today',

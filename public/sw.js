@@ -2,6 +2,31 @@
 // system notifications, even when no tab is open. Kept dependency-free and
 // tiny on purpose: it does nothing else (no caching/offline).
 
+// Per-task-type body copy. "other" stays generic since the task title
+// itself carries all the meaning there.
+const TASK_BODY = {
+  walk: {
+    upcoming: (name) => name + "'s due for a walk",
+    due: (name) => 'Walkies! ' + name + "'s ready to go",
+  },
+  meal: {
+    upcoming: (name) => name + "'s mealtime is coming up",
+    due: (name) => "Dinner's served — " + name + "'s waiting!",
+  },
+  medication: {
+    upcoming: (name) => name + "'s meds are coming up",
+    due: (name) => "Time for " + name + "'s meds",
+  },
+  potty: {
+    upcoming: (name) => name + ' might need a potty break soon',
+    due: (name) => name + "'s gotta go!",
+  },
+  other: {
+    upcoming: (name) => name + "'s ready when you are",
+    due: (name) => "It's go time for " + name + '!',
+  },
+}
+
 self.addEventListener('install', () => {
   self.skipWaiting()
 })
@@ -26,11 +51,11 @@ self.addEventListener('push', (event) => {
       minute: '2-digit',
     })
     // "On time" reminders (and late-delivered ones) land at or after the
-    // scheduled moment — "coming up" would read wrong there.
-    payload.body =
-      scheduled.getTime() - Date.now() < 60 * 1000
-        ? "It's time! (" + time + ')'
-        : 'Coming up at ' + time
+    // scheduled moment — the "coming up" phrasing would read wrong there.
+    const name = payload.dogName || 'Your pup'
+    const isDue = scheduled.getTime() - Date.now() < 60 * 1000
+    const phrasing = TASK_BODY[payload.taskType] || TASK_BODY.other
+    payload.body = (isDue ? phrasing.due : phrasing.upcoming)(name) + ' (' + time + ')'
   }
   event.waitUntil(
     self.registration.showNotification(payload.title, {
