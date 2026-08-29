@@ -283,10 +283,19 @@ function Textarea({
   return (
     <textarea
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={(e) => {
+        onChange(e.target.value)
+        e.target.style.height = 'auto'
+        e.target.style.height = `${e.target.scrollHeight}px`
+      }}
+      ref={(el) => {
+        if (!el) return
+        el.style.height = 'auto'
+        el.style.height = `${el.scrollHeight}px`
+      }}
       placeholder={placeholder}
       rows={rows}
-      className="w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-dm text-[15px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors resize-none"
+      className="w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-dm text-[15px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors resize-none overflow-hidden"
     />
   )
 }
