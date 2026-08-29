@@ -78,10 +78,16 @@ function AppRoutes() {
       // awaiting a Supabase call (this one invokes an Edge Function) from
       // inside the handler can deadlock the client.
       setTimeout(() => {
+        // TEMP DEBUG (remove after diagnosing the calendar-connect issue):
+        console.log('[goodpup-debug] auth event', event, {
+          hasProviderToken: !!newSession?.provider_token,
+          hasProviderRefreshToken: !!newSession?.provider_refresh_token,
+          requestMarker: localStorage.getItem('heypup-requesting-calendar-scope'),
+        })
         void captureGoogleConnectionIfRequested(
           newSession?.provider_token,
           newSession?.provider_refresh_token,
-        ).catch(() => {})
+        ).catch((e) => console.error('[goodpup-debug] captureGoogleConnectionIfRequested failed', e))
       }, 0)
     })
     return () => subscription.unsubscribe()
