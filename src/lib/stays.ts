@@ -72,3 +72,8 @@ export async function updateStay(
   if (error) throw error
   return mapRow(data)
 }
+
+export async function deleteStay(id: string): Promise<void> {
+  const { error } = await supabase.from('stays').delete().eq('id', id)
+  if (error) throw error
+}

@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { CalendarDays, ChevronDown, Check, Plus, Search, X } from 'lucide-react'
+import { CalendarDays, ChevronDown, Check, Plus, Search, Trash2, X } from 'lucide-react'
 import DogIcon from '../components/icons/DogIcon'
 import { TimePickerButton } from '../components/TimePicker'
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
 import { listDogs } from '../lib/dogs'
-import { getStay, updateStay } from '../lib/stays'
+import { getStay, updateStay, deleteStay } from '../lib/stays'
 import { createTasks, deleteTasksByStay, listTasksByStay } from '../lib/tasks'
 import { generateTasksForStay } from '../utils/taskGenerator'
 import { combineLocalDateTime } from '../utils/dateUtils'
@@ -231,6 +231,9 @@ export default function StartStayPage() {
   const [endTime, setEndTime] = useState(endParam.time)
   const [endDayEdited, setEndDayEdited] = useState(isEditMode)
   const [notes, setNotes] = useState('')
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   function handleStartDayChange(day: string) {
     setStartDay(day)
@@ -306,6 +309,24 @@ export default function StartStayPage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save changes. Please try again.')
       setSaving(false)
+    }
+  }
+
+  async function handleDeleteStay() {
+    if (!stayId || deleting) return
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      const tasks = await listTasksByStay(stayId)
+      if (isGoogleCalendarConnected()) {
+        await deletePushedTasksFromGoogle(tasks).catch(() => {})
+      }
+      await deleteTasksByStay(stayId)
+      await deleteStay(stayId)
+      navigate(selectedDog ? `/dogs/${selectedDog.id}` : '/')
+    } catch (e) {
+      setDeleteError(e instanceof Error ? e.message : 'Could not delete. Please try again.')
+      setDeleting(false)
     }
   }
 
@@ -423,7 +444,50 @@ export default function StartStayPage() {
               : `Tasks will be generated from ${selectedDog.name}'s care schedule.`}
           </p>
         )}
+
+        {isEditMode && (
+          <Button fullWidth variant="danger" onClick={() => setShowDeleteConfirm(true)}>
+            <Trash2 size={18} />
+            Delete Stay
+          </Button>
+        )}
       </div>
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center px-6">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => !deleting && setShowDeleteConfirm(false)}
+          />
+          <div className="relative w-full max-w-[380px] bg-cream rounded-[22px] p-6">
+            <p className="font-outfit font-bold text-[20px] text-text-primary leading-tight mb-2">
+              Delete this stay?
+            </p>
+            <p className="font-dm text-[14px] text-text-secondary leading-relaxed mb-5">
+              This removes the stay and every care task generated for it
+              {selectedDog ? ` for ${selectedDog.name}` : ''}. This can't be undone.
+            </p>
+            {deleteError && (
+              <div className="bg-[#fee2e2] rounded-[12px] px-4 py-3 mb-3">
+                <p className="font-dm text-[13px] text-[#b91c1c]">{deleteError}</p>
+              </div>
+            )}
+            <div className="flex flex-col gap-2">
+              <Button
+                fullWidth
+                variant="danger"
+                disabled={deleting}
+                onClick={() => void handleDeleteStay()}
+              >
+                {deleting ? 'Deleting…' : 'Delete Stay'}
+              </Button>
+              <Button fullWidth variant="ghost" disabled={deleting} onClick={() => setShowDeleteConfirm(false)}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {pickerOpen && (
         <DogPickerSheet
