@@ -24,6 +24,7 @@ import {
   isPushEnabled,
   setPushEnabled,
   getLastPushError,
+  onGoogleConnectionChanged,
 } from '../lib/googleCalendar'
 import {
   enablePushReminders,
@@ -237,6 +238,10 @@ export default function SyncSettingsPage() {
       setReminders(on)
       if (on) getReminderMinutes().then(setReminderMinutes)
     })
+    // Connecting finishes asynchronously after the OAuth redirect has
+    // already landed back here, so the mount read above can be stale —
+    // this catches the flag flipping shortly after.
+    return onGoogleConnectionChanged(() => setCalendarConnected(isGoogleCalendarConnected()))
   }, [])
 
   function togglePush(on: boolean) {

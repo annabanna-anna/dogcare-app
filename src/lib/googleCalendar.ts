@@ -38,9 +38,25 @@ const PUSH_TASKLIST_CACHE_KEY = 'heypup-google-tasklist-push-id'
 const PUSH_ENABLED_KEY = 'heypup-google-calendar-push-enabled'
 const PUSH_ERROR_KEY = 'heypup-google-calendar-push-error'
 const PUSH_CALENDAR_NAME = 'HeyPup'
+
+/** Fired whenever the connected flag changes, so a mounted Settings page can
+ *  update itself — connecting finishes asynchronously (an Edge Function
+ *  round-trip) after the OAuth redirect has already landed the page back on
+ *  Settings, so a one-time mount read of localStorage can be stale. */
+const CONNECTION_CHANGED_EVENT = 'heypup:google-connection-changed'
+function notifyConnectionChanged(): void {
+  window.dispatchEvent(new Event(CONNECTION_CHANGED_EVENT))
+}
+
+/** Subscribes to connection-state changes (connect, disconnect, or a
+ *  server reconciliation via syncGoogleConnectionState). Returns an
+ *  unsubscribe function for use in a useEffect cleanup. */
+export function onGoogleConnectionChanged(handler: () => void): () => void {
+  window.addEventListener(CONNECTION_CHANGED_EVENT, handler)
+  return () => window.removeEventListener(CONNECTION_CHANGED_EVENT, handler)
+}
 const CALENDAR_SCOPE =
   'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/tasks'
-const ROVER_BOOKED_TAG = '[b]'
 // Refresh this long before the token actually expires, so a call that starts
 // just under the wire doesn't land after it.
 const EXPIRY_MARGIN_MS = 5 * 60 * 1000
@@ -68,6 +84,7 @@ export interface GoogleCalendarEvent {
   end: string
   allDay: boolean
   htmlLink: string
+  status: string // Google's own event status: 'confirmed' | 'tentative' | 'cancelled'
 }
 
 interface GoogleCalendarListEntry {
@@ -147,6 +164,7 @@ export async function connectGoogleCalendar(redirectPath = '/settings'): Promise
  *  regardless, so the UI never gets stuck "connected" if the call fails. */
 export async function disconnectGoogleCalendar(): Promise<void> {
   clearLocalGoogleState()
+  notifyConnectionChanged()
   try {
     await callOAuthFunction({ action: 'disconnect' })
   } catch {
@@ -194,6 +212,7 @@ export async function captureGoogleConnectionIfRequested(
     // in the browser.
     await callOAuthFunction({ action: 'store', refreshToken: providerRefreshToken })
     localStorage.setItem(CONNECTED_KEY, '1')
+    notifyConnectionChanged()
   }
   // Google's access tokens are 1hr; cache the one we just got so the first
   // calls after connecting don't need a refresh round-trip.
@@ -208,8 +227,10 @@ export async function captureGoogleConnectionIfRequested(
 export async function syncGoogleConnectionState(): Promise<void> {
   const { data, error } = await supabase.rpc('has_google_credentials')
   if (error) return
+  const wasConnected = isGoogleCalendarConnected()
   if (data === true) localStorage.setItem(CONNECTED_KEY, '1')
   else clearLocalGoogleState()
+  if (isGoogleCalendarConnected() !== wasConnected) notifyConnectionChanged()
 }
 
 /** Returns a usable access token, minting a fresh one via the Edge Function
@@ -337,7 +358,7 @@ export async function listUpcomingGoogleEvents(maxResults = 10): Promise<GoogleC
   if (!res.ok) throw new Error('Could not load Google Calendar events.')
 
   const data = (await res.json()) as {
-    items?: { id: string; summary?: string; start?: { date?: string; dateTime?: string }; end?: { date?: string; dateTime?: string }; htmlLink: string }[]
+    items?: { id: string; summary?: string; status?: string; start?: { date?: string; dateTime?: string }; end?: { date?: string; dateTime?: string }; htmlLink: string }[]
   }
   const events = (data.items ?? []).map((item) => ({
     id: item.id,
@@ -346,14 +367,25 @@ export async function listUpcomingGoogleEvents(maxResults = 10): Promise<GoogleC
     end: item.end?.dateTime ?? item.end?.date ?? '',
     allDay: !item.start?.dateTime,
     htmlLink: item.htmlLink,
+    status: item.status ?? 'confirmed',
   }))
-  return isRover ? events.filter((e) => e.title.toLowerCase().includes(ROVER_BOOKED_TAG)) : events
+  // Rover marks a pending request as a 'tentative' Google Calendar event and
+  // an accepted booking as 'confirmed' — that status field is Google's own,
+  // set directly by Rover's sync, so it's the primary signal. The title
+  // check is a fallback for events whose status doesn't come through as
+  // expected: real Rover titles look like "Boarding: Dog / Owner" (no
+  // bracket tag in practice, despite the older "[B]" assumption).
+  return isRover
+    ? events.filter((e) => e.status === 'confirmed' || /boarding|\[b\]/i.test(e.title))
+    : events
 }
 
-/** Parses Rover's "[TAG] Dog Name / Owner Name" event-title convention.
- *  Returns null for titles that don't match — callers should just skip those. */
+/** Parses Rover's "Boarding: Dog Name / Owner Name" event-title convention
+ *  (also accepts an older assumed "[TAG] Dog Name / Owner Name" form, in
+ *  case some events still carry it). Returns null for titles that don't
+ *  match — callers should just skip those. */
 export function parseRoverStyleTitle(title: string): { dogName: string; ownerName: string } | null {
-  const withoutTag = title.replace(/^\[[^\]]*\]\s*/, '')
+  const withoutTag = title.replace(/^(\[[^\]]*\]|[^:/]+:)\s*/, '')
   const parts = withoutTag.split('/').map((p) => p.trim())
   if (parts.length !== 2 || !parts[0] || !parts[1]) return null
   return { dogName: parts[0], ownerName: parts[1] }

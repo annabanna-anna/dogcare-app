@@ -45,17 +45,20 @@ export default function CalendarPage() {
   const [connecting, setConnecting] = useState(false)
   const [isRover, setIsRover] = useState(false)
   const [retrying, setRetrying] = useState(false)
+  const [synced, setSynced] = useState(false)
   const [lastPushError, setLastPushError] = useState<string | null>(getLastPushError)
   const [showCalendarInfo, setShowCalendarInfo] = useState(false)
 
   async function retryAllPushes() {
     setRetrying(true)
+    setSynced(false)
     try {
       for (const stay of upcomingStays) {
         const stayTasks = await listTasksByStay(stay.id)
         await pushTasksToGoogleCalendar(stayTasks)
       }
       setLastPushError(null)
+      setSynced(true)
     } catch {
       setLastPushError(getLastPushError())
     } finally {
@@ -174,9 +177,21 @@ export default function CalendarPage() {
           </div>
         )}
 
-        <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest">
-          Upcoming Stays
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest">
+            Upcoming Stays
+          </p>
+          {googleConnected && isPushEnabled() && upcomingStays.length > 0 && !lastPushError && (
+            <button
+              type="button"
+              onClick={() => void retryAllPushes()}
+              disabled={retrying}
+              className="font-dm font-bold text-[12px] text-cobalt disabled:opacity-60"
+            >
+              {retrying ? 'Syncing…' : synced ? 'Synced ✓' : 'Sync existing stays now'}
+            </button>
+          )}
+        </div>
 
         {error && (
           <div className="bg-[#fee2e2] rounded-[12px] px-4 py-3">
