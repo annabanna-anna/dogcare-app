@@ -63,7 +63,7 @@ export interface Database {
         Row: {
           id: string
           owner_id: string
-          dog_id: string | null
+          dog_id: string
           start_date: string
           end_date: string
           notes: string | null
@@ -72,25 +72,13 @@ export interface Database {
         Insert: {
           id?: string
           owner_id: string
-          dog_id?: string | null
+          dog_id: string
           start_date: string
           end_date: string
           notes?: string | null
           created_at?: string
         }
         Update: Partial<Database['public']['Tables']['stays']['Insert']>
-      }
-      stay_dogs: {
-        Relationships: []
-        Row: {
-          stay_id: string
-          dog_id: string
-        }
-        Insert: {
-          stay_id: string
-          dog_id: string
-        }
-        Update: Partial<Database['public']['Tables']['stay_dogs']['Insert']>
       }
       tasks: {
         Relationships: []

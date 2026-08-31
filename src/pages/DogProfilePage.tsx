@@ -111,7 +111,7 @@ export default function DogProfilePage() {
       .then((stays) => {
         if (cancelled) return
         const upcoming = stays
-          .filter((s) => s.dogIds.includes(id) && new Date(s.endDate) >= now)
+          .filter((s) => s.dogId === id && new Date(s.endDate) >= now)
           .sort((a, b) => a.startDate.localeCompare(b.startDate))
         setCurrentStay(upcoming[0] ?? null)
       })

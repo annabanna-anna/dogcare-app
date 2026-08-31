@@ -232,12 +232,8 @@ export default function CalendarPage() {
         )}
 
         {upcomingStays.map((stay) => {
-          const stayDogs = stay.dogIds
-            .map((dogId) => dogs.find((d) => d.id === dogId))
-            .filter((d): d is Dog => Boolean(d))
-          if (stayDogs.length === 0) return null
-          const primaryDog = stayDogs[0]
-          const namesLabel = stayDogs.map((d) => d.name).join(' & ')
+          const dog = dogs.find((d) => d.id === stay.dogId)
+          if (!dog) return null
           const isActive = new Date(stay.startDate) <= now && new Date(stay.endDate) >= now
           return (
             <div
@@ -245,8 +241,8 @@ export default function CalendarPage() {
               className="bg-white border border-border-light rounded-[16px] p-4 flex gap-4 items-center"
             >
               <div className="size-12 rounded-[10px] overflow-hidden bg-[#f3f4f6] shrink-0 flex items-center justify-center">
-                {primaryDog.photoUrl ? (
-                  <img src={primaryDog.photoUrl} alt={primaryDog.name} className="size-full object-cover" />
+                {dog.photoUrl ? (
+                  <img src={dog.photoUrl} alt={dog.name} className="size-full object-cover" />
                 ) : (
                   <DogIcon size={22} className="text-text-muted" />
                 )}
@@ -254,7 +250,7 @@ export default function CalendarPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
                   <p className="font-outfit font-semibold text-[17px] text-text-primary leading-none">
-                    {namesLabel}
+                    {dog.name}
                   </p>
                   {isActive && (
                     <span className="text-[11px] font-dm font-bold bg-[#dcfce7] text-[#15803d] rounded-full px-2 py-0.5">

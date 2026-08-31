@@ -4,7 +4,7 @@ import { PawPrint, Pill, Toilet } from 'lucide-react'
 import DogBowlIcon from '../components/icons/DogBowlIcon'
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
-import { getDogsByIds } from '../lib/dogs'
+import { getDog } from '../lib/dogs'
 import { createStay } from '../lib/stays'
 import { createTasks } from '../lib/tasks'
 import { generateTasksForStay } from '../utils/taskGenerator'
@@ -29,7 +29,7 @@ const typeBg: Record<TaskType, string> = {
 }
 
 interface LocationState {
-  dogIds: string[]
+  dogId: string
   startDate: string
   endDate: string
   notes: string
@@ -40,39 +40,37 @@ export default function TaskPreviewPage() {
   const location = useLocation()
   const state = location.state as LocationState | null
 
-  const [dogs, setDogs] = useState<Dog[] | null | undefined>(undefined)
+  const [dog, setDog] = useState<Dog | null | undefined>(undefined)
   const [confirming, setConfirming] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!state?.dogIds?.length) {
-      setDogs(null)
+    if (!state?.dogId) {
+      setDog(null)
       return
     }
     let cancelled = false
-    getDogsByIds(state.dogIds)
-      .then((d) => !cancelled && setDogs(d.length > 0 ? d : null))
-      .catch(() => !cancelled && setDogs(null))
+    getDog(state.dogId)
+      .then((d) => !cancelled && setDog(d))
+      .catch(() => !cancelled && setDog(null))
     return () => {
       cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state?.dogIds])
-
-  const namesLabel = dogs?.map((d) => d.name).join(' & ') ?? ''
+  }, [state?.dogId])
 
   const tasks = useMemo<Task[]>(() => {
-    if (!dogs || !state) return []
+    if (!dog || !state) return []
     const stayId = `preview-stay-${Date.now()}`
-    return generateTasksForStay(dogs, {
+    return generateTasksForStay(dog, {
       id: stayId,
-      dogIds: dogs.map((d) => d.id),
+      dogId: dog.id,
       startDate: state.startDate,
       endDate: state.endDate,
       notes: state.notes,
       createdAt: new Date().toISOString(),
     })
-  }, [dogs, state])
+  }, [dog, state])
 
   // Group tasks by date
   const grouped = useMemo(() => {
@@ -85,7 +83,7 @@ export default function TaskPreviewPage() {
     return map
   }, [tasks])
 
-  if (dogs === undefined) {
+  if (dog === undefined) {
     return (
       <div className="min-h-svh bg-cream flex items-center justify-center px-6">
         <p className="font-dm text-[14px] text-text-secondary">Loading…</p>
@@ -93,7 +91,7 @@ export default function TaskPreviewPage() {
     )
   }
 
-  if (!state || !dogs) {
+  if (!state || !dog) {
     return (
       <div className="min-h-svh bg-cream flex items-center justify-center px-6">
         <div className="text-center">
@@ -109,17 +107,17 @@ export default function TaskPreviewPage() {
   }
 
   async function handleConfirm() {
-    if (!dogs || !state || confirming) return
+    if (!dog || !state || confirming) return
     setConfirming(true)
     setError(null)
     try {
       const stay = await createStay({
-        dogIds: dogs.map((d) => d.id),
+        dogId: dog.id,
         startDate: state.startDate,
         endDate: state.endDate,
         notes: state.notes,
       })
-      const finalTasks = generateTasksForStay(dogs, stay)
+      const finalTasks = generateTasksForStay(dog, stay)
       // Push the rows createTasks returns, not finalTasks — only they carry
       // real DB ids, which the push needs to save each Google event ref.
       const createdTasks = await createTasks(finalTasks)
@@ -140,7 +138,7 @@ export default function TaskPreviewPage() {
       <PageHeader
         back
         title="Preview Tasks"
-        subtitle={`${namesLabel} · ${tasks.length} tasks`}
+        subtitle={`${dog.name} · ${tasks.length} tasks`}
       />
 
       <div className="px-6 mt-4 flex flex-col gap-6">
@@ -156,7 +154,7 @@ export default function TaskPreviewPage() {
               No tasks generated
             </p>
             <p className="font-dm text-[14px] text-text-secondary">
-              {namesLabel} has no care schedule entries yet. Add them to the dog profile first.
+              {dog.name} has no care schedule entries yet. Add them to the dog profile first.
             </p>
           </div>
         )}
