@@ -2,12 +2,16 @@ import { supabase } from './supabase'
 import type { Stay } from '../types'
 import type { Database } from './database.types'
 
-type StayRow = Database['public']['Tables']['stays']['Row']
+type StayRow = Database['public']['Tables']['stays']['Row'] & {
+  stay_dogs: { dog_id: string }[] | null
+}
+
+const STAY_SELECT = '*, stay_dogs(dog_id)'
 
 function mapRow(row: StayRow): Stay {
   return {
     id: row.id,
-    dogId: row.dog_id,
+    dogIds: (row.stay_dogs ?? []).map((d) => d.dog_id),
     startDate: row.start_date,
     endDate: row.end_date,
     notes: row.notes ?? undefined,
@@ -21,14 +25,24 @@ async function currentUserId(): Promise<string> {
   return data.user.id
 }
 
+async function setStayDogs(stayId: string, dogIds: string[]): Promise<void> {
+  const { error: deleteError } = await supabase.from('stay_dogs').delete().eq('stay_id', stayId)
+  if (deleteError) throw deleteError
+  if (dogIds.length === 0) return
+  const { error: insertError } = await supabase
+    .from('stay_dogs')
+    .insert(dogIds.map((dogId) => ({ stay_id: stayId, dog_id: dogId })))
+  if (insertError) throw insertError
+}
+
 export async function listStays(): Promise<Stay[]> {
-  const { data, error } = await supabase.from('stays').select('*').order('start_date')
+  const { data, error } = await supabase.from('stays').select(STAY_SELECT).order('start_date')
   if (error) throw error
   return (data ?? []).map(mapRow)
 }
 
 export async function createStay(input: {
-  dogId: string
+  dogIds: string[]
   startDate: string
   endDate: string
   notes?: string
@@ -38,7 +52,6 @@ export async function createStay(input: {
     .from('stays')
     .insert({
       owner_id: ownerId,
-      dog_id: input.dogId,
       start_date: input.startDate,
       end_date: input.endDate,
       notes: input.notes || null,
@@ -46,18 +59,19 @@ export async function createStay(input: {
     .select('*')
     .single()
   if (error) throw error
-  return mapRow(data)
+  await setStayDogs(data.id, input.dogIds)
+  return { ...mapRow({ ...data, stay_dogs: null }), dogIds: input.dogIds }
 }
 
 export async function getStay(id: string): Promise<Stay | null> {
-  const { data, error } = await supabase.from('stays').select('*').eq('id', id).maybeSingle()
+  const { data, error } = await supabase.from('stays').select(STAY_SELECT).eq('id', id).maybeSingle()
   if (error) throw error
   return data ? mapRow(data) : null
 }
 
 export async function updateStay(
   id: string,
-  input: { startDate: string; endDate: string; notes?: string },
+  input: { dogIds: string[]; startDate: string; endDate: string; notes?: string },
 ): Promise<Stay> {
   const { data, error } = await supabase
     .from('stays')
@@ -70,7 +84,8 @@ export async function updateStay(
     .select('*')
     .single()
   if (error) throw error
-  return mapRow(data)
+  await setStayDogs(id, input.dogIds)
+  return { ...mapRow({ ...data, stay_dogs: null }), dogIds: input.dogIds }
 }
 
 export async function deleteStay(id: string): Promise<void> {

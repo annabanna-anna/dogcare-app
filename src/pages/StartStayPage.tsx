@@ -47,16 +47,18 @@ function DogAvatar({ dog, size }: { dog: Dog; size: number }) {
   )
 }
 
+const MAX_DOGS_PER_STAY = 3
+
 function DogPickerSheet({
   dogs,
-  selectedDogId,
-  onSelect,
+  selectedDogIds,
+  onToggle,
   onClose,
   onAddDog,
 }: {
   dogs: Dog[]
-  selectedDogId: string
-  onSelect: (id: string) => void
+  selectedDogIds: string[]
+  onToggle: (id: string) => void
   onClose: () => void
   onAddDog: () => void
 }) {
@@ -69,14 +71,21 @@ function DogPickerSheet({
       .filter((d) => !q || `${d.name} ${d.breed} ${d.ownerName}`.toLowerCase().includes(q))
   }, [query, dogs])
 
+  const atLimit = selectedDogIds.length >= MAX_DOGS_PER_STAY
+
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative w-full max-w-[430px] bg-cream rounded-t-[22px] pt-5 pb-8 max-h-[75svh] flex flex-col">
         <div className="px-6 flex items-start justify-between mb-3">
-          <p className="font-outfit font-bold text-[22px] text-text-primary leading-tight">
-            Choose a dog
-          </p>
+          <div>
+            <p className="font-outfit font-bold text-[22px] text-text-primary leading-tight">
+              Choose dogs
+            </p>
+            <p className="font-dm text-[13px] text-text-secondary mt-0.5">
+              Up to {MAX_DOGS_PER_STAY} dogs from the same owner can share one stay.
+            </p>
+          </div>
           <button
             onClick={onClose}
             className="size-8 rounded-full bg-[#f3f4f6] flex items-center justify-center text-text-secondary shrink-0"
@@ -100,15 +109,19 @@ function DogPickerSheet({
 
         <div className="px-6 overflow-y-auto flex flex-col gap-2">
           {filtered.map((dog) => {
-            const isSelected = dog.id === selectedDogId
+            const isSelected = selectedDogIds.includes(dog.id)
+            const disabled = !isSelected && atLimit
             return (
               <button
                 key={dog.id}
-                onClick={() => onSelect(dog.id)}
+                onClick={() => !disabled && onToggle(dog.id)}
+                disabled={disabled}
                 className={`flex items-center gap-3 p-3 rounded-[14px] border transition-colors text-left shrink-0 ${
                   isSelected
                     ? 'border-coral bg-[#fff5f3]'
-                    : 'border-border-light bg-white active:bg-gray-50'
+                    : disabled
+                      ? 'border-border-light bg-white opacity-50'
+                      : 'border-border-light bg-white active:bg-gray-50'
                 }`}
               >
                 <DogAvatar dog={dog} size={44} />
@@ -120,7 +133,13 @@ function DogPickerSheet({
                     {dog.breed} · {dog.ownerName}
                   </p>
                 </div>
-                {isSelected && <Check size={18} className="text-coral shrink-0" strokeWidth={2.5} />}
+                <div
+                  className={`size-6 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                    isSelected ? 'border-coral bg-coral' : 'border-border-light'
+                  }`}
+                >
+                  {isSelected && <Check size={14} className="text-white" strokeWidth={3} />}
+                </div>
               </button>
             )
           })}
@@ -131,7 +150,7 @@ function DogPickerSheet({
           )}
         </div>
 
-        <div className="px-6 pt-3 shrink-0">
+        <div className="px-6 pt-3 shrink-0 flex flex-col gap-2">
           <button
             onClick={onAddDog}
             className="w-full flex items-center gap-3 p-3 rounded-[14px] border border-dashed border-coral/40 text-left active:bg-[#fff5f3] transition-colors"
@@ -141,6 +160,9 @@ function DogPickerSheet({
             </div>
             <p className="font-dm font-semibold text-[15px] text-coral">Add New Dog</p>
           </button>
+          <Button fullWidth onClick={onClose} disabled={selectedDogIds.length === 0}>
+            Done
+          </Button>
         </div>
       </div>
     </div>
@@ -207,7 +229,7 @@ export default function StartStayPage() {
   const { stayId } = useParams<{ stayId: string }>()
   const isEditMode = Boolean(stayId)
 
-  const preselectedDogId = params.get('dog') ?? ''
+  const preselectedDogId = params.get('dog')
 
   const now = new Date()
   const defaultStart = new Date(now)
@@ -223,7 +245,9 @@ export default function StartStayPage() {
   const [loadingStay, setLoadingStay] = useState(isEditMode)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [selectedDogId, setSelectedDogId] = useState(preselectedDogId)
+  const [selectedDogIds, setSelectedDogIds] = useState<string[]>(
+    preselectedDogId ? [preselectedDogId] : [],
+  )
   const [pickerOpen, setPickerOpen] = useState(false)
   const [startDay, setStartDay] = useState(startParam.day)
   const [startTime, setStartTime] = useState(startParam.time)
@@ -257,7 +281,7 @@ export default function StartStayPage() {
     getStay(stayId)
       .then((stay) => {
         if (cancelled || !stay) return
-        setSelectedDogId(stay.dogId)
+        setSelectedDogIds(stay.dogIds)
         const start = parseDateParam(stay.startDate, now)
         const end = parseDateParam(stay.endDate, now)
         setStartDay(start.day)
@@ -274,23 +298,25 @@ export default function StartStayPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditMode, stayId])
 
-  const selectedDog = dogs.find((d) => d.id === selectedDogId)
+  const selectedDogs = dogs.filter((d) => selectedDogIds.includes(d.id))
+  const primaryDog = selectedDogs[0]
+  const namesLabel = selectedDogs.map((d) => d.name).join(' & ')
   const startDate = combineLocalDateTime(startDay, startTime)
   const endDate = combineLocalDateTime(endDay, endTime)
 
   function handleGenerate() {
     if (!isValid) return
     navigate('/stays/preview', {
-      state: { dogId: selectedDogId, startDate, endDate, notes },
+      state: { dogIds: selectedDogIds, startDate, endDate, notes },
     })
   }
 
   async function handleSaveEdit() {
-    if (!isValid || !stayId || !selectedDog || saving) return
+    if (!isValid || !stayId || selectedDogs.length === 0 || saving) return
     setSaving(true)
     setError(null)
     try {
-      const stay = await updateStay(stayId, { startDate, endDate, notes })
+      const stay = await updateStay(stayId, { dogIds: selectedDogIds, startDate, endDate, notes })
       const oldTasks = await listTasksByStay(stayId)
       if (isGoogleCalendarConnected()) {
         // Clean up whatever these were pushed as before regenerating, so
@@ -298,14 +324,14 @@ export default function StartStayPage() {
         await deletePushedTasksFromGoogle(oldTasks).catch(() => {})
       }
       await deleteTasksByStay(stayId)
-      const newTasks = generateTasksForStay(selectedDog, stay)
+      const newTasks = generateTasksForStay(selectedDogs, stay)
       // Push the rows createTasks returns, not newTasks — only they carry
       // real DB ids, which the push needs to save each Google event ref.
       const createdTasks = await createTasks(newTasks)
       if (isGoogleCalendarConnected()) {
         pushTasksToGoogleCalendar(createdTasks).catch(() => {})
       }
-      navigate(`/dogs/${selectedDog.id}`)
+      navigate(`/dogs/${primaryDog.id}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save changes. Please try again.')
       setSaving(false)
@@ -323,7 +349,7 @@ export default function StartStayPage() {
       }
       await deleteTasksByStay(stayId)
       await deleteStay(stayId)
-      navigate(selectedDog ? `/dogs/${selectedDog.id}` : '/')
+      navigate(primaryDog ? `/dogs/${primaryDog.id}` : '/')
     } catch (e) {
       setDeleteError(e instanceof Error ? e.message : 'Could not delete. Please try again.')
       setDeleting(false)
@@ -331,7 +357,7 @@ export default function StartStayPage() {
   }
 
   const isValid =
-    selectedDogId && startDay && endDay && new Date(endDate) > new Date(startDate)
+    selectedDogIds.length > 0 && startDay && endDay && new Date(endDate) > new Date(startDate)
 
   if (loadingStay) {
     return (
@@ -355,39 +381,63 @@ export default function StartStayPage() {
         {/* Dog selector */}
         <section>
           <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
-            Which dog?
+            Which dog(s)?
           </p>
-          <button
-            onClick={() => !loading && !isEditMode && setPickerOpen(true)}
-            disabled={loading || isEditMode}
-            className={`w-full flex items-center gap-3 p-3 rounded-[14px] border border-border-light bg-white transition-colors text-left ${
-              selectedDog ? '' : 'active:bg-gray-50'
-            } ${isEditMode ? 'opacity-70' : ''}`}
-          >
-            {selectedDog ? (
-              <>
-                <DogAvatar dog={selectedDog} size={44} />
-                <div className="flex-1 min-w-0">
-                  <p className="font-dm font-semibold text-[15px] text-text-primary leading-none">
-                    {selectedDog.name}
-                  </p>
-                  <p className="font-dm text-[13px] text-text-secondary mt-0.5 truncate">
-                    {selectedDog.breed} · {selectedDog.ownerName}
-                  </p>
+          {selectedDogs.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              {selectedDogs.map((dog) => (
+                <div
+                  key={dog.id}
+                  className="w-full flex items-center gap-3 p-3 rounded-[14px] border border-border-light bg-white"
+                >
+                  <DogAvatar dog={dog} size={44} />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-dm font-semibold text-[15px] text-text-primary leading-none">
+                      {dog.name}
+                    </p>
+                    <p className="font-dm text-[13px] text-text-secondary mt-0.5 truncate">
+                      {dog.breed} · {dog.ownerName}
+                    </p>
+                  </div>
+                  {!isEditMode && (
+                    <button
+                      onClick={() =>
+                        setSelectedDogIds((ids) => ids.filter((id) => id !== dog.id))
+                      }
+                      className="size-8 rounded-full bg-[#f3f4f6] flex items-center justify-center text-text-secondary shrink-0"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
                 </div>
-              </>
-            ) : (
-              <>
-                <div className="size-11 rounded-[10px] bg-[#f3f4f6] shrink-0 flex items-center justify-center">
-                  <DogIcon size={20} className="text-text-muted" />
-                </div>
-                <p className="flex-1 font-dm text-[15px] text-text-secondary">
-                  {loading ? 'Loading dogs…' : 'Choose a dog'}
-                </p>
-              </>
-            )}
-            {!isEditMode && <ChevronDown size={18} className="text-text-muted shrink-0" />}
-          </button>
+              ))}
+              {!isEditMode && selectedDogs.length < MAX_DOGS_PER_STAY && (
+                <button
+                  onClick={() => setPickerOpen(true)}
+                  className="w-full flex items-center gap-3 p-3 rounded-[14px] border border-dashed border-coral/40 text-left active:bg-[#fff5f3] transition-colors"
+                >
+                  <div className="size-11 rounded-[10px] bg-[#fff5f3] shrink-0 flex items-center justify-center">
+                    <Plus size={20} className="text-coral" />
+                  </div>
+                  <p className="font-dm font-semibold text-[15px] text-coral">Add another dog</p>
+                </button>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={() => !loading && !isEditMode && setPickerOpen(true)}
+              disabled={loading || isEditMode}
+              className="w-full flex items-center gap-3 p-3 rounded-[14px] border border-border-light bg-white transition-colors text-left active:bg-gray-50"
+            >
+              <div className="size-11 rounded-[10px] bg-[#f3f4f6] shrink-0 flex items-center justify-center">
+                <DogIcon size={20} className="text-text-muted" />
+              </div>
+              <p className="flex-1 font-dm text-[15px] text-text-secondary">
+                {loading ? 'Loading dogs…' : 'Choose dogs'}
+              </p>
+              <ChevronDown size={18} className="text-text-muted shrink-0" />
+            </button>
+          )}
         </section>
 
         {/* Date range */}
@@ -437,11 +487,11 @@ export default function StartStayPage() {
           {isEditMode ? (saving ? 'Saving…' : 'Save Changes') : 'Generate Care Tasks'}
         </Button>
 
-        {selectedDog && (
+        {selectedDogs.length > 0 && (
           <p className="font-dm text-[13px] text-text-secondary text-center">
             {isEditMode
-              ? `Care tasks will be regenerated from ${selectedDog.name}'s care schedule for the new dates.`
-              : `Tasks will be generated from ${selectedDog.name}'s care schedule.`}
+              ? `Care tasks will be regenerated from ${namesLabel}'s care schedule for the new dates.`
+              : `Tasks will be generated from ${namesLabel}'s care schedule.`}
           </p>
         )}
 
@@ -465,7 +515,7 @@ export default function StartStayPage() {
             </p>
             <p className="font-dm text-[14px] text-text-secondary leading-relaxed mb-5">
               This removes the stay and every care task generated for it
-              {selectedDog ? ` for ${selectedDog.name}` : ''}. This can't be undone.
+              {selectedDogs.length > 0 ? ` for ${namesLabel}` : ''}. This can't be undone.
             </p>
             {deleteError && (
               <div className="bg-[#fee2e2] rounded-[12px] px-4 py-3 mb-3">
@@ -492,11 +542,16 @@ export default function StartStayPage() {
       {pickerOpen && (
         <DogPickerSheet
           dogs={dogs}
-          selectedDogId={selectedDogId}
-          onSelect={(id) => {
-            setSelectedDogId(id)
-            setPickerOpen(false)
-          }}
+          selectedDogIds={selectedDogIds}
+          onToggle={(id) =>
+            setSelectedDogIds((ids) =>
+              ids.includes(id)
+                ? ids.filter((existing) => existing !== id)
+                : ids.length < MAX_DOGS_PER_STAY
+                  ? [...ids, id]
+                  : ids,
+            )
+          }
           onClose={() => setPickerOpen(false)}
           onAddDog={() => navigate('/dogs/new')}
         />

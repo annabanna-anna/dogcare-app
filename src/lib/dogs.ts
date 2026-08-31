@@ -67,6 +67,13 @@ export async function getDog(id: string): Promise<Dog | null> {
   return data ? mapRow(data) : null
 }
 
+export async function getDogsByIds(ids: string[]): Promise<Dog[]> {
+  if (ids.length === 0) return []
+  const { data, error } = await supabase.from('dogs').select('*').in('id', ids)
+  if (error) throw error
+  return (data ?? []).map(mapRow)
+}
+
 /** id is generated client-side (crypto.randomUUID()) so a photo can be uploaded to its
  *  storage path before the row exists. */
 export async function createDog(id: string, input: DogInput): Promise<Dog> {

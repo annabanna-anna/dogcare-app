@@ -21,7 +21,7 @@ import type { Dog } from '../types'
 export async function regenerateFutureTasksForDog(dog: Dog): Promise<void> {
   const now = new Date()
   const stays = (await listStays()).filter(
-    (s) => s.dogId === dog.id && new Date(s.endDate) >= now,
+    (s) => s.dogIds.includes(dog.id) && new Date(s.endDate) >= now,
   )
 
   for (const stay of stays) {

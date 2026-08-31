@@ -81,13 +81,13 @@ export default function DogListPage() {
 
   function getNextStay(dogId: string) {
     return stays
-      .filter((s) => s.dogId === dogId && new Date(s.endDate) >= now)
+      .filter((s) => s.dogIds.includes(dogId) && new Date(s.endDate) >= now)
       .sort((a, b) => a.startDate.localeCompare(b.startDate))[0]
   }
 
   function isActive(dogId: string) {
     return stays.some(
-      (s) => s.dogId === dogId && new Date(s.startDate) <= now && new Date(s.endDate) >= now,
+      (s) => s.dogIds.includes(dogId) && new Date(s.startDate) <= now && new Date(s.endDate) >= now,
     )
   }
 

@@ -103,11 +103,12 @@ export default function TodayPage() {
         const now = new Date()
         const active = stayRows
           .filter((s) => new Date(s.startDate) <= now && new Date(s.endDate) >= now)
-          .map((s) => {
-            const dog = dogRows.find((d) => d.id === s.dogId)
-            return dog ? { dog, stay: s } : null
-          })
-          .filter(Boolean) as { dog: Dog; stay: Stay }[]
+          .flatMap((s) =>
+            s.dogIds
+              .map((dogId) => dogRows.find((d) => d.id === dogId))
+              .filter((dog): dog is Dog => Boolean(dog))
+              .map((dog) => ({ dog, stay: s })),
+          )
         setActiveDogs(active)
       })
       .catch((e) => !cancelled && setError(e instanceof Error ? e.message : 'Could not load.'))

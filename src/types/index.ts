@@ -40,7 +40,7 @@ export interface Dog {
 
 export interface Stay {
   id: string
-  dogId: string
+  dogIds: string[]    // 1–3 dogs sharing this stay (e.g. two dogs, one owner)
   startDate: string   // ISO date string
   endDate: string     // ISO date string
   notes?: string
