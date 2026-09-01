@@ -12,4 +12,4 @@ export const CONTACT_EMAIL = `privacy@${SITE_DOMAIN}`
 
 /** Shown on the privacy policy. Update whenever the policy's substance
  *  changes — not on typo fixes. */
-export const PRIVACY_EFFECTIVE_DATE = 'August 9, 2026'
+export const PRIVACY_EFFECTIVE_DATE = 'September 1, 2026'

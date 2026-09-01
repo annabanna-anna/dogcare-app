@@ -64,6 +64,7 @@ const CONTENTS = [
   { id: 'what-we-collect', label: 'What we collect' },
   { id: 'how-we-use-it', label: 'How we use it' },
   { id: 'google-data', label: 'Google account data' },
+  { id: 'data-protection', label: 'How we protect your data' },
   { id: 'who-else', label: 'Who else handles it' },
   { id: 'retention', label: 'Keeping and deleting' },
   { id: 'your-choices', label: 'Your choices' },
@@ -224,6 +225,45 @@ export default function PrivacyPage() {
               Google API Services User Data Policy
             </a>
             , including the Limited Use requirements.
+          </P>
+
+          <H2 id="data-protection">How we protect your data</H2>
+          <P>
+            Some of what HeyPup stores is sensitive: your clients' contact details, dogs'
+            medication and behaviour notes, and the Google refresh token that lets us sync your
+            calendar. We protect it with:
+          </P>
+          <List>
+            <Item>
+              <strong className="font-bold text-text-primary">Encryption in transit.</strong>{' '}
+              Every connection to the app, our database, and Google's APIs is made over HTTPS/TLS.
+            </Item>
+            <Item>
+              <strong className="font-bold text-text-primary">Encryption at rest.</strong> Our
+              database and file storage, hosted on Supabase, encrypt data at rest on their
+              underlying infrastructure.
+            </Item>
+            <Item>
+              <strong className="font-bold text-text-primary">Per-user access control.</strong> Row
+              Level Security is enabled on every table holding dog, owner, stay, and task data, so
+              the database itself enforces that you can only ever read or write rows tied to your
+              own account — not just the app's code.
+            </Item>
+            <Item>
+              <strong className="font-bold text-text-primary">Locked-down credential storage.</strong>{' '}
+              Your Google refresh token is kept in a table with no policy granting it to any
+              client at all; only our server process can read it, and only to obtain the access
+              tokens described above.
+            </Item>
+            <Item>
+              <strong className="font-bold text-text-primary">Least-privilege scopes.</strong> We
+              request only the Google Calendar and Tasks scopes described above — never your
+              contacts, Drive, or Gmail.
+            </Item>
+          </List>
+          <P>
+            If we ever learn of a breach affecting your data, we will notify you by email without
+            undue delay.
           </P>
 
           <H2 id="who-else">Who else handles it</H2>
