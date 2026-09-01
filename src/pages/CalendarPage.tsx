@@ -18,6 +18,7 @@ import {
 } from '../lib/googleCalendar'
 import { formatShortDate, formatTime } from '../utils/dateUtils'
 import type { Dog, Stay } from '../types'
+import { dogDisplayName } from '../utils/dogDisplay'
 
 function formatEventRange(event: GoogleCalendarEvent): string {
   if (event.allDay) {
@@ -250,7 +251,7 @@ export default function CalendarPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
                   <p className="font-outfit font-semibold text-[17px] text-text-primary leading-none">
-                    {dog.name}
+                    {dogDisplayName(dog)}
                   </p>
                   {isActive && (
                     <span className="text-[11px] font-dm font-bold bg-[#dcfce7] text-[#15803d] rounded-full px-2 py-0.5">

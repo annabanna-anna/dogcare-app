@@ -7,7 +7,14 @@ import { getDog, createDog, updateDog, uploadDogPhoto } from '../lib/dogs'
 import { regenerateFutureTasksForDog } from '../lib/stayTaskSync'
 import { TimePickerButton } from '../components/TimePicker'
 import { DOG_BREEDS } from '../data/dogBreeds'
-import type { CareScheduleEntry, DogSize, TaskType, YesNoUnsure } from '../types'
+import type { CareScheduleEntry, DogGroupMember, DogSize, TaskType, YesNoUnsure } from '../types'
+import { dogDisplayName } from '../utils/dogDisplay'
+
+const MAX_DOGS_IN_GROUP = 3
+
+function emptyGroupMember(): DogGroupMember {
+  return { name: '', breed: '', size: 'medium' }
+}
 
 const scheduleTypeOptions: { value: TaskType; label: string }[] = [
   { value: 'walk', label: 'Walk' },
@@ -29,6 +36,7 @@ interface FormState {
   name: string
   breed: string
   size: DogSize
+  additionalDogs: DogGroupMember[]
   ownerName: string
   ownerContact: string
   behaviorNotes: string
@@ -47,6 +55,7 @@ const defaultForm: FormState = {
   name: '',
   breed: '',
   size: 'medium',
+  additionalDogs: [],
   ownerName: '',
   ownerContact: '',
   behaviorNotes: '',
@@ -505,6 +514,7 @@ export default function AddEditDogPage() {
           name: d.name,
           breed: d.breed,
           size: d.size,
+          additionalDogs: d.additionalDogs.map((m) => ({ ...m })),
           ownerName: d.ownerName,
           ownerContact: d.ownerContact,
           behaviorNotes: d.behaviorNotes,
@@ -521,7 +531,7 @@ export default function AddEditDogPage() {
         setSchedule(d.careSchedule.map((e) => ({ ...e })))
         setPhotoSrc(d.photoUrl ?? null)
         setExistingId(d.id)
-        setExistingName(d.name)
+        setExistingName(dogDisplayName(d))
       })
       .catch(() => !cancelled && setNotFound(true))
       .finally(() => !cancelled && setLoadingExisting(false))
@@ -561,16 +571,40 @@ export default function AddEditDogPage() {
 
   const [scheduleWarning, setScheduleWarning] = useState<'empty' | 'no-walk' | null>(null)
   const [nameTouched, setNameTouched] = useState(false)
+  const [additionalNameTouched, setAdditionalNameTouched] = useState(false)
   const [otherTitleTouched, setOtherTitleTouched] = useState(false)
   const scheduleSectionRef = useRef<HTMLElement>(null)
   const hasWalkEntry = schedule.some((e) => e.taskType === 'walk')
   const hasMissingOtherTitle = schedule.some(
     (e) => e.taskType === 'other' && !e.customTitle?.trim(),
   )
+  const hasMissingAdditionalName = form.additionalDogs.some((m) => !m.name.trim())
+
+  function updateAdditionalDog(i: number, patch: Partial<DogGroupMember>) {
+    setForm((prev) => ({
+      ...prev,
+      additionalDogs: prev.additionalDogs.map((m, j) => (j === i ? { ...m, ...patch } : m)),
+    }))
+  }
+
+  function addAdditionalDog() {
+    setForm((prev) => ({ ...prev, additionalDogs: [...prev.additionalDogs, emptyGroupMember()] }))
+  }
+
+  function removeAdditionalDog(i: number) {
+    setForm((prev) => ({
+      ...prev,
+      additionalDogs: prev.additionalDogs.filter((_, j) => j !== i),
+    }))
+  }
 
   function handleSubmit() {
     if (!form.name.trim()) {
       setNameTouched(true)
+      return
+    }
+    if (hasMissingAdditionalName) {
+      setAdditionalNameTouched(true)
       return
     }
     if (schedule.length === 0) {
@@ -615,7 +649,7 @@ export default function AddEditDogPage() {
       }
       navigate(
         isEdit ? `/dogs/${dogId}` : '/dogs',
-        isEdit ? { replace: true } : { state: { justAddedName: form.name.trim() } },
+        isEdit ? { replace: true } : { state: { justAddedName: dogDisplayName(form) } },
       )
     } catch (e) {
       const message =
@@ -741,6 +775,88 @@ export default function AddEditDogPage() {
                 ))}
               </div>
             </div>
+
+            {form.additionalDogs.map((member, i) => (
+              <div
+                key={i}
+                className="border-t border-border-faint pt-3 mt-1 flex flex-col gap-3"
+              >
+                <div className="flex items-center justify-between">
+                  <p className="font-dm font-bold text-[12px] text-text-secondary uppercase tracking-widest">
+                    Dog {i + 2}
+                  </p>
+                  <button
+                    onClick={() => removeAdditionalDog(i)}
+                    aria-label="Remove this dog"
+                    className="size-8 rounded-full bg-[#f3f4f6] flex items-center justify-center text-text-secondary shrink-0 active:bg-[#e5e7eb] transition-colors"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+                <div>
+                  <FieldLabel required>Dog's Name</FieldLabel>
+                  <Input
+                    value={member.name}
+                    onChange={(v) => updateAdditionalDog(i, { name: v })}
+                    placeholder="e.g. Ollie"
+                  />
+                  {additionalNameTouched && !member.name.trim() && (
+                    <p className="font-dm text-[12px] text-[#b91c1c] mt-1">
+                      This dog's name is required.
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <FieldLabel>Breed</FieldLabel>
+                  <BreedField
+                    value={member.breed}
+                    onChange={(v) => updateAdditionalDog(i, { breed: v })}
+                  />
+                </div>
+                <div>
+                  <FieldLabel>Size</FieldLabel>
+                  <div className="flex gap-2">
+                    {sizeOptions.map(({ value, label, weight }) => (
+                      <button
+                        key={value}
+                        onClick={() => updateAdditionalDog(i, { size: value })}
+                        className={`flex-1 py-2.5 rounded-[12px] border transition-colors ${
+                          member.size === value
+                            ? 'bg-coral border-coral text-white'
+                            : 'bg-white border-border-light text-text-secondary'
+                        }`}
+                      >
+                        <span className="font-dm font-bold text-[14px] block leading-tight">
+                          {label}
+                        </span>
+                        <span
+                          className={`font-dm text-[11px] block leading-tight ${
+                            member.size === value ? 'text-white/80' : 'text-text-muted'
+                          }`}
+                        >
+                          {weight}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {form.additionalDogs.length < MAX_DOGS_IN_GROUP - 1 && (
+              <div className="mt-4">
+                <p className="font-dm text-[13px] text-text-secondary mb-2">
+                  Sitting more than one dog for this owner with the same care and schedule?
+                </p>
+                <button
+                  onClick={addAdditionalDog}
+                  className="w-full py-3 rounded-[12px] border-2 border-dashed border-border-light flex items-center justify-center gap-1.5 font-dm font-bold text-[14px] text-text-secondary active:bg-gray-50 transition-colors"
+                >
+                  <Plus size={16} />
+                  Add another dog from the same owner
+                </button>
+              </div>
+            )}
           </div>
         </section>
 

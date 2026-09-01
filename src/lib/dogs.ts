@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { CareScheduleEntry, Dog, DogSize, YesNoUnsure } from '../types'
+import type { CareScheduleEntry, Dog, DogGroupMember, DogSize, YesNoUnsure } from '../types'
 import type { Database } from './database.types'
 
 type DogRow = Database['public']['Tables']['dogs']['Row']
@@ -10,6 +10,7 @@ function mapRow(row: DogRow): Dog {
     name: row.name,
     breed: row.breed,
     size: row.size,
+    additionalDogs: row.additional_dogs ?? [],
     ownerName: row.owner_name,
     ownerContact: row.owner_contact,
     photoUrl: row.photo_url ?? undefined,
@@ -33,6 +34,7 @@ export interface DogInput {
   name: string
   breed: string
   size: DogSize
+  additionalDogs: DogGroupMember[]
   ownerName: string
   ownerContact: string
   photoUrl?: string | null
@@ -79,6 +81,7 @@ export async function createDog(id: string, input: DogInput): Promise<Dog> {
       name: input.name,
       breed: input.breed,
       size: input.size,
+      additional_dogs: input.additionalDogs,
       owner_name: input.ownerName,
       owner_contact: input.ownerContact,
       photo_url: input.photoUrl ?? null,
@@ -107,6 +110,7 @@ export async function updateDog(id: string, input: DogInput): Promise<Dog> {
       name: input.name,
       breed: input.breed,
       size: input.size,
+      additional_dogs: input.additionalDogs,
       owner_name: input.ownerName,
       owner_contact: input.ownerContact,
       photo_url: input.photoUrl ?? null,

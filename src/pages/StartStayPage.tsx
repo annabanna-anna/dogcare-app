@@ -16,6 +16,7 @@ import {
   deletePushedTasksFromGoogle,
 } from '../lib/googleCalendar'
 import type { Dog } from '../types'
+import { dogDisplayBreed, dogDisplayName, dogSearchText } from '../utils/dogDisplay'
 
 function pad(n: number) {
   return String(n).padStart(2, '0')
@@ -66,7 +67,7 @@ function DogPickerSheet({
     const q = query.trim().toLowerCase()
     return [...dogs]
       .sort((a, b) => a.name.localeCompare(b.name))
-      .filter((d) => !q || `${d.name} ${d.breed} ${d.ownerName}`.toLowerCase().includes(q))
+      .filter((d) => !q || dogSearchText(d).includes(q))
   }, [query, dogs])
 
   return (
@@ -114,10 +115,10 @@ function DogPickerSheet({
                 <DogAvatar dog={dog} size={44} />
                 <div className="flex-1 min-w-0">
                   <p className="font-dm font-semibold text-[15px] text-text-primary leading-none">
-                    {dog.name}
+                    {dogDisplayName(dog)}
                   </p>
                   <p className="font-dm text-[13px] text-text-secondary mt-0.5 truncate">
-                    {dog.breed} · {dog.ownerName}
+                    {dogDisplayBreed(dog)} · {dog.ownerName}
                   </p>
                 </div>
                 {isSelected && <Check size={18} className="text-coral shrink-0" strokeWidth={2.5} />}
@@ -369,10 +370,10 @@ export default function StartStayPage() {
                 <DogAvatar dog={selectedDog} size={44} />
                 <div className="flex-1 min-w-0">
                   <p className="font-dm font-semibold text-[15px] text-text-primary leading-none">
-                    {selectedDog.name}
+                    {dogDisplayName(selectedDog)}
                   </p>
                   <p className="font-dm text-[13px] text-text-secondary mt-0.5 truncate">
-                    {selectedDog.breed} · {selectedDog.ownerName}
+                    {dogDisplayBreed(selectedDog)} · {selectedDog.ownerName}
                   </p>
                 </div>
               </>
@@ -440,8 +441,8 @@ export default function StartStayPage() {
         {selectedDog && (
           <p className="font-dm text-[13px] text-text-secondary text-center">
             {isEditMode
-              ? `Care tasks will be regenerated from ${selectedDog.name}'s care schedule for the new dates.`
-              : `Tasks will be generated from ${selectedDog.name}'s care schedule.`}
+              ? `Care tasks will be regenerated from ${dogDisplayName(selectedDog)}'s care schedule for the new dates.`
+              : `Tasks will be generated from ${dogDisplayName(selectedDog)}'s care schedule.`}
           </p>
         )}
 
@@ -465,7 +466,7 @@ export default function StartStayPage() {
             </p>
             <p className="font-dm text-[14px] text-text-secondary leading-relaxed mb-5">
               This removes the stay and every care task generated for it
-              {selectedDog ? ` for ${selectedDog.name}` : ''}. This can't be undone.
+              {selectedDog ? ` for ${dogDisplayName(selectedDog)}` : ''}. This can't be undone.
             </p>
             {deleteError && (
               <div className="bg-[#fee2e2] rounded-[12px] px-4 py-3 mb-3">

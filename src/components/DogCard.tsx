@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import DogIcon from './icons/DogIcon'
 import type { Dog, Stay } from '../types'
 import { formatShortDate } from '../utils/dateUtils'
+import { dogDisplayBreed, dogDisplayName } from '../utils/dogDisplay'
 
 interface Props {
   dog: Dog
@@ -38,10 +39,10 @@ export default function DogCard({ dog, nextStay }: Props) {
       {/* Info */}
       <div className="flex-1 min-w-0">
         <p className="font-outfit font-bold text-[20px] text-text-primary leading-tight">
-          {dog.name}
+          {dogDisplayName(dog)}
         </p>
         <p className="font-dm text-[13px] text-text-secondary mt-0.5 truncate">
-          {dog.breed} · {dog.ownerName}
+          {dogDisplayBreed(dog)} · {dog.ownerName}
         </p>
         {nextStay ? (
           <span className="inline-flex items-center mt-2 rounded-full bg-coral px-2.5 py-1 text-[11px] font-dm font-bold uppercase tracking-wide text-white">

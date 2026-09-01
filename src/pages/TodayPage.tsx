@@ -14,6 +14,7 @@ import {
   type GoogleCalendarEvent,
 } from '../lib/googleCalendar'
 import type { Dog, Stay, Task, TaskStatus } from '../types'
+import { dogDisplayName } from '../utils/dogDisplay'
 import {
   addDays,
   formatDayHeading,
@@ -567,7 +568,7 @@ export default function TodayPage() {
                       </div>
                       <div>
                         <p className="font-dm font-semibold text-[14px] text-text-primary leading-none">
-                          {dog.name}
+                          {dogDisplayName(dog)}
                         </p>
                         <p className="font-dm text-[12px] text-text-secondary mt-0.5">
                           Until {endDate}

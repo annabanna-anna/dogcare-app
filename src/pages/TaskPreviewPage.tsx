@@ -11,6 +11,7 @@ import { generateTasksForStay } from '../utils/taskGenerator'
 import { isGoogleCalendarConnected, pushTasksToGoogleCalendar } from '../lib/googleCalendar'
 import { formatDayHeading, formatTime, toLocalDateKey } from '../utils/dateUtils'
 import type { Dog, Task, TaskType } from '../types'
+import { dogDisplayName } from '../utils/dogDisplay'
 
 const typeIcon: Record<TaskType, React.ComponentType<{ size?: string | number; className?: string }>> = {
   walk: PawPrint,
@@ -138,7 +139,7 @@ export default function TaskPreviewPage() {
       <PageHeader
         back
         title="Preview Tasks"
-        subtitle={`${dog.name} · ${tasks.length} tasks`}
+        subtitle={`${dogDisplayName(dog)} · ${tasks.length} tasks`}
       />
 
       <div className="px-6 mt-4 flex flex-col gap-6">
@@ -154,7 +155,7 @@ export default function TaskPreviewPage() {
               No tasks generated
             </p>
             <p className="font-dm text-[14px] text-text-secondary">
-              {dog.name} has no care schedule entries yet. Add them to the dog profile first.
+              {dogDisplayName(dog)} has no care schedule entries yet. Add them to the dog profile first.
             </p>
           </div>
         )}

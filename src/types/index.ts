@@ -11,11 +11,20 @@ export interface CareScheduleEntry {
   customTitle?: string   // required when taskType is 'other' — short task title, e.g. "Nail trim"
 }
 
+/** A second or third dog sharing this profile's owner, care instructions,
+ *  and schedule — e.g. two dogs from the same owner with identical care. */
+export interface DogGroupMember {
+  name: string
+  breed: string
+  size: DogSize
+}
+
 export interface Dog {
   id: string
   name: string
   breed: string
   size: DogSize
+  additionalDogs: DogGroupMember[]   // 0–2 more dogs sharing this profile
   ownerName: string
   ownerContact: string
   photoUrl?: string

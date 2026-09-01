@@ -9,6 +9,7 @@ import { listDogs } from '../lib/dogs'
 import { listStays } from '../lib/stays'
 import { seedSampleDogs } from '../lib/seed'
 import type { Dog, Stay } from '../types'
+import { dogSearchText } from '../utils/dogDisplay'
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
 
@@ -98,7 +99,7 @@ export default function DogListPage() {
       .filter(
         (d) =>
           !q ||
-          `${d.name} ${d.breed} ${d.ownerName}`.toLowerCase().includes(q),
+          dogSearchText(d).includes(q),
       )
     const active = filtered.filter((d) => isActive(d.id))
     const rest = filtered.filter((d) => !isActive(d.id))

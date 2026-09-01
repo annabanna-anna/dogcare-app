@@ -24,6 +24,7 @@ import { getDog, deleteDog } from '../lib/dogs'
 import { listStays } from '../lib/stays'
 import { formatTime, formatShortDate } from '../utils/dateUtils'
 import type { Dog, Stay, TaskType, YesNoUnsure } from '../types'
+import { dogDisplayBreed, dogDisplayName } from '../utils/dogDisplay'
 
 const typeLabel: Record<TaskType, string> = {
   walk: 'Walk',
@@ -146,8 +147,8 @@ export default function DogProfilePage() {
     <div className="min-h-svh bg-cream pb-28">
       <PageHeader
         back
-        title={dog.name}
-        subtitle={`${dog.breed} · ${dog.size}`}
+        title={dogDisplayName(dog)}
+        subtitle={dog.additionalDogs.length > 0 ? dogDisplayBreed(dog) : `${dog.breed} · ${dog.size}`}
         right={
           <button
             onClick={() => navigate(`/dogs/${dog.id}/edit`)}
@@ -170,9 +171,9 @@ export default function DogProfilePage() {
           </div>
           <div>
             <p className="font-outfit font-bold text-[22px] text-text-primary leading-none mb-1">
-              {dog.name}
+              {dogDisplayName(dog)}
             </p>
-            <p className="font-dm text-[14px] text-text-secondary">{dog.breed}</p>
+            <p className="font-dm text-[14px] text-text-secondary">{dogDisplayBreed(dog)}</p>
             <p className="font-dm font-semibold text-[14px] text-text-primary mt-2">
               {dog.ownerName}
             </p>
@@ -350,10 +351,10 @@ export default function DogProfilePage() {
           />
           <div className="relative w-full max-w-[380px] bg-cream rounded-[22px] p-6">
             <p className="font-outfit font-bold text-[20px] text-text-primary leading-tight mb-2">
-              Delete {dog.name}?
+              Delete {dogDisplayName(dog)}?
             </p>
             <p className="font-dm text-[14px] text-text-secondary leading-relaxed mb-5">
-              This removes {dog.name}'s profile, care instructions, and every stay and task
+              This removes {dogDisplayName(dog)}'s profile, care instructions, and every stay and task
               linked to them. This can't be undone.
             </p>
             {deleteError && (

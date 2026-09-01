@@ -101,6 +101,9 @@ alter table dogs add column if not exists walk_time_flexible boolean not null de
 alter table dogs add column if not exists has_allergies yes_no_unsure not null default 'unsure';
 alter table dogs add column if not exists allergy_notes text not null default '';
 alter table dogs add column if not exists goes_to_dog_parks yes_no_unsure not null default 'unsure';
+-- Up to 2 more dogs sharing this profile's owner/care instructions/schedule
+-- (e.g. two dogs from the same owner with identical care) — {name, breed, size} each.
+alter table dogs add column if not exists additional_dogs jsonb not null default '[]'::jsonb;
 
 -- One row per browser/device that turned on push reminders in Settings —
 -- the endpoint/p256dh/auth triple is the Web Push subscription the browser
