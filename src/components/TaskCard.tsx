@@ -25,10 +25,10 @@ const SWIPE_THRESHOLD = 84
 const SWIPE_MAX = 140
 
 const typeConfig: Record<TaskType, { icon: React.ComponentType<{ size?: string | number; className?: string }>; bg: string; iconColor: string }> = {
-  walk:       { icon: PawPrint,       bg: 'bg-green-vivid', iconColor: 'text-white' },
+  walk:       { icon: PawPrint,       bg: 'bg-blue-task',   iconColor: 'text-white' },
   meal:       { icon: DogBowlIcon,   bg: 'bg-coral',       iconColor: 'text-white' },
-  medication: { icon: Pill,           bg: 'bg-blue-task',   iconColor: 'text-white' },
-  potty:      { icon: Toilet,         bg: 'bg-purple-task', iconColor: 'text-white' },
+  medication: { icon: Pill,           bg: 'bg-purple-task', iconColor: 'text-white' },
+  potty:      { icon: Toilet,         bg: 'bg-green-vivid', iconColor: 'text-white' },
   other:      { icon: Bone,           bg: 'bg-[#6b7280]',   iconColor: 'text-white' },
 }
 

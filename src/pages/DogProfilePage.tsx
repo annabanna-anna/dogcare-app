@@ -35,10 +35,10 @@ const typeLabel: Record<TaskType, string> = {
 }
 
 const typeBg: Record<TaskType, string> = {
-  walk: '#18ba1d',
+  walk: '#2344dd',
   meal: '#ff4514',
-  medication: '#2344dd',
-  potty: '#9333ea',
+  medication: '#9333ea',
+  potty: '#18ba1d',
   other: '#6b7280',
 }
 
