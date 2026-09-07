@@ -33,6 +33,17 @@ function toQuarterTimeValue(date: Date): string {
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
+/** Rounds up to the next whole hour (or keeps it, if already on the hour). */
+function roundUpToHour(date: Date): Date {
+  const d = new Date(date)
+  if (d.getMinutes() > 0 || d.getSeconds() > 0 || d.getMilliseconds() > 0) {
+    d.setHours(d.getHours() + 1, 0, 0, 0)
+  } else {
+    d.setSeconds(0, 0)
+  }
+  return d
+}
+
 function DogAvatar({ dog, size }: { dog: Dog; size: number }) {
   return (
     <div
@@ -211,10 +222,19 @@ export default function StartStayPage() {
   const preselectedDogId = params.get('dog') ?? ''
 
   const now = new Date()
-  const defaultStart = new Date(now)
-  defaultStart.setHours(9, 0, 0, 0)
-  const defaultEnd = new Date(now)
-  defaultEnd.setHours(17, 0, 0, 0)
+  const defaultStart = roundUpToHour(now)
+  const fivePmToday = new Date(now)
+  fivePmToday.setHours(17, 0, 0, 0)
+  const defaultEnd =
+    defaultStart > fivePmToday
+      ? new Date(
+          defaultStart.getFullYear(),
+          defaultStart.getMonth(),
+          defaultStart.getDate() + 1,
+          defaultStart.getHours(),
+          defaultStart.getMinutes(),
+        )
+      : fivePmToday
 
   const startParam = parseDateParam(params.get('start'), defaultStart)
   const endParam = parseDateParam(params.get('end'), defaultEnd)

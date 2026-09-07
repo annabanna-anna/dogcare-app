@@ -49,6 +49,7 @@ export const DOG_BREEDS: string[] = [
   'Collie',
   'Coonhound',
   'Corgi',
+  'Coton de Tulear',
   'Dachshund',
   'Dalmatian',
   'Doberman Pinscher',
