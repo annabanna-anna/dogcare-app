@@ -267,7 +267,7 @@ export default function AuthPage() {
             domain hits this screen first — give them a way to find out what
             the app is without making an account. */}
         <Link
-          to="/about"
+          to="/"
           className="font-dm text-[13px] text-text-muted hover:text-text-secondary underline underline-offset-2 transition-colors"
         >
           What is HeyPup?

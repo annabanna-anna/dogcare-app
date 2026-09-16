@@ -343,7 +343,7 @@ export default function PrivacyPage() {
 
         <div className="mt-16 pt-8 border-t border-border-faint">
           <Link
-            to="/about"
+            to="/"
             className="font-dm font-bold text-[15px] text-coral hover:text-coral-deep transition-colors rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-coral"
           >
             ← Back to HeyPup

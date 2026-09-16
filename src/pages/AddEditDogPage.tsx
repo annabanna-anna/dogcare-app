@@ -648,7 +648,7 @@ export default function AddEditDogPage() {
         await createDog(dogId, input)
       }
       navigate(
-        isEdit ? `/dogs/${dogId}` : '/dogs',
+        isEdit ? `/app/dogs/${dogId}` : '/app/dogs',
         isEdit ? { replace: true } : { state: { justAddedName: dogDisplayName(form) } },
       )
     } catch (e) {
@@ -677,7 +677,7 @@ export default function AddEditDogPage() {
       <div className="min-h-svh bg-cream flex items-center justify-center px-6">
         <div className="text-center">
           <p className="font-outfit font-bold text-[17px] text-text-primary mb-2">Dog not found</p>
-          <Button onClick={() => navigate('/dogs')} variant="secondary">
+          <Button onClick={() => navigate('/app/dogs')} variant="secondary">
             Back to Dogs
           </Button>
         </div>

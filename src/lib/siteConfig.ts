@@ -4,7 +4,7 @@
 // review reads the privacy policy against what the app actually does, so
 // stale contact details here are a review risk, not a cosmetic one.
 
-export const SITE_DOMAIN = 'heypup.annaoshiro.com'
+export const SITE_DOMAIN = 'heypup.app'
 
 /** Where users reach a human about their data. Must be a working inbox
  *  before the verification request is submitted. */

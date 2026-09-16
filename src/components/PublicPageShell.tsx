@@ -7,7 +7,7 @@ interface Props {
 }
 
 /**
- * Chrome for the logged-out public pages (/about, /privacy).
+ * Chrome for the logged-out public pages (/, /privacy).
  *
  * `data-public-page` is what releases these pages from the 430px phone
  * frame `#root` imposes on the app — see the `:has()` rule in index.css.
@@ -19,7 +19,7 @@ export default function PublicPageShell({ children }: Props) {
       <header className="sticky top-0 z-20 bg-cream/90 backdrop-blur-sm border-b border-border-faint">
         <div className="mx-auto max-w-[1100px] px-6 h-16 flex items-center justify-between gap-4">
           <Link
-            to="/about"
+            to="/"
             className="font-outfit font-bold text-[22px] tracking-tight text-cobalt rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-coral"
           >
             HeyPup
@@ -32,7 +32,7 @@ export default function PublicPageShell({ children }: Props) {
               Privacy
             </Link>
             <Link
-              to="/"
+              to="/app"
               className="font-dm font-bold text-[14px] px-4 py-2 rounded-full bg-cobalt text-white hover:bg-[#1c37b8] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coral"
             >
               Open app

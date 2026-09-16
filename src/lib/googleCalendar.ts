@@ -136,7 +136,7 @@ async function callOAuthFunction<T>(body: Record<string, unknown>): Promise<T> {
 
 /** Starts the OAuth round-trip requesting Calendar read/write access
  *  (full-page redirect). */
-export async function connectGoogleCalendar(redirectPath = '/settings'): Promise<void> {
+export async function connectGoogleCalendar(redirectPath = '/app/settings'): Promise<void> {
   localStorage.setItem(REQUEST_MARKER, '1')
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',

@@ -1016,7 +1016,7 @@ export default function AboutPage() {
           </p>
           <div className="rise-in flex flex-wrap gap-3 mt-8" style={{ animationDelay: '180ms' }}>
             <Link
-              to="/"
+              to="/app"
               className="inline-flex items-center gap-2 rounded-full bg-coral px-6 py-3.5 font-dm font-bold text-[15px] text-white hover:bg-coral-deep transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
             >
               Start tracking
@@ -1287,7 +1287,7 @@ export default function AboutPage() {
             Free to use while HeyPup is finding its feet. Bring your own dogs.
           </p>
           <Link
-            to="/"
+            to="/app"
             className="inline-flex items-center gap-2 rounded-full bg-coral px-7 py-4 font-dm font-bold text-[16px] text-white mt-8 hover:bg-coral-deep transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
             Open HeyPup

@@ -122,7 +122,7 @@ export default function CalendarPage() {
   async function handleConnect() {
     setConnecting(true)
     try {
-      await connectGoogleCalendar('/calendar')
+      await connectGoogleCalendar('/app/calendar')
     } catch {
       setConnecting(false)
     }
@@ -287,7 +287,7 @@ export default function CalendarPage() {
                 <div className="flex-1">
                   <p className="font-dm text-[13px] text-[#b91c1c]">{googleError}</p>
                   <button
-                    onClick={() => navigate('/settings')}
+                    onClick={() => navigate('/app/settings')}
                     className="font-dm font-bold text-[12px] text-[#b91c1c] underline mt-1"
                   >
                     Reconnect in Settings

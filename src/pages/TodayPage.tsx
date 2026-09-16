@@ -452,7 +452,7 @@ export default function TodayPage() {
                               type="button"
                               onClick={() =>
                                 navigate(
-                                  `/stays/new?dog=${c.id}&start=${encodeURIComponent(event.start)}&end=${encodeURIComponent(event.end)}`,
+                                  `/app/stays/new?dog=${c.id}&start=${encodeURIComponent(event.start)}&end=${encodeURIComponent(event.end)}`,
                                 )
                               }
                               className="flex items-center gap-3 bg-white rounded-[12px] px-3 py-2.5 text-left active:scale-[0.98] transition-transform"
@@ -485,7 +485,7 @@ export default function TodayPage() {
                           size="sm"
                           onClick={() =>
                             navigate(
-                              `/stays/new?dog=${dog.id}&start=${encodeURIComponent(event.start)}&end=${encodeURIComponent(event.end)}`,
+                              `/app/stays/new?dog=${dog.id}&start=${encodeURIComponent(event.start)}&end=${encodeURIComponent(event.end)}`,
                             )
                           }
                         >
@@ -526,7 +526,7 @@ export default function TodayPage() {
                       size="sm"
                       onClick={() =>
                         navigate(
-                          `/dogs/new?name=${encodeURIComponent(dogName)}&owner=${encodeURIComponent(ownerName)}`,
+                          `/app/dogs/new?name=${encodeURIComponent(dogName)}&owner=${encodeURIComponent(ownerName)}`,
                         )
                       }
                     >
@@ -556,7 +556,7 @@ export default function TodayPage() {
                   return (
                     <Link
                       key={dog.id}
-                      to={`/dogs/${dog.id}`}
+                      to={`/app/dogs/${dog.id}`}
                       className="flex items-center gap-3 rounded-full pl-1.5 pr-4 py-1.5 bg-cream border border-border-light active:scale-[0.97] transition-transform"
                     >
                       <div className="size-9 rounded-full overflow-hidden bg-[#f3f4f6] flex items-center justify-center shrink-0">
@@ -669,7 +669,7 @@ export default function TodayPage() {
                     Start a stay to generate care tasks.
                   </p>
                   <div className="mt-3">
-                    <Button onClick={() => navigate('/stays/new')}>
+                    <Button onClick={() => navigate('/app/stays/new')}>
                       <CalendarPlus size={18} />
                       Start a Stay
                     </Button>

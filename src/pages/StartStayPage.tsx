@@ -301,7 +301,7 @@ export default function StartStayPage() {
 
   function handleGenerate() {
     if (!isValid) return
-    navigate('/stays/preview', {
+    navigate('/app/stays/preview', {
       state: { dogId: selectedDogId, startDate, endDate, notes },
     })
   }
@@ -326,7 +326,7 @@ export default function StartStayPage() {
       if (isGoogleCalendarConnected()) {
         pushTasksToGoogleCalendar(createdTasks).catch(() => {})
       }
-      navigate(`/dogs/${selectedDog.id}`)
+      navigate(`/app/dogs/${selectedDog.id}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save changes. Please try again.')
       setSaving(false)
@@ -344,7 +344,7 @@ export default function StartStayPage() {
       }
       await deleteTasksByStay(stayId)
       await deleteStay(stayId)
-      navigate(selectedDog ? `/dogs/${selectedDog.id}` : '/')
+      navigate(selectedDog ? `/app/dogs/${selectedDog.id}` : '/app')
     } catch (e) {
       setDeleteError(e instanceof Error ? e.message : 'Could not delete. Please try again.')
       setDeleting(false)
@@ -519,7 +519,7 @@ export default function StartStayPage() {
             setPickerOpen(false)
           }}
           onClose={() => setPickerOpen(false)}
-          onAddDog={() => navigate('/dogs/new')}
+          onAddDog={() => navigate('/app/dogs/new')}
         />
       )}
     </div>

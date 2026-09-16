@@ -21,11 +21,12 @@ import PrivacyPage from './pages/PrivacyPage'
 import SplashScreen from './components/SplashScreen'
 import BottomNav from './components/BottomNav'
 
-/** Routes that render for signed-out visitors: the marketing page and the
+/** Routes that render for signed-out visitors: the marketing home and the
  *  privacy policy. Both must be reachable without an account — Google's
  *  OAuth verification review reads them, and a reviewer who lands on a login
- *  wall has nothing to review. */
-const PUBLIC_PATHS = ['/about', '/privacy']
+ *  wall has nothing to review. `/about` is a legacy alias for `/` (heypup.app
+ *  now hosts the marketing page at the root, with the product at `/app`). */
+const PUBLIC_PATHS = ['/', '/about', '/privacy']
 
 export default function App() {
   // The router has to sit above the auth gate now, so the public routes can
@@ -87,12 +88,38 @@ function AppRoutes() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // Public pages render regardless of auth state, and without waiting on the
-  // session check — signed in or out, /about and /privacy look the same.
+  if (pathname === '/about') {
+    return <Navigate to="/" replace />
+  }
+
+  // Public pages render without waiting on the session check — a signed-out
+  // visitor sees the marketing home or privacy policy immediately. A signed-in
+  // visitor who lands on "/" (e.g. a bookmark from before heypup.app existed)
+  // is bounced into the app once we know they have a session. A password-reset
+  // link also lands at "/" (Supabase redirects to the site origin), so that
+  // still has to route to UpdatePasswordPage rather than the marketing page.
   if (isPublicRoute) {
+    const isAuthed = session !== 'loading' && session !== null
+    let homeElement
+    if (passwordRecovery) {
+      homeElement = (
+        <UpdatePasswordPage
+          onDone={() => {
+            setPasswordRecovery(false)
+            navigate('/app', { replace: true })
+          }}
+        />
+      )
+    } else if (session === 'loading') {
+      homeElement = null
+    } else if (isAuthed) {
+      homeElement = <Navigate to="/app" replace />
+    } else {
+      homeElement = <AboutPage />
+    }
     return (
       <Routes>
-        <Route path="/about" element={<AboutPage />} />
+        <Route path="/" element={homeElement} />
         <Route path="/privacy" element={<PrivacyPage />} />
       </Routes>
     )
@@ -115,7 +142,7 @@ function AppRoutes() {
         <UpdatePasswordPage
           onDone={() => {
             setPasswordRecovery(false)
-            navigate('/', { replace: true })
+            navigate('/app', { replace: true })
           }}
         />
       </>
@@ -135,19 +162,19 @@ function AppRoutes() {
     <>
       {splashOverlay}
       <Routes>
-        <Route element={<AppLayout />}>
-          <Route path="/" element={<TodayPage />} />
-          <Route path="/dogs" element={<DogListPage />} />
-          <Route path="/dogs/:id" element={<DogProfilePage />} />
-          <Route path="/stays/new" element={<StartStayPage />} />
-          <Route path="/stays/:stayId/edit" element={<StartStayPage />} />
-          <Route path="/calendar" element={<CalendarPage />} />
-          <Route path="/settings" element={<SyncSettingsPage />} />
+        <Route path="/app" element={<AppLayout />}>
+          <Route index element={<TodayPage />} />
+          <Route path="dogs" element={<DogListPage />} />
+          <Route path="dogs/:id" element={<DogProfilePage />} />
+          <Route path="stays/new" element={<StartStayPage />} />
+          <Route path="stays/:stayId/edit" element={<StartStayPage />} />
+          <Route path="calendar" element={<CalendarPage />} />
+          <Route path="settings" element={<SyncSettingsPage />} />
         </Route>
-        <Route path="/dogs/new" element={<AddEditDogPage />} />
-        <Route path="/dogs/:id/edit" element={<AddEditDogPage />} />
-        <Route path="/stays/preview" element={<TaskPreviewPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/app/dogs/new" element={<AddEditDogPage />} />
+        <Route path="/app/dogs/:id/edit" element={<AddEditDogPage />} />
+        <Route path="/app/stays/preview" element={<TaskPreviewPage />} />
+        <Route path="*" element={<Navigate to="/app" replace />} />
       </Routes>
     </>
   )

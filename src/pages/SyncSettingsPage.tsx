@@ -500,7 +500,7 @@ export default function SyncSettingsPage() {
             About
           </p>
           <div className="bg-white border border-border-light rounded-[16px] px-4 divide-y divide-border-faint">
-            <a className="block w-full text-left" href="/about" target="_blank" rel="noreferrer">
+            <a className="block w-full text-left" href="/" target="_blank" rel="noreferrer">
               <SettingRow
                 icon={<Info size={18} />}
                 label="About HeyPup"
