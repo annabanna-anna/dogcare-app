@@ -24,6 +24,8 @@ import {
   isPushEnabled,
   setPushEnabled,
   getLastPushError,
+  getLastPullError,
+  listUpcomingGoogleEvents,
   onGoogleConnectionChanged,
 } from '../lib/googleCalendar'
 import {
@@ -222,6 +224,7 @@ export default function SyncSettingsPage() {
   const [showCalendarInfo, setShowCalendarInfo] = useState(false)
   const [pushEnabled, setPushEnabledState] = useState(true)
   const [pushError, setPushError] = useState<string | null>(null)
+  const [pullError, setPullError] = useState<string | null>(null)
   const [reminders, setReminders] = useState(false)
   const [reminderMinutes, setReminderMinutes] = useState(15)
   const [reminderBusy, setReminderBusy] = useState(false)
@@ -231,17 +234,37 @@ export default function SyncSettingsPage() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email ?? null))
-    setCalendarConnected(isGoogleCalendarConnected())
+    const connected = isGoogleCalendarConnected()
+    setCalendarConnected(connected)
     setPushEnabledState(isPushEnabled())
     setPushError(getLastPushError())
+    setPullError(getLastPullError())
     isPushReminderEnabled().then((on) => {
       setReminders(on)
       if (on) getReminderMinutes().then(setReminderMinutes)
     })
+    // The toggle otherwise only reflects the last-cached "connected" flag,
+    // which stays true across a token revoke until something actually
+    // calls the Google API and finds out — landing straight on Settings
+    // (rather than Upcoming, which does this fetch already) would leave
+    // the toggle stuck "on" with no error shown. Poke the API here too so
+    // Settings surfaces the same disconnect on its own.
+    if (connected) {
+      listUpcomingGoogleEvents()
+        .then(() => setPullError(null))
+        .catch(() => {
+          setCalendarConnected(isGoogleCalendarConnected())
+          setPullError(getLastPullError())
+        })
+    }
     // Connecting finishes asynchronously after the OAuth redirect has
     // already landed back here, so the mount read above can be stale —
-    // this catches the flag flipping shortly after.
-    return onGoogleConnectionChanged(() => setCalendarConnected(isGoogleCalendarConnected()))
+    // this catches the flag flipping shortly after (and also catches the
+    // check above, or a fetch from another mounted page, dropping it).
+    return onGoogleConnectionChanged(() => {
+      setCalendarConnected(isGoogleCalendarConnected())
+      setPullError(getLastPullError())
+    })
   }, [])
 
   function togglePush(on: boolean) {
@@ -296,6 +319,7 @@ export default function SyncSettingsPage() {
     // dropped server-side in the background.
     void disconnectGoogleCalendar()
     setCalendarConnected(false)
+    setPullError(null)
     setShowDisconnectConfirm(false)
   }
 
@@ -332,6 +356,23 @@ export default function SyncSettingsPage() {
               }
             />
             <div className="pb-4 flex flex-col gap-3">
+              {pullError && (
+                <div className="flex items-start gap-2 bg-[#fee2e2] rounded-[12px] px-3 py-2.5">
+                  <AlertCircle size={15} className="text-[#b91c1c] shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-dm text-[12px] text-[#b91c1c] leading-snug">{pullError}</p>
+                    {!calendarConnected && (
+                      <button
+                        type="button"
+                        onClick={() => void handleCalendarToggle(true)}
+                        className="font-dm font-bold text-[12px] text-[#b91c1c] underline mt-1"
+                      >
+                        Reconnect
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
               <div className="flex flex-col gap-1 pb-3 border-b border-border-light">
                 <PurposeRow done={calendarConnected} label="Shows your Rover bookings" />
                 <div className="flex items-start gap-2 pl-[26px]">

@@ -14,6 +14,7 @@ import {
   listUpcomingGoogleEvents,
   pushTasksToGoogleCalendar,
   getLastPushError,
+  getLastPullError,
   type GoogleCalendarEvent,
 } from '../lib/googleCalendar'
 import { formatShortDate, formatTime } from '../utils/dateUtils'
@@ -106,19 +107,12 @@ export default function CalendarPage() {
         setGoogleEvents(events)
         setIsRover(isUsingRoverCalendar())
       })
-      .catch((e) => {
+      .catch(() => {
         if (cancelled) return
-        // Access tokens now refresh themselves, so EXPIRED no longer means
-        // "an hour went by" — it means Google access was actually revoked
-        // and the stored connection has been dropped. Stay rendered as
-        // connected for this pass so the message below (and its Reconnect
-        // action) is visible; the local flag is already cleared, so a
-        // reload lands on the connect card.
-        setGoogleError(
-          e instanceof Error && e.message === 'EXPIRED'
-            ? 'Google access was revoked — reconnect to see your events.'
-            : 'Could not load Google Calendar events.',
-        )
+        // On EXPIRED the local flag is already cleared (a reload lands on
+        // the connect card) — stay rendered as connected for this pass so
+        // the message below (and its Reconnect action) is visible.
+        setGoogleError(getLastPullError() ?? 'Could not load Google Calendar events.')
       })
     return () => {
       cancelled = true

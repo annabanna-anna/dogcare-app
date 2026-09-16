@@ -37,6 +37,7 @@ const PUSH_CALENDAR_CACHE_KEY = 'heypup-google-calendar-push-id'
 const PUSH_TASKLIST_CACHE_KEY = 'heypup-google-tasklist-push-id'
 const PUSH_ENABLED_KEY = 'heypup-google-calendar-push-enabled'
 const PUSH_ERROR_KEY = 'heypup-google-calendar-push-error'
+const PULL_ERROR_KEY = 'heypup-google-calendar-pull-error'
 const PUSH_CALENDAR_NAME = 'HeyPup'
 
 /** Fired whenever the connected flag changes, so a mounted Settings page can
@@ -164,6 +165,7 @@ export async function connectGoogleCalendar(redirectPath = '/settings'): Promise
  *  regardless, so the UI never gets stuck "connected" if the call fails. */
 export async function disconnectGoogleCalendar(): Promise<void> {
   clearLocalGoogleState()
+  localStorage.removeItem(PULL_ERROR_KEY)
   notifyConnectionChanged()
   try {
     await callOAuthFunction({ action: 'disconnect' })
@@ -189,6 +191,14 @@ export function setPushEnabled(enabled: boolean): void {
  *  (e.g. the Tasks API not being enabled yet) becomes visible in Settings. */
 export function getLastPushError(): string | null {
   return localStorage.getItem(PUSH_ERROR_KEY)
+}
+
+/** Reason the most recent pull (fetching upcoming events) failed, if it did —
+ *  set by listUpcomingGoogleEvents() so a Settings page that never triggers
+ *  that fetch itself can still surface the same failure the Upcoming page
+ *  shows. Cleared on the next successful pull or on disconnect. */
+export function getLastPullError(): string | null {
+  return localStorage.getItem(PULL_ERROR_KEY)
 }
 
 /** Called from App.tsx's auth-state listener on every session change. Only
@@ -255,6 +265,14 @@ async function getAccessToken(forceRefresh = false): Promise<string> {
     const status = (e as { context?: { status?: number } }).context?.status
     if (status === 401 || status === 404) {
       clearLocalGoogleState()
+      localStorage.setItem(
+        PULL_ERROR_KEY,
+        'Google access was revoked — reconnect to see your events.',
+      )
+      // The connected flag just changed underneath whatever page is
+      // mounted — Settings only updates itself in response to this event,
+      // so without it the toggle is left showing "on" indefinitely.
+      notifyConnectionChanged()
       throw new Error('EXPIRED')
     }
     throw new Error('Could not reach Google — check your connection and try again.')
@@ -344,40 +362,51 @@ async function resolveTargetCalendar(): Promise<{ calendarId: string; isRover: b
 export async function listUpcomingGoogleEvents(maxResults = 10): Promise<GoogleCalendarEvent[]> {
   if (!isGoogleCalendarConnected()) throw new Error('NOT_CONNECTED')
 
-  const { calendarId, isRover } = await resolveTargetCalendar()
+  try {
+    const { calendarId, isRover } = await resolveTargetCalendar()
 
-  const params = new URLSearchParams({
-    timeMin: new Date().toISOString(),
-    singleEvents: 'true',
-    orderBy: 'startTime',
-    maxResults: String(maxResults),
-  })
-  const res = await googleFetch(
-    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?${params}`,
-  )
-  if (!res.ok) throw new Error('Could not load Google Calendar events.')
+    const params = new URLSearchParams({
+      timeMin: new Date().toISOString(),
+      singleEvents: 'true',
+      orderBy: 'startTime',
+      maxResults: String(maxResults),
+    })
+    const res = await googleFetch(
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?${params}`,
+    )
+    if (!res.ok) throw new Error('Could not load Google Calendar events.')
 
-  const data = (await res.json()) as {
-    items?: { id: string; summary?: string; status?: string; start?: { date?: string; dateTime?: string }; end?: { date?: string; dateTime?: string }; htmlLink: string }[]
+    const data = (await res.json()) as {
+      items?: { id: string; summary?: string; status?: string; start?: { date?: string; dateTime?: string }; end?: { date?: string; dateTime?: string }; htmlLink: string }[]
+    }
+    const events = (data.items ?? []).map((item) => ({
+      id: item.id,
+      title: item.summary || '(No title)',
+      start: item.start?.dateTime ?? item.start?.date ?? '',
+      end: item.end?.dateTime ?? item.end?.date ?? '',
+      allDay: !item.start?.dateTime,
+      htmlLink: item.htmlLink,
+      status: item.status ?? 'confirmed',
+    }))
+    // Rover marks a pending request as a 'tentative' Google Calendar event and
+    // an accepted booking as 'confirmed' — that status field is Google's own,
+    // set directly by Rover's sync, so it's the primary signal. The title
+    // check is a fallback for events whose status doesn't come through as
+    // expected: real Rover titles look like "Boarding: Dog / Owner" (no
+    // bracket tag in practice, despite the older "[B]" assumption).
+    const filtered = isRover
+      ? events.filter((e) => e.status === 'confirmed' || /boarding|\[b\]/i.test(e.title))
+      : events
+    localStorage.removeItem(PULL_ERROR_KEY)
+    return filtered
+  } catch (e) {
+    // EXPIRED already set its own (more specific) message inside
+    // getAccessToken — don't clobber it with the generic one here.
+    if (!(e instanceof Error && e.message === 'EXPIRED')) {
+      localStorage.setItem(PULL_ERROR_KEY, 'Could not load Google Calendar events.')
+    }
+    throw e
   }
-  const events = (data.items ?? []).map((item) => ({
-    id: item.id,
-    title: item.summary || '(No title)',
-    start: item.start?.dateTime ?? item.start?.date ?? '',
-    end: item.end?.dateTime ?? item.end?.date ?? '',
-    allDay: !item.start?.dateTime,
-    htmlLink: item.htmlLink,
-    status: item.status ?? 'confirmed',
-  }))
-  // Rover marks a pending request as a 'tentative' Google Calendar event and
-  // an accepted booking as 'confirmed' — that status field is Google's own,
-  // set directly by Rover's sync, so it's the primary signal. The title
-  // check is a fallback for events whose status doesn't come through as
-  // expected: real Rover titles look like "Boarding: Dog / Owner" (no
-  // bracket tag in practice, despite the older "[B]" assumption).
-  return isRover
-    ? events.filter((e) => e.status === 'confirmed' || /boarding|\[b\]/i.test(e.title))
-    : events
 }
 
 /** Parses Rover's "Boarding: Dog Name / Owner Name" event-title convention
