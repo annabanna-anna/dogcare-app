@@ -23,7 +23,7 @@ export default function DogCard({ dog, nextStay }: Props) {
       className="w-full bg-cream border border-border-light rounded-[22px] p-4 flex items-center gap-4 active:scale-[0.98] transition-transform text-left"
     >
       {/* Avatar */}
-      <div className="shrink-0 size-16 rounded-[18px] overflow-hidden bg-[#f3f4f6] flex items-center justify-center">
+      <div className="shrink-0 size-16 rounded-full overflow-hidden bg-[#f3f4f6] flex items-center justify-center">
         {showPhoto ? (
           <img
             src={dog.photoUrl}
