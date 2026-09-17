@@ -127,7 +127,7 @@ export default function TaskPreviewPage() {
         // failure (expired token, API hiccup) shouldn't block the user.
         pushTasksToGoogleCalendar(createdTasks).catch(() => {})
       }
-      navigate('/app')
+      navigate('/app/today')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save this stay. Please try again.')
       setConfirming(false)

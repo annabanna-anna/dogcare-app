@@ -344,7 +344,7 @@ export default function StartStayPage() {
       }
       await deleteTasksByStay(stayId)
       await deleteStay(stayId)
-      navigate(selectedDog ? `/app/dogs/${selectedDog.id}` : '/app')
+      navigate(selectedDog ? `/app/dogs/${selectedDog.id}` : '/app/today')
     } catch (e) {
       setDeleteError(e instanceof Error ? e.message : 'Could not delete. Please try again.')
       setDeleting(false)

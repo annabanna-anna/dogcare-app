@@ -32,7 +32,7 @@ export default function PublicPageShell({ children }: Props) {
               Privacy
             </Link>
             <Link
-              to="/app"
+              to="/app/today"
               className="font-dm font-bold text-[14px] px-4 py-2 rounded-full bg-cobalt text-white hover:bg-[#1c37b8] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coral"
             >
               Open app

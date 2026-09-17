@@ -106,14 +106,14 @@ function AppRoutes() {
         <UpdatePasswordPage
           onDone={() => {
             setPasswordRecovery(false)
-            navigate('/app', { replace: true })
+            navigate('/app/today', { replace: true })
           }}
         />
       )
     } else if (session === 'loading') {
       homeElement = null
     } else if (isAuthed) {
-      homeElement = <Navigate to="/app" replace />
+      homeElement = <Navigate to="/app/today" replace />
     } else {
       homeElement = <AboutPage />
     }
@@ -142,7 +142,7 @@ function AppRoutes() {
         <UpdatePasswordPage
           onDone={() => {
             setPasswordRecovery(false)
-            navigate('/app', { replace: true })
+            navigate('/app/today', { replace: true })
           }}
         />
       </>
@@ -163,7 +163,8 @@ function AppRoutes() {
       {splashOverlay}
       <Routes>
         <Route path="/app" element={<AppLayout />}>
-          <Route index element={<TodayPage />} />
+          <Route index element={<Navigate to="/app/today" replace />} />
+          <Route path="today" element={<TodayPage />} />
           <Route path="dogs" element={<DogListPage />} />
           <Route path="dogs/:id" element={<DogProfilePage />} />
           <Route path="stays/new" element={<StartStayPage />} />
@@ -174,7 +175,7 @@ function AppRoutes() {
         <Route path="/app/dogs/new" element={<AddEditDogPage />} />
         <Route path="/app/dogs/:id/edit" element={<AddEditDogPage />} />
         <Route path="/app/stays/preview" element={<TaskPreviewPage />} />
-        <Route path="*" element={<Navigate to="/app" replace />} />
+        <Route path="*" element={<Navigate to="/app/today" replace />} />
       </Routes>
     </>
   )

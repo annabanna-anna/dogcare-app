@@ -3,7 +3,7 @@ import { Home, PawPrint, CalendarDays, Settings } from 'lucide-react'
 import { NavLink, useLocation } from 'react-router-dom'
 
 const navItems = [
-  { to: '/app',          label: 'Today',    Icon: Home },
+  { to: '/app/today',    label: 'Today',    Icon: Home },
   { to: '/app/dogs',     label: 'Dogs',     Icon: PawPrint },
   { to: '/app/calendar', label: 'Upcoming', Icon: CalendarDays },
   { to: '/app/settings', label: 'Settings', Icon: Settings },
@@ -19,7 +19,7 @@ export default function BottomNav() {
   const activeIndex = Math.max(
     0,
     navItems.findIndex(({ to }) =>
-      to === '/app' ? pathname === '/app' : pathname.startsWith(to)
+      pathname.startsWith(to)
     )
   )
 
@@ -76,7 +76,7 @@ export default function BottomNav() {
                 itemRefs.current[i] = el
               }}
               to={to}
-              end={to === '/app'}
+              end
               className="relative z-10 flex flex-col items-center gap-1 py-2.5 rounded-full text-nav-inactive"
             >
               <Icon
