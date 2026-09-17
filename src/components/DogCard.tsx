@@ -44,13 +44,9 @@ export default function DogCard({ dog, nextStay }: Props) {
         <p className="font-dm text-[13px] text-text-secondary mt-0.5 truncate">
           {dogDisplayBreed(dog)} · {dog.ownerName}
         </p>
-        {nextStay ? (
+        {nextStay && (
           <span className="inline-flex items-center mt-2 rounded-full bg-coral px-2.5 py-1 text-[11px] font-dm font-bold uppercase tracking-wide text-white">
             {formatShortDate(nextStay.startDate)} – {formatShortDate(nextStay.endDate)}
-          </span>
-        ) : (
-          <span className="inline-flex items-center mt-2 rounded-full bg-gray-200 px-2.5 py-1 text-[11px] font-dm font-bold text-gray-600">
-            No upcoming stay
           </span>
         )}
       </div>
