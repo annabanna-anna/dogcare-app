@@ -177,7 +177,6 @@ export default function DogProfilePage() {
             <p className="font-dm font-semibold text-[14px] text-text-primary mt-2">
               {dog.ownerName}
             </p>
-            <p className="font-dm text-[13px] text-text-secondary">{dog.ownerContact}</p>
           </div>
         </div>
 

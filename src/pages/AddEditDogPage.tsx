@@ -865,20 +865,9 @@ export default function AddEditDogPage() {
           <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-3">
             Owner
           </p>
-          <div className="flex flex-col gap-3">
-            <div>
-              <FieldLabel>Owner Name</FieldLabel>
-              <Input value={form.ownerName} onChange={set('ownerName')} placeholder="Full name" />
-            </div>
-            <div>
-              <FieldLabel>Contact</FieldLabel>
-              <Input
-                value={form.ownerContact}
-                onChange={set('ownerContact')}
-                placeholder="Phone or email"
-                type="tel"
-              />
-            </div>
+          <div>
+            <FieldLabel>Owner Name</FieldLabel>
+            <Input value={form.ownerName} onChange={set('ownerName')} placeholder="Full name" />
           </div>
         </section>
 
