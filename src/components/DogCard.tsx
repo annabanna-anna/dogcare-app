@@ -19,7 +19,7 @@ export default function DogCard({ dog, nextStay }: Props) {
 
   return (
     <button
-      onClick={() => navigate(`/app/dogs/${dog.id}`)}
+      onClick={() => navigate(`/dogs/${dog.id}`)}
       className="w-full bg-cream border border-border-light rounded-[22px] p-4 flex items-center gap-4 active:scale-[0.98] transition-transform text-left"
     >
       {/* Avatar */}

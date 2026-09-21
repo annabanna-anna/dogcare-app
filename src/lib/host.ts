@@ -1,7 +1,7 @@
 /** heypup.app is the marketing site; web.heypup.app is the installable app.
  *  Both serve this same bundle, so the hostname decides what "/" shows.
  *  Anywhere else (localhost, preview deploys) behaves like the old single-host
- *  setup: marketing at "/", app under "/app". */
+ *  setup: marketing at "/", app at "/today", "/dogs", etc. */
 const APP_HOST = 'web.heypup.app'
 const MARKETING_HOST = 'heypup.app'
 
@@ -12,4 +12,4 @@ export const isMarketingHost = hostname === MARKETING_HOST || hostname === `www.
 
 /** Where "Open app" links go. Absolute on the marketing host (different
  *  origin); a same-origin path everywhere else. */
-export const APP_URL = isMarketingHost ? `https://${APP_HOST}/app/today` : '/app/today'
+export const APP_URL = isMarketingHost ? `https://${APP_HOST}/today` : '/today'

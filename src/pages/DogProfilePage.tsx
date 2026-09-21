@@ -135,7 +135,7 @@ export default function DogProfilePage() {
       <div className="min-h-svh bg-cream flex items-center justify-center px-6">
         <div className="text-center">
           <p className="font-outfit font-bold text-[17px] text-text-primary mb-2">Dog not found</p>
-          <Button onClick={() => navigate('/app/dogs')} variant="secondary">
+          <Button onClick={() => navigate('/dogs')} variant="secondary">
             Back to Dogs
           </Button>
         </div>
@@ -151,7 +151,7 @@ export default function DogProfilePage() {
         subtitle={dog.additionalDogs.length > 0 ? dogDisplayBreed(dog) : `${dog.breed} · ${dog.size}`}
         right={
           <button
-            onClick={() => navigate(`/app/dogs/${dog.id}/edit`)}
+            onClick={() => navigate(`/dogs/${dog.id}/edit`)}
             className="size-10 rounded-full bg-white border border-border-light flex items-center justify-center text-text-secondary active:bg-gray-50"
           >
             <Pencil size={16} />
@@ -213,7 +213,7 @@ export default function DogProfilePage() {
             </div>
             <Button
               fullWidth
-              onClick={() => navigate(`/app/stays/${currentStay.id}/edit`)}
+              onClick={() => navigate(`/stays/${currentStay.id}/edit`)}
             >
               <Pencil size={18} />
               Edit Stay
@@ -222,7 +222,7 @@ export default function DogProfilePage() {
         ) : (
           <Button
             fullWidth
-            onClick={() => navigate(`/app/stays/new?dog=${dog.id}`)}
+            onClick={() => navigate(`/stays/new?dog=${dog.id}`)}
           >
             <CalendarPlus size={18} />
             Start a Stay
@@ -371,7 +371,7 @@ export default function DogProfilePage() {
                   setDeleteError(null)
                   try {
                     await deleteDog(dog.id)
-                    navigate('/app/dogs')
+                    navigate('/dogs')
                   } catch (e) {
                     setDeleteError(e instanceof Error ? e.message : 'Could not delete. Please try again.')
                     setDeleting(false)

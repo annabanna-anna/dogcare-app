@@ -26,7 +26,7 @@ import BottomNav from './components/BottomNav'
  *  privacy policy. Both must be reachable without an account — Google's
  *  OAuth verification review reads them, and a reviewer who lands on a login
  *  wall has nothing to review. `/about` is a legacy alias for `/` (heypup.app
- *  now hosts the marketing page at the root, with the product at `/app`). */
+ *  now hosts the marketing page at the root, with the product on web.heypup.app). */
 const PUBLIC_PATHS = isAppHost ? ['/privacy'] : ['/', '/about', '/privacy']
 
 export default function App() {
@@ -92,8 +92,13 @@ function AppRoutes() {
   // The marketing host has no app: send any /app deep link (old bookmarks,
   // home-screen shortcuts) to the app host.
   if (isMarketingHost && pathname.startsWith('/app')) {
-    window.location.replace(`https://web.heypup.app${pathname}${window.location.search}${window.location.hash}`)
+    window.location.replace(`https://web.heypup.app${pathname.replace(/^\/app/, '') || '/'}${window.location.search}${window.location.hash}`)
     return null
+  }
+
+  // Legacy: the app used to live under /app (old bookmarks, home-screen icons).
+  if (pathname === '/app' || pathname.startsWith('/app/')) {
+    return <Navigate to={pathname.replace(/^\/app/, '') || '/'} replace />
   }
 
   if (pathname === '/about') {
@@ -114,14 +119,14 @@ function AppRoutes() {
         <UpdatePasswordPage
           onDone={() => {
             setPasswordRecovery(false)
-            navigate('/app/today', { replace: true })
+            navigate('/today', { replace: true })
           }}
         />
       )
     } else if (session === 'loading') {
       homeElement = null
     } else if (isAuthed) {
-      homeElement = <Navigate to="/app/today" replace />
+      homeElement = <Navigate to="/today" replace />
     } else {
       homeElement = <AboutPage />
     }
@@ -150,7 +155,7 @@ function AppRoutes() {
         <UpdatePasswordPage
           onDone={() => {
             setPasswordRecovery(false)
-            navigate('/app/today', { replace: true })
+            navigate('/today', { replace: true })
           }}
         />
       </>
@@ -170,8 +175,7 @@ function AppRoutes() {
     <>
       {splashOverlay}
       <Routes>
-        <Route path="/app" element={<AppLayout />}>
-          <Route index element={<Navigate to="/app/today" replace />} />
+        <Route element={<AppLayout />}>
           <Route path="today" element={<TodayPage />} />
           <Route path="dogs" element={<DogListPage />} />
           <Route path="dogs/:id" element={<DogProfilePage />} />
@@ -180,10 +184,10 @@ function AppRoutes() {
           <Route path="calendar" element={<CalendarPage />} />
           <Route path="settings" element={<SyncSettingsPage />} />
         </Route>
-        <Route path="/app/dogs/new" element={<AddEditDogPage />} />
-        <Route path="/app/dogs/:id/edit" element={<AddEditDogPage />} />
-        <Route path="/app/stays/preview" element={<TaskPreviewPage />} />
-        <Route path="*" element={<Navigate to="/app/today" replace />} />
+        <Route path="/dogs/new" element={<AddEditDogPage />} />
+        <Route path="/dogs/:id/edit" element={<AddEditDogPage />} />
+        <Route path="/stays/preview" element={<TaskPreviewPage />} />
+        <Route path="*" element={<Navigate to="/today" replace />} />
       </Routes>
     </>
   )

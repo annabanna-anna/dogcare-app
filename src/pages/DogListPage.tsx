@@ -242,7 +242,7 @@ export default function DogListPage() {
       {/* Floating add button */}
       <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-40 flex justify-end pr-6 pointer-events-none">
         <button
-          onClick={() => navigate('/app/dogs/new')}
+          onClick={() => navigate('/dogs/new')}
           className="pointer-events-auto size-14 rounded-full bg-coral flex items-center justify-center text-white active:bg-coral-deep active:scale-95 transition-all duration-100"
           aria-label="Add dog"
         >

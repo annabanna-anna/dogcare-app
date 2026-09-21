@@ -99,7 +99,7 @@ export default function TaskPreviewPage() {
           <p className="font-outfit font-bold text-[17px] text-text-primary mb-4">
             No stay data found.
           </p>
-          <Button onClick={() => navigate('/app/stays/new')} variant="secondary">
+          <Button onClick={() => navigate('/stays/new')} variant="secondary">
             Start a Stay
           </Button>
         </div>
@@ -127,7 +127,7 @@ export default function TaskPreviewPage() {
         // failure (expired token, API hiccup) shouldn't block the user.
         pushTasksToGoogleCalendar(createdTasks).catch(() => {})
       }
-      navigate('/app/today')
+      navigate('/today')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save this stay. Please try again.')
       setConfirming(false)

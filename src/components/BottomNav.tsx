@@ -3,10 +3,10 @@ import { Home, PawPrint, CalendarDays, Settings } from 'lucide-react'
 import { NavLink, useLocation } from 'react-router-dom'
 
 const navItems = [
-  { to: '/app/today',    label: 'Today',    Icon: Home },
-  { to: '/app/dogs',     label: 'Dogs',     Icon: PawPrint },
-  { to: '/app/calendar', label: 'Upcoming', Icon: CalendarDays },
-  { to: '/app/settings', label: 'Settings', Icon: Settings },
+  { to: '/today',    label: 'Today',    Icon: Home },
+  { to: '/dogs',     label: 'Dogs',     Icon: PawPrint },
+  { to: '/calendar', label: 'Upcoming', Icon: CalendarDays },
+  { to: '/settings', label: 'Settings', Icon: Settings },
 ]
 
 // Horizontal inset (px) between the sliding pill and the bounds of the
