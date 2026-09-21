@@ -14,6 +14,7 @@ import {
   ExternalLink,
   Bug,
   Mail,
+  Trash2,
 } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
@@ -231,6 +232,23 @@ export default function SyncSettingsPage() {
   const [reminderError, setReminderError] = useState<string | null>(null)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [feedbackModal, setFeedbackModal] = useState<'bug' | 'contact' | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  async function confirmDeleteAccount() {
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      const { error } = await supabase.functions.invoke('delete-account')
+      if (error) throw error
+      navigate('/', { replace: true })
+      await supabase.auth.signOut()
+    } catch {
+      setDeleteError('Could not delete your account. Try again.')
+      setDeleting(false)
+    }
+  }
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email ?? null))
@@ -528,6 +546,14 @@ export default function SyncSettingsPage() {
                 right={<ChevronRight size={18} className="text-[#d1d1d1]" />}
               />
             </button>
+            <button className="w-full text-left" onClick={() => setShowDeleteConfirm(true)}>
+              <SettingRow
+                icon={<Trash2 size={18} />}
+                label="Delete Account"
+                description="Permanently remove your HeyPup data"
+                right={<ChevronRight size={18} className="text-[#d1d1d1]" />}
+              />
+            </button>
           </div>
         </section>
       </div>
@@ -582,6 +608,45 @@ export default function SyncSettingsPage() {
                 Disconnect
               </Button>
               <Button fullWidth variant="ghost" onClick={() => setShowDisconnectConfirm(false)}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center px-6">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => !deleting && setShowDeleteConfirm(false)}
+          />
+          <div className="relative w-full max-w-[380px] bg-cream rounded-[22px] p-6">
+            <p className="font-outfit font-bold text-[20px] text-text-primary leading-tight mb-2">
+              Delete your account?
+            </p>
+            <p className="font-dm text-[14px] text-text-secondary leading-relaxed mb-5">
+              This permanently deletes your dogs, stays, tasks and settings from HeyPup. It
+              can't be undone. Your Google account isn't affected.
+            </p>
+            {deleteError && (
+              <p className="font-dm text-[13px] text-red-600 mb-3">{deleteError}</p>
+            )}
+            <div className="flex flex-col gap-2">
+              <Button
+                fullWidth
+                variant="danger"
+                onClick={() => void confirmDeleteAccount()}
+                disabled={deleting}
+              >
+                {deleting ? 'Deleting…' : 'Delete account'}
+              </Button>
+              <Button
+                fullWidth
+                variant="ghost"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+              >
                 Cancel
               </Button>
             </div>
