@@ -40,7 +40,8 @@ export default function App() {
 }
 
 function AppRoutes() {
-  const { pathname } = useLocation()
+  const location = useLocation()
+  const { pathname } = location
   const navigate = useNavigate()
   const isPublicRoute = PUBLIC_PATHS.includes(pathname)
 
@@ -162,14 +163,31 @@ function AppRoutes() {
     )
   }
 
+  // Signed-out visitors get their own /login route; the page they were
+  // trying to reach rides along in router state so we can return them to it.
   if (!session) {
     return (
       <>
         {splashOverlay}
-        <AuthPage />
+        <Routes>
+          <Route path="/login" element={<AuthPage />} />
+          <Route
+            path="*"
+            element={
+              <Navigate
+                to="/login"
+                replace
+                state={{ from: pathname + window.location.search }}
+              />
+            }
+          />
+        </Routes>
       </>
     )
   }
+
+  const loginState = location.state as { from?: string } | null
+  const afterLogin = loginState?.from && loginState.from !== '/login' ? loginState.from : '/today'
 
   return (
     <>
@@ -184,6 +202,7 @@ function AppRoutes() {
           <Route path="calendar" element={<CalendarPage />} />
           <Route path="settings" element={<SyncSettingsPage />} />
         </Route>
+        <Route path="/login" element={<Navigate to={afterLogin} replace />} />
         <Route path="/dogs/new" element={<AddEditDogPage />} />
         <Route path="/dogs/:id/edit" element={<AddEditDogPage />} />
         <Route path="/stays/preview" element={<TaskPreviewPage />} />
