@@ -234,7 +234,19 @@ export default function SyncSettingsPage() {
   const [feedbackModal, setFeedbackModal] = useState<'bug' | 'contact' | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  function openDeleteConfirm() {
+    setDeleteConfirmText('')
+    setDeleteError(null)
+    setShowDeleteConfirm(true)
+  }
+
+  function closeDeleteConfirm() {
+    setShowDeleteConfirm(false)
+    setDeleteConfirmText('')
+  }
 
   async function confirmDeleteAccount() {
     setDeleting(true)
@@ -546,7 +558,7 @@ export default function SyncSettingsPage() {
                 right={<ChevronRight size={18} className="text-[#d1d1d1]" />}
               />
             </button>
-            <button className="w-full text-left" onClick={() => setShowDeleteConfirm(true)}>
+            <button className="w-full text-left" onClick={openDeleteConfirm}>
               <SettingRow
                 icon={<Trash2 size={18} />}
                 label="Delete Account"
@@ -619,7 +631,7 @@ export default function SyncSettingsPage() {
         <div className="fixed inset-0 z-[70] flex items-center justify-center px-6">
           <div
             className="absolute inset-0 bg-black/40"
-            onClick={() => !deleting && setShowDeleteConfirm(false)}
+            onClick={() => !deleting && closeDeleteConfirm()}
           />
           <div className="relative w-full max-w-[380px] bg-cream rounded-[22px] p-6">
             <p className="font-outfit font-bold text-[20px] text-text-primary leading-tight mb-2">
@@ -629,6 +641,20 @@ export default function SyncSettingsPage() {
               This permanently deletes your dogs, stays, tasks and settings from HeyPup. It
               can't be undone. Your Google account isn't affected.
             </p>
+            <p className="font-dm text-[13px] text-text-secondary mb-2">
+              Type <span className="font-bold">delete</span> to confirm.
+            </p>
+            <input
+              type="text"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="delete"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              disabled={deleting}
+              className="w-full font-dm text-[14px] text-text-primary bg-white border border-border-light rounded-[14px] px-4 py-3 mb-4 focus:outline-none focus:border-coral"
+            />
             {deleteError && (
               <p className="font-dm text-[13px] text-red-600 mb-3">{deleteError}</p>
             )}
@@ -637,14 +663,14 @@ export default function SyncSettingsPage() {
                 fullWidth
                 variant="danger"
                 onClick={() => void confirmDeleteAccount()}
-                disabled={deleting}
+                disabled={deleting || deleteConfirmText.trim().toLowerCase() !== 'delete'}
               >
                 {deleting ? 'Deleting…' : 'Delete account'}
               </Button>
               <Button
                 fullWidth
                 variant="ghost"
-                onClick={() => setShowDeleteConfirm(false)}
+                onClick={closeDeleteConfirm}
                 disabled={deleting}
               >
                 Cancel
