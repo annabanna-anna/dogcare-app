@@ -86,7 +86,12 @@ export default function AuthPage() {
     setError(null)
     const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin },
+      options: {
+        redirectTo: window.location.origin,
+        // Without this Google silently reuses the browser's signed-in account,
+        // so logging out and back in can't switch accounts.
+        queryParams: { prompt: 'select_account' },
+      },
     })
     if (authError) setError(authError.message)
   }
