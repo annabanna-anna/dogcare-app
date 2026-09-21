@@ -4,10 +4,8 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import PageHeader from '../components/PageHeader'
 import DogCard from '../components/DogCard'
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
-import Button from '../components/Button'
 import { listDogs } from '../lib/dogs'
 import { listStays } from '../lib/stays'
-import { seedSampleDogs } from '../lib/seed'
 import type { Dog, Stay } from '../types'
 import { dogSearchText } from '../utils/dogDisplay'
 
@@ -21,7 +19,6 @@ export default function DogListPage() {
   const [stays, setStays] = useState<Stay[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [seeding, setSeeding] = useState(false)
   const letterRefs = useRef<Record<string, HTMLElement | null>>({})
   const now = new Date()
 
@@ -66,19 +63,6 @@ export default function DogListPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  async function handleSeed() {
-    setSeeding(true)
-    setError(null)
-    try {
-      await seedSampleDogs()
-      await load()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not add sample dogs.')
-    } finally {
-      setSeeding(false)
-    }
-  }
 
   function getNextStay(dogId: string) {
     return stays
@@ -227,9 +211,6 @@ export default function DogListPage() {
               <p className="font-dm text-[14px] text-text-secondary">
                 Tap + to add your first dog.
               </p>
-              <Button variant="ghost" size="sm" disabled={seeding} onClick={handleSeed} className="mt-2">
-                {seeding ? 'Adding sample dogs…' : 'Add 3 sample dogs (for testing)'}
-              </Button>
             </div>
           )}
 

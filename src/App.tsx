@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase'
+import { isAppHost, isMarketingHost } from './lib/host'
 import {
   captureGoogleConnectionIfRequested,
   syncGoogleConnectionState,
@@ -26,7 +27,7 @@ import BottomNav from './components/BottomNav'
  *  OAuth verification review reads them, and a reviewer who lands on a login
  *  wall has nothing to review. `/about` is a legacy alias for `/` (heypup.app
  *  now hosts the marketing page at the root, with the product at `/app`). */
-const PUBLIC_PATHS = ['/', '/about', '/privacy']
+const PUBLIC_PATHS = isAppHost ? ['/privacy'] : ['/', '/about', '/privacy']
 
 export default function App() {
   // The router has to sit above the auth gate now, so the public routes can
@@ -87,6 +88,13 @@ function AppRoutes() {
     })
     return () => subscription.unsubscribe()
   }, [])
+
+  // The marketing host has no app: send any /app deep link (old bookmarks,
+  // home-screen shortcuts) to the app host.
+  if (isMarketingHost && pathname.startsWith('/app')) {
+    window.location.replace(`https://web.heypup.app${pathname}${window.location.search}${window.location.hash}`)
+    return null
+  }
 
   if (pathname === '/about') {
     return <Navigate to="/" replace />

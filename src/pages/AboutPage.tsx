@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { APP_URL } from '../lib/host'
 import {
   ArrowRight,
   Bell,
@@ -1015,13 +1016,13 @@ export default function AboutPage() {
             not sitting down to plan.
           </p>
           <div className="rise-in flex flex-wrap gap-3 mt-8" style={{ animationDelay: '180ms' }}>
-            <Link
-              to="/app/today"
+            <a
+              href={APP_URL}
               className="inline-flex items-center gap-2 rounded-full bg-coral px-6 py-3.5 font-dm font-bold text-[15px] text-white hover:bg-coral-deep transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
             >
               Start tracking
               <ArrowRight size={17} />
-            </Link>
+            </a>
             <a
               href="#calendar-sync"
               className="inline-flex items-center gap-2 rounded-full bg-white border-2 border-text-primary px-6 py-3.5 font-dm font-bold text-[15px] text-text-primary hover:bg-card transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coral"
@@ -1286,13 +1287,13 @@ export default function AboutPage() {
           <p className="font-dm text-[17px] text-white/90 leading-relaxed mt-5 mx-auto max-w-[48ch]">
             Free to use while HeyPup is finding its feet. Bring your own dogs.
           </p>
-          <Link
-            to="/app/today"
+          <a
+            href={APP_URL}
             className="inline-flex items-center gap-2 rounded-full bg-coral px-7 py-4 font-dm font-bold text-[16px] text-white mt-8 hover:bg-coral-deep transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
             Open HeyPup
             <ArrowRight size={18} />
-          </Link>
+          </a>
         </div>
       </section>
     </PublicPageShell>

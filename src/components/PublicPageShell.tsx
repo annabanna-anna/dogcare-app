@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { APP_URL } from '../lib/host'
 import { CONTACT_EMAIL } from '../lib/siteConfig'
 
 interface Props {
@@ -31,12 +32,12 @@ export default function PublicPageShell({ children }: Props) {
             >
               Privacy
             </Link>
-            <Link
-              to="/app/today"
+            <a
+              href={APP_URL}
               className="font-dm font-bold text-[14px] px-4 py-2 rounded-full bg-cobalt text-white hover:bg-[#1c37b8] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coral"
             >
               Open app
-            </Link>
+            </a>
           </nav>
         </div>
       </header>
