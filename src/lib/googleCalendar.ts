@@ -243,6 +243,19 @@ export async function syncGoogleConnectionState(): Promise<void> {
   if (isGoogleCalendarConnected() !== wasConnected) notifyConnectionChanged()
 }
 
+/** Reads the `code` field from a google-oauth error response, if any.
+ *  Clones the response so it can be read more than once. */
+async function readFunctionErrorCode(e: unknown): Promise<string | null> {
+  const context = (e as { context?: Response } | null)?.context
+  if (!(context instanceof Response)) return null
+  try {
+    const body = (await context.clone().json()) as { code?: string }
+    return body.code ?? null
+  } catch {
+    return null // not a JSON error response (e.g. a gateway error page)
+  }
+}
+
 /** Returns a usable access token, minting a fresh one via the Edge Function
  *  when the cached one is missing or near expiry. */
 async function getAccessToken(forceRefresh = false): Promise<string> {
@@ -252,18 +265,29 @@ async function getAccessToken(forceRefresh = false): Promise<string> {
   }
   if (!isGoogleCalendarConnected()) throw new Error('NOT_CONNECTED')
 
+  const requestRefresh = () =>
+    callOAuthFunction<{ accessToken: string; expiresIn: number }>({ action: 'refresh' })
+
   let result: { accessToken: string; expiresIn: number }
   try {
-    result = await callOAuthFunction<{ accessToken: string; expiresIn: number }>({
-      action: 'refresh',
-    })
+    try {
+      result = await requestRefresh()
+    } catch (e) {
+      // A 401 without a REVOKED code means our own Supabase session was
+      // rejected (e.g. the app woke up overnight with a stale login), not
+      // that Google access is gone. Renew the session and try once more.
+      if ((await readFunctionErrorCode(e)) !== null) throw e
+      if ((e as { context?: { status?: number } }).context?.status !== 401) throw e
+      await supabase.auth.refreshSession()
+      result = await requestRefresh()
+    }
   } catch (e) {
-    // The function returns 401/404 when the refresh token is revoked or
-    // absent — the connection is genuinely gone, so stop claiming otherwise
-    // and let the UI offer a reconnect. Anything else (network, 502) is
+    // Only the function's explicit REVOKED / NOT_CONNECTED codes mean the
+    // connection is genuinely gone — stop claiming otherwise and let the UI
+    // offer a reconnect. Anything else (network, 502, a session hiccup) is
     // transient: keep the connection and let the caller retry later.
-    const status = (e as { context?: { status?: number } }).context?.status
-    if (status === 401 || status === 404) {
+    const code = await readFunctionErrorCode(e)
+    if (code === 'REVOKED' || code === 'NOT_CONNECTED') {
       clearLocalGoogleState()
       localStorage.setItem(
         PULL_ERROR_KEY,
