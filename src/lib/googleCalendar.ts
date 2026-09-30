@@ -435,10 +435,14 @@ export async function listUpcomingGoogleEvents(maxResults = 10): Promise<GoogleC
 
 /** Parses Rover's "Boarding: Dog Name / Owner Name" event-title convention
  *  (also accepts an older assumed "[TAG] Dog Name / Owner Name" form, in
- *  case some events still carry it). Returns null for titles that don't
- *  match — callers should just skip those. */
+ *  case some events still carry it). Rover also puts the service as a
+ *  suffix — "Dog / Jasmine Z.: Boarding", "…: Doggy Day Care" — which is
+ *  stripped so it doesn't end up in the owner name. Returns null for titles
+ *  that don't match — callers should just skip those. */
 export function parseRoverStyleTitle(title: string): { dogName: string; ownerName: string } | null {
-  const withoutTag = title.replace(/^(\[[^\]]*\]|[^:/]+:)\s*/, '')
+  const withoutTag = title
+    .replace(/^(\[[^\]]*\]|[^:/]+:)\s*/, '')
+    .replace(/\s*:[^:/]*$/, '')
   const parts = withoutTag.split('/').map((p) => p.trim())
   if (parts.length !== 2 || !parts[0] || !parts[1]) return null
   return { dogName: parts[0], ownerName: parts[1] }
