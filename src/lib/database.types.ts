@@ -29,6 +29,7 @@ export interface Database {
           has_allergies: YesNoUnsure
           allergy_notes: string
           goes_to_dog_parks: YesNoUnsure
+          dog_park_notes: string
           walk_time_flexible: boolean
           care_schedule: CareScheduleEntry[]
           created_at: string
@@ -53,6 +54,7 @@ export interface Database {
           has_allergies?: YesNoUnsure
           allergy_notes?: string
           goes_to_dog_parks?: YesNoUnsure
+          dog_park_notes?: string
           walk_time_flexible?: boolean
           care_schedule?: CareScheduleEntry[]
           created_at?: string

@@ -13,3 +13,7 @@ export const isMarketingHost = hostname === MARKETING_HOST || hostname === `www.
 /** Where "Open app" links go. Absolute on the marketing host (different
  *  origin); a same-origin path everywhere else. */
 export const APP_URL = isMarketingHost ? `https://${APP_HOST}/today` : '/today'
+
+/** Where "About HeyPup" links go. Always absolute: on the app host "/" is the
+ *  app itself, and a signed-in visitor to "/" anywhere gets bounced to /today. */
+export const MARKETING_URL = `https://${MARKETING_HOST}/`

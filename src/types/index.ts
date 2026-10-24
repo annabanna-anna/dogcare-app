@@ -36,8 +36,9 @@ export interface Dog {
   emergencyNotes: string
   otherNotes: string
   hasAllergies: YesNoUnsure
-  allergyNotes: string   // which allergen(s) — filled in when hasAllergies is 'yes'
+  allergyNotes: string   // which allergen(s) — optional detail when hasAllergies is 'yes' or 'no'
   goesToDogParks: YesNoUnsure
+  dogParkNotes: string   // optional detail (e.g. fenced parks only) when goesToDogParks is 'yes' or 'no'
   // Regular daily schedule
   walkTimeFlexible: boolean
   careSchedule: CareScheduleEntry[]

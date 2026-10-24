@@ -237,7 +237,7 @@ export default function DogProfilePage() {
             badgeLabel={yesNoUnsureLabel[dog.hasAllergies]}
             accent={dog.hasAllergies === 'yes'}
           />
-          {dog.hasAllergies === 'yes' && dog.allergyNotes && (
+          {dog.hasAllergies !== 'unsure' && dog.allergyNotes && (
             <p className="font-dm text-[13px] text-text-secondary leading-relaxed pl-6 -mt-1">
               {dog.allergyNotes}
             </p>
@@ -248,6 +248,11 @@ export default function DogProfilePage() {
             badgeLabel={yesNoUnsureLabel[dog.goesToDogParks]}
             accent={dog.goesToDogParks === 'yes'}
           />
+          {dog.goesToDogParks !== 'unsure' && dog.dogParkNotes && (
+            <p className="font-dm text-[13px] text-text-secondary leading-relaxed pl-6 -mt-1">
+              {dog.dogParkNotes}
+            </p>
+          )}
         </div>
 
         {/* Care Notes */}

@@ -23,6 +23,7 @@ function mapRow(row: DogRow): Dog {
     hasAllergies: row.has_allergies,
     allergyNotes: row.allergy_notes,
     goesToDogParks: row.goes_to_dog_parks,
+    dogParkNotes: row.dog_park_notes ?? '',
     walkTimeFlexible: row.walk_time_flexible,
     careSchedule: row.care_schedule ?? [],
     createdAt: row.created_at,
@@ -47,6 +48,7 @@ export interface DogInput {
   hasAllergies: YesNoUnsure
   allergyNotes: string
   goesToDogParks: YesNoUnsure
+  dogParkNotes: string
   walkTimeFlexible: boolean
   careSchedule: CareScheduleEntry[]
 }
@@ -94,6 +96,7 @@ export async function createDog(id: string, input: DogInput): Promise<Dog> {
       has_allergies: input.hasAllergies,
       allergy_notes: input.allergyNotes,
       goes_to_dog_parks: input.goesToDogParks,
+      dog_park_notes: input.dogParkNotes,
       walk_time_flexible: input.walkTimeFlexible,
       care_schedule: input.careSchedule,
     })
@@ -123,6 +126,7 @@ export async function updateDog(id: string, input: DogInput): Promise<Dog> {
       has_allergies: input.hasAllergies,
       allergy_notes: input.allergyNotes,
       goes_to_dog_parks: input.goesToDogParks,
+      dog_park_notes: input.dogParkNotes,
       walk_time_flexible: input.walkTimeFlexible,
       care_schedule: input.careSchedule,
     })

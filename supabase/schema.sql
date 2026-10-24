@@ -47,6 +47,7 @@ create table if not exists dogs (
   has_allergies     yes_no_unsure not null default 'unsure',
   allergy_notes     text not null default '',
   goes_to_dog_parks yes_no_unsure not null default 'unsure',
+  dog_park_notes    text not null default '',
   walk_time_flexible boolean not null default false,
   care_schedule     jsonb not null default '[]'::jsonb,
   created_at        timestamptz not null default now(),
@@ -101,6 +102,8 @@ alter table dogs add column if not exists walk_time_flexible boolean not null de
 alter table dogs add column if not exists has_allergies yes_no_unsure not null default 'unsure';
 alter table dogs add column if not exists allergy_notes text not null default '';
 alter table dogs add column if not exists goes_to_dog_parks yes_no_unsure not null default 'unsure';
+-- Free-form detail on the dog park answer (e.g. fully fenced parks only).
+alter table dogs add column if not exists dog_park_notes text not null default '';
 -- Up to 2 more dogs sharing this profile's owner/care instructions/schedule
 -- (e.g. two dogs from the same owner with identical care) — {name, breed, size} each.
 alter table dogs add column if not exists additional_dogs jsonb not null default '[]'::jsonb;

@@ -48,6 +48,7 @@ interface FormState {
   hasAllergies: YesNoUnsure
   allergyNotes: string
   goesToDogParks: YesNoUnsure
+  dogParkNotes: string
   walkTimeFlexible: boolean
 }
 
@@ -67,6 +68,7 @@ const defaultForm: FormState = {
   hasAllergies: 'unsure',
   allergyNotes: '',
   goesToDogParks: 'unsure',
+  dogParkNotes: '',
   walkTimeFlexible: false,
 }
 
@@ -526,6 +528,7 @@ export default function AddEditDogPage() {
           hasAllergies: d.hasAllergies,
           allergyNotes: d.allergyNotes,
           goesToDogParks: d.goesToDogParks,
+          dogParkNotes: d.dogParkNotes,
           walkTimeFlexible: d.walkTimeFlexible,
         })
         setSchedule(d.careSchedule.map((e) => ({ ...e })))
@@ -867,7 +870,7 @@ export default function AddEditDogPage() {
           </p>
           <div>
             <FieldLabel>Owner Name</FieldLabel>
-            <Input value={form.ownerName} onChange={set('ownerName')} placeholder="Full name" />
+            <Input value={form.ownerName} onChange={set('ownerName')} placeholder="e.g. Sarah or Sarah K." />
           </div>
         </section>
 
@@ -910,12 +913,16 @@ export default function AddEditDogPage() {
                   </button>
                 ))}
               </div>
-              {form.hasAllergies === 'yes' && (
+              {form.hasAllergies !== 'unsure' && (
                 <div className="mt-2">
                   <Textarea
                     value={form.allergyNotes}
                     onChange={set('allergyNotes')}
-                    placeholder="Which allergen(s)? e.g. chicken, beef, grain..."
+                    placeholder={
+                      form.hasAllergies === 'yes'
+                        ? 'Which allergen(s)? e.g. chicken, beef, grain...'
+                        : 'Anything to watch? e.g. sensitive stomach, avoid rich treats'
+                    }
                     rows={2}
                   />
                 </div>
@@ -938,6 +945,20 @@ export default function AddEditDogPage() {
                   </button>
                 ))}
               </div>
+              {form.goesToDogParks !== 'unsure' && (
+                <div className="mt-2">
+                  <Textarea
+                    value={form.dogParkNotes}
+                    onChange={set('dogParkNotes')}
+                    placeholder={
+                      form.goesToDogParks === 'yes'
+                        ? 'Any conditions? e.g. fully fenced parks only, small-dog area...'
+                        : 'Anything to know? e.g. reactive with big dogs'
+                    }
+                    rows={2}
+                  />
+                </div>
+              )}
             </div>
             <div>
               <FieldLabel>Medication Notes</FieldLabel>

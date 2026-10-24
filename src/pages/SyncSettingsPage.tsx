@@ -16,6 +16,7 @@ import {
   Mail,
   Trash2,
 } from 'lucide-react'
+import { MARKETING_URL } from '../lib/host'
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
 import {
@@ -530,7 +531,7 @@ export default function SyncSettingsPage() {
             About
           </p>
           <div className="bg-white border border-border-light rounded-[16px] px-4 divide-y divide-border-faint">
-            <a className="block w-full text-left" href="/" target="_blank" rel="noreferrer">
+            <a className="block w-full text-left" href={MARKETING_URL} target="_blank" rel="noreferrer">
               <SettingRow
                 icon={<Info size={18} />}
                 label="About HeyPup"

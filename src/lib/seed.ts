@@ -21,6 +21,7 @@ const sampleDogs: (DogInput & { careSchedule: CareScheduleEntry[] })[] = [
     hasAllergies: 'yes',
     allergyNotes: 'Chicken',
     goesToDogParks: 'no',
+    dogParkNotes: '',
     walkTimeFlexible: false,
     careSchedule: [
       { time: '08:00', taskType: 'walk', note: 'Avoid dog park' },
@@ -47,6 +48,7 @@ const sampleDogs: (DogInput & { careSchedule: CareScheduleEntry[] })[] = [
     hasAllergies: 'unsure',
     allergyNotes: '',
     goesToDogParks: 'unsure',
+    dogParkNotes: '',
     walkTimeFlexible: false,
     careSchedule: [
       { time: '07:30', taskType: 'walk', note: '' },
@@ -71,6 +73,7 @@ const sampleDogs: (DogInput & { careSchedule: CareScheduleEntry[] })[] = [
     hasAllergies: 'no',
     allergyNotes: '',
     goesToDogParks: 'yes',
+    dogParkNotes: '',
     walkTimeFlexible: false,
     careSchedule: [
       { time: '07:00', taskType: 'meal', note: 'With fish oil supplement' },
