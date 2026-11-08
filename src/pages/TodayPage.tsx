@@ -577,6 +577,14 @@ export default function TodayPage() {
                     </Link>
                   )
                 })}
+                <button
+                  type="button"
+                  onClick={() => navigate('/stays/new')}
+                  className="flex items-center gap-1.5 rounded-full h-12 px-4 border border-dashed border-border-light text-text-muted font-dm font-medium text-[13px] active:scale-[0.97] transition-transform"
+                >
+                  <CalendarPlus size={15} />
+                  Start another stay
+                </button>
               </div>
             </section>
           )}
