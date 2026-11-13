@@ -874,7 +874,7 @@ const ALT_STEPS = [
   },
   {
     title: 'Start a stay',
-    body: 'Pick the dates. Their regular daily schedule comes along with them.',
+    body: 'Pick the dates. Their regular daily schedule comes along with them. Rover synced to Google Calendar? HeyPup spots the booking and asks if you want to start the stay.',
     Visual: StartStayCollage,
   },
   {
