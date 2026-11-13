@@ -19,12 +19,13 @@ import DogBowlIcon from '../components/icons/DogBowlIcon'
 import DogIcon from '../components/icons/DogIcon'
 import PageHeader from '../components/PageHeader'
 import CareNoteSection from '../components/CareNoteSection'
+import DogTabs from '../components/DogTabs'
 import Button from '../components/Button'
 import { getDog, deleteDog } from '../lib/dogs'
 import { listStays } from '../lib/stays'
 import { formatTime, formatShortDate } from '../utils/dateUtils'
-import type { Dog, Stay, TaskType, YesNoUnsure } from '../types'
-import { dogDisplayBreed, dogDisplayName } from '../utils/dogDisplay'
+import { PRIMARY_DOG_KEY, type Dog, type Stay, type TaskType, type YesNoUnsure } from '../types'
+import { dogDisplayBreed, dogDisplayName, dogGroup, scheduleEntryDogName } from '../utils/dogDisplay'
 
 const typeLabel: Record<TaskType, string> = {
   walk: 'Walk',
@@ -92,6 +93,7 @@ export default function DogProfilePage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [activeDogKey, setActiveDogKey] = useState(PRIMARY_DOG_KEY)
 
   useEffect(() => {
     if (!id) return
@@ -143,6 +145,75 @@ export default function DogProfilePage() {
     )
   }
 
+  const group = dogGroup(dog)
+  const isGroup = group.length > 1
+  // Care notes are per dog; the owner, stay, and daily schedule are shared.
+  const care = group.find((d) => d.key === activeDogKey) ?? group[0]
+
+  const scheduleCard = (
+    <div className="bg-white border border-border-light rounded-[16px] p-4">
+      <div className="flex items-center gap-2 mb-4">
+        <Clock size={16} className="text-coral shrink-0" />
+        <h3 className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-wide">
+          Daily Schedule
+        </h3>
+        <div className="ml-auto flex flex-wrap justify-end gap-1">
+          {isGroup && (
+            <span className="text-[11px] font-dm font-bold bg-[#eef1fd] text-cobalt rounded-full px-2 py-0.5">
+              {dogDisplayName(dog)}
+            </span>
+          )}
+          {dog.walkTimeFlexible && (
+            <span className="text-[11px] font-dm font-bold bg-[#eef1fd] text-cobalt rounded-full px-2 py-0.5">
+              Walk time flexible
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="flex flex-col gap-3">
+        {dog.careSchedule.map((entry, i) => {
+          const Icon = typeIcon[entry.taskType] ?? PawPrint
+          const onlyFor = isGroup ? scheduleEntryDogName(dog, entry.forDog) : undefined
+          return (
+          <div key={i} className={`flex gap-3 ${entry.note ? 'items-start' : 'items-center'}`}>
+            <span
+              className={`font-dm font-bold text-[13px] text-text-primary w-[68px] shrink-0 ${
+                entry.note ? 'pt-0.5' : ''
+              }`}
+            >
+              {formatTime(`2000-01-01T${entry.time}:00`)}
+            </span>
+            <div
+              className={`size-6 rounded-full flex items-center justify-center shrink-0 ${
+                entry.note ? 'mt-0.5' : ''
+              }`}
+              style={{ backgroundColor: typeBg[entry.taskType] ?? '#6b7280' }}
+            >
+              <Icon size={12} className="text-white" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="font-dm font-bold text-[14px] text-text-primary leading-none">
+                  {typeLabel[entry.taskType]}
+                </p>
+                {onlyFor && (
+                  <span className="text-[11px] font-dm font-bold bg-[#f2f2f2] text-text-secondary rounded-full px-2 py-0.5">
+                    {onlyFor} only
+                  </span>
+                )}
+              </div>
+              {entry.note && (
+                <p className="font-dm text-[12px] text-text-secondary mt-0.5">
+                  {entry.note}
+                </p>
+              )}
+            </div>
+          </div>
+        )})}
+      </div>
+    </div>
+  )
+
   return (
     <div className="min-h-svh bg-cream pb-28">
       <PageHeader
@@ -160,24 +231,54 @@ export default function DogProfilePage() {
       />
 
       <div className="px-6 mt-2 flex flex-col gap-4">
-        {/* Photo + owner card */}
+        {/* Photo + owner card — a group shows every dog's photo and the shared owner */}
         <div className="bg-white border border-border-light rounded-[16px] p-4 flex gap-4 items-center">
-          <div className="size-20 rounded-[14px] overflow-hidden bg-[#f3f4f6] shrink-0">
-            {dog.photoUrl ? (
-              <img src={dog.photoUrl} alt={dog.name} className="size-full object-cover" />
-            ) : (
-              <div className="size-full flex items-center justify-center text-text-muted"><DogIcon size={36} /></div>
-            )}
-          </div>
-          <div>
-            <p className="font-outfit font-bold text-[22px] text-text-primary leading-none mb-1">
-              {dogDisplayName(dog)}
-            </p>
-            <p className="font-dm text-[14px] text-text-secondary">{dogDisplayBreed(dog)}</p>
-            <p className="font-dm font-semibold text-[14px] text-text-primary mt-2">
-              {dog.ownerName}
-            </p>
-          </div>
+          {isGroup ? (
+            <div className="flex shrink-0">
+              {group.map((d, i) => (
+                <div
+                  key={d.key}
+                  className={`size-14 rounded-full overflow-hidden bg-[#f3f4f6] ring-[3px] ring-white flex items-center justify-center text-text-muted ${
+                    i > 0 ? '-ml-4' : ''
+                  }`}
+                >
+                  {d.photoUrl ? (
+                    <img src={d.photoUrl} alt={d.name} className="size-full object-cover" />
+                  ) : (
+                    <DogIcon size={26} />
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="size-20 rounded-[14px] overflow-hidden bg-[#f3f4f6] shrink-0">
+              {dog.photoUrl ? (
+                <img src={dog.photoUrl} alt={dog.name} className="size-full object-cover" />
+              ) : (
+                <div className="size-full flex items-center justify-center text-text-muted"><DogIcon size={36} /></div>
+              )}
+            </div>
+          )}
+          {isGroup ? (
+            <div className="min-w-0">
+              <p className="font-outfit font-bold text-[22px] text-text-primary leading-none mb-1">
+                {dog.ownerName || dogDisplayName(dog)}
+              </p>
+              <p className="font-dm text-[14px] text-text-secondary">
+                Owner of {dogDisplayName(dog)}
+              </p>
+            </div>
+          ) : (
+            <div>
+              <p className="font-outfit font-bold text-[22px] text-text-primary leading-none mb-1">
+                {dogDisplayName(dog)}
+              </p>
+              <p className="font-dm text-[14px] text-text-secondary">{dogDisplayBreed(dog)}</p>
+              <p className="font-dm font-semibold text-[14px] text-text-primary mt-2">
+                {dog.ownerName}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Current stay info + Edit Stay CTA, grouped in one card */}
@@ -229,28 +330,40 @@ export default function DogProfilePage() {
           </Button>
         )}
 
+        {/* Shared schedule sits above the per-dog notes on a group profile */}
+        {isGroup && scheduleCard}
+
+        {isGroup && (
+          <div className="flex flex-col gap-2.5">
+            <h3 className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-wide">
+              Care Notes
+            </h3>
+            <DogTabs dogs={group} value={care.key} onChange={setActiveDogKey} />
+          </div>
+        )}
+
         {/* Quick Facts */}
         <div className="bg-white border border-border-light rounded-[16px] p-4 flex flex-col gap-3">
           <QuickFactRow
             icon={<ShieldAlert size={16} />}
             label="Allergies"
-            badgeLabel={yesNoUnsureLabel[dog.hasAllergies]}
-            accent={dog.hasAllergies === 'yes'}
+            badgeLabel={yesNoUnsureLabel[care.hasAllergies]}
+            accent={care.hasAllergies === 'yes'}
           />
-          {dog.hasAllergies !== 'unsure' && dog.allergyNotes && (
+          {care.hasAllergies !== 'unsure' && care.allergyNotes && (
             <p className="font-dm text-[13px] text-text-secondary leading-relaxed pl-6 -mt-1">
-              {dog.allergyNotes}
+              {care.allergyNotes}
             </p>
           )}
           <QuickFactRow
             icon={<Trees size={16} />}
             label="Goes to Dog Parks"
-            badgeLabel={yesNoUnsureLabel[dog.goesToDogParks]}
-            accent={dog.goesToDogParks === 'yes'}
+            badgeLabel={yesNoUnsureLabel[care.goesToDogParks]}
+            accent={care.goesToDogParks === 'yes'}
           />
-          {dog.goesToDogParks !== 'unsure' && dog.dogParkNotes && (
+          {care.goesToDogParks !== 'unsure' && care.dogParkNotes && (
             <p className="font-dm text-[13px] text-text-secondary leading-relaxed pl-6 -mt-1">
-              {dog.dogParkNotes}
+              {care.dogParkNotes}
             </p>
           )}
         </div>
@@ -259,87 +372,42 @@ export default function DogProfilePage() {
         <CareNoteSection
           title="Behavior"
           icon={<Heart size={16} />}
-          content={dog.behaviorNotes}
+          content={care.behaviorNotes}
           emptyText="No behavior notes."
         />
         <CareNoteSection
           title="Food"
           icon={<DogBowlIcon size={16} />}
-          content={dog.foodNotes}
+          content={care.foodNotes}
           emptyText="No food notes."
         />
         <CareNoteSection
           title="Medication"
           icon={<Pill size={16} />}
-          content={dog.medicationNotes}
+          content={care.medicationNotes}
           emptyText="No medications."
         />
         <CareNoteSection
           title="Walks"
           icon={<PawPrint size={16} />}
-          content={dog.walkNotes}
+          content={care.walkNotes}
           emptyText="No walk notes."
         />
         <CareNoteSection
           title="Emergency Notes"
           icon={<AlertTriangle size={16} />}
-          content={dog.emergencyNotes}
+          content={care.emergencyNotes}
           emptyText="No emergency notes."
         />
         <CareNoteSection
           title="Other Notes"
           icon={<StickyNote size={16} />}
-          content={dog.otherNotes}
+          content={care.otherNotes}
           emptyText="No other notes."
         />
 
-        {/* Daily Schedule */}
-        <div className="bg-white border border-border-light rounded-[16px] p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Clock size={16} className="text-coral shrink-0" />
-            <h3 className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-wide">
-              Daily Schedule
-            </h3>
-            {dog.walkTimeFlexible && (
-              <span className="ml-auto text-[11px] font-dm font-bold bg-[#eef1fd] text-cobalt rounded-full px-2 py-0.5">
-                Walk time flexible
-              </span>
-            )}
-          </div>
-          <div className="flex flex-col gap-3">
-            {dog.careSchedule.map((entry, i) => {
-              const Icon = typeIcon[entry.taskType] ?? PawPrint
-              return (
-              <div key={i} className={`flex gap-3 ${entry.note ? 'items-start' : 'items-center'}`}>
-                <span
-                  className={`font-dm font-bold text-[13px] text-text-primary w-[68px] shrink-0 ${
-                    entry.note ? 'pt-0.5' : ''
-                  }`}
-                >
-                  {formatTime(`2000-01-01T${entry.time}:00`)}
-                </span>
-                <div
-                  className={`size-6 rounded-full flex items-center justify-center shrink-0 ${
-                    entry.note ? 'mt-0.5' : ''
-                  }`}
-                  style={{ backgroundColor: typeBg[entry.taskType] ?? '#6b7280' }}
-                >
-                  <Icon size={12} className="text-white" />
-                </div>
-                <div>
-                  <p className="font-dm font-bold text-[14px] text-text-primary leading-none">
-                    {typeLabel[entry.taskType]}
-                  </p>
-                  {entry.note && (
-                    <p className="font-dm text-[12px] text-text-secondary mt-0.5">
-                      {entry.note}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )})}
-          </div>
-        </div>
+        {!isGroup && scheduleCard}
+
         {/* Delete */}
         <Button fullWidth variant="danger" onClick={() => setShowDeleteConfirm(true)}>
           <Trash2 size={18} />

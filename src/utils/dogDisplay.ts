@@ -1,4 +1,4 @@
-import type { Dog } from '../types'
+import { PRIMARY_DOG_KEY, type Dog, type DogCareNotes, type DogSize } from '../types'
 
 type DogLike = Pick<Dog, 'name' | 'breed' | 'additionalDogs'>
 
@@ -25,4 +25,53 @@ export function dogSearchText(dog: DogLike & { ownerName: string }): string {
   return [dog.name, dog.breed, ...dog.additionalDogs.flatMap((d) => [d.name, d.breed]), dog.ownerName]
     .join(' ')
     .toLowerCase()
+}
+
+export interface GroupDog extends DogCareNotes {
+  key: string   // PRIMARY_DOG_KEY or the group member's id — matches CareScheduleEntry.forDog
+  name: string
+  breed: string
+  size: DogSize
+  photoUrl?: string
+}
+
+export const CARE_NOTE_FIELDS = [
+  'behaviorNotes',
+  'foodNotes',
+  'medicationNotes',
+  'walkNotes',
+  'emergencyNotes',
+  'otherNotes',
+  'hasAllergies',
+  'allergyNotes',
+  'goesToDogParks',
+  'dogParkNotes',
+] as const satisfies readonly (keyof DogCareNotes)[]
+
+export function pickCareNotes(src: DogCareNotes): DogCareNotes {
+  return Object.fromEntries(CARE_NOTE_FIELDS.map((f) => [f, src[f]])) as unknown as DogCareNotes
+}
+
+/** Every dog on the profile, the profile's own dog first. */
+export function dogGroup(
+  dog: Pick<Dog, 'name' | 'breed' | 'size' | 'photoUrl' | 'additionalDogs'> & DogCareNotes,
+): GroupDog[] {
+  return [
+    { ...pickCareNotes(dog), key: PRIMARY_DOG_KEY, name: dog.name, breed: dog.breed, size: dog.size, photoUrl: dog.photoUrl },
+    ...dog.additionalDogs.map((m) => ({
+      ...pickCareNotes(m),
+      key: m.id,
+      name: m.name,
+      breed: m.breed,
+      size: m.size,
+      photoUrl: m.photoUrl,
+    })),
+  ]
+}
+
+/** Name of the dog a schedule entry is limited to, or undefined when it's for every dog. */
+export function scheduleEntryDogName(dog: DogLike & { additionalDogs: { id: string }[] }, forDog?: string): string | undefined {
+  if (!forDog) return undefined
+  if (forDog === PRIMARY_DOG_KEY) return dog.name
+  return dog.additionalDogs.find((m) => m.id === forDog)?.name
 }

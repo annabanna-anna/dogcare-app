@@ -1,5 +1,5 @@
 import type { Dog, Stay, Task, TaskType } from '../types'
-import { dogDisplayName } from './dogDisplay'
+import { dogDisplayName, scheduleEntryDogName } from './dogDisplay'
 
 const TASK_TITLES: Record<TaskType, string> = {
   walk: 'Walk',
@@ -38,7 +38,7 @@ export function generateTasksForStay(dog: Dog, stay: Stay): Task[] {
         id: `generated-${stay.id}-${taskIndex++}`,
         stayId: stay.id,
         dogId: dog.id,
-        dogName: dogDisplayName(dog),
+        dogName: scheduleEntryDogName(dog, entry.forDog) ?? dogDisplayName(dog),
         type: entry.taskType,
         title,
         scheduledTime: scheduledTime.toISOString(),

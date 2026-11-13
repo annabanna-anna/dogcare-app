@@ -85,15 +85,21 @@ function SettingRow({
   label,
   description,
   right,
+  danger = false,
 }: {
   icon: React.ReactNode
   label: string
   description?: string
   right?: React.ReactNode
+  danger?: boolean
 }) {
   return (
     <div className="flex items-center gap-3 py-4">
-      <div className="size-9 rounded-[10px] bg-[#f3f4f6] flex items-center justify-center shrink-0 text-text-secondary">
+      <div
+        className={`size-9 rounded-[10px] flex items-center justify-center shrink-0 ${
+          danger ? 'bg-[#fee2e2] text-[#b91c1c]' : 'bg-[#f3f4f6] text-text-secondary'
+        }`}
+      >
         {icon}
       </div>
       <div className="flex-1 min-w-0">
@@ -563,6 +569,7 @@ export default function SyncSettingsPage() {
               <SettingRow
                 icon={<Trash2 size={18} />}
                 label="Delete Account"
+                danger
                 description="Permanently remove your HeyPup data"
                 right={<ChevronRight size={18} className="text-[#d1d1d1]" />}
               />

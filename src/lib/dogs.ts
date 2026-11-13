@@ -1,19 +1,24 @@
 import { supabase } from './supabase'
-import type { CareScheduleEntry, Dog, DogGroupMember, DogSize, YesNoUnsure } from '../types'
+import type { CareScheduleEntry, Dog, DogCareNotes, DogGroupMember, DogSize, YesNoUnsure } from '../types'
 import type { Database } from './database.types'
 
 type DogRow = Database['public']['Tables']['dogs']['Row']
 
-function mapRow(row: DogRow): Dog {
+/** Group members saved before per-dog care existed have no id/photo/notes of
+ *  their own — they shared the profile's notes, so they inherit them here. */
+function mapMember(raw: Partial<DogGroupMember>, i: number, shared: DogCareNotes): DogGroupMember {
   return {
-    id: row.id,
-    name: row.name,
-    breed: row.breed,
-    size: row.size,
-    additionalDogs: row.additional_dogs ?? [],
-    ownerName: row.owner_name,
-    ownerContact: row.owner_contact,
-    photoUrl: row.photo_url ?? undefined,
+    ...shared,
+    ...raw,
+    id: raw.id ?? `member-${i + 1}`,
+    name: raw.name ?? '',
+    breed: raw.breed ?? '',
+    size: raw.size ?? 'medium',
+  }
+}
+
+function mapRow(row: DogRow): Dog {
+  const care: DogCareNotes = {
     behaviorNotes: row.behavior_notes,
     foodNotes: row.food_notes,
     medicationNotes: row.medication_notes,
@@ -24,6 +29,17 @@ function mapRow(row: DogRow): Dog {
     allergyNotes: row.allergy_notes,
     goesToDogParks: row.goes_to_dog_parks,
     dogParkNotes: row.dog_park_notes ?? '',
+  }
+  return {
+    id: row.id,
+    name: row.name,
+    breed: row.breed,
+    size: row.size,
+    additionalDogs: (row.additional_dogs ?? []).map((m, i) => mapMember(m, i, care)),
+    ownerName: row.owner_name,
+    ownerContact: row.owner_contact,
+    photoUrl: row.photo_url ?? undefined,
+    ...care,
     walkTimeFlexible: row.walk_time_flexible,
     careSchedule: row.care_schedule ?? [],
     createdAt: row.created_at,
@@ -137,19 +153,23 @@ export async function updateDog(id: string, input: DogInput): Promise<Dog> {
   return mapRow(data)
 }
 
-/** Deletes the dog row (stays/tasks cascade via FK) and its photo, if any. */
+/** Deletes the dog row (stays/tasks cascade via FK) and its photos, if any. */
 export async function deleteDog(id: string): Promise<void> {
   const ownerId = await currentUserId()
   const { error } = await supabase.from('dogs').delete().eq('id', id)
   if (error) throw error
   // Best-effort cleanup — a missing/already-gone object shouldn't fail the delete.
-  await supabase.storage.from('dog-photos').remove([`${ownerId}/${id}.jpg`])
+  // Group members' photos live next to the main one as `<id>-<memberId>.jpg`.
+  const { data: files } = await supabase.storage.from('dog-photos').list(ownerId, { search: id })
+  const paths = (files ?? []).map((f) => `${ownerId}/${f.name}`)
+  await supabase.storage.from('dog-photos').remove(paths.length ? paths : [`${ownerId}/${id}.jpg`])
 }
 
-/** Uploads to the owner-scoped `dog-photos` bucket and returns a cache-busted public URL. */
-export async function uploadDogPhoto(dogId: string, blob: Blob): Promise<string> {
+/** Uploads to the owner-scoped `dog-photos` bucket and returns a cache-busted public URL.
+ *  Pass memberId for a group member's photo. */
+export async function uploadDogPhoto(dogId: string, blob: Blob, memberId?: string): Promise<string> {
   const ownerId = await currentUserId()
-  const path = `${ownerId}/${dogId}.jpg`
+  const path = `${ownerId}/${memberId ? `${dogId}-${memberId}` : dogId}.jpg`
   const { error } = await supabase.storage
     .from('dog-photos')
     .upload(path, blob, { contentType: 'image/jpeg', upsert: true })

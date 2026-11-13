@@ -1,19 +1,29 @@
-import { useEffect, useRef, useState } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ImagePlus, RefreshCw, Trash2, Plus, ChevronDown, X } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
+import DogTabs from '../components/DogTabs'
+import DogIcon from '../components/icons/DogIcon'
 import { getDog, createDog, updateDog, uploadDogPhoto } from '../lib/dogs'
 import { regenerateFutureTasksForDog } from '../lib/stayTaskSync'
 import { TimePickerButton } from '../components/TimePicker'
 import { DOG_BREEDS } from '../data/dogBreeds'
-import type { CareScheduleEntry, DogGroupMember, DogSize, TaskType, YesNoUnsure } from '../types'
-import { dogDisplayName } from '../utils/dogDisplay'
+import {
+  PRIMARY_DOG_KEY,
+  type CareScheduleEntry,
+  type DogCareNotes,
+  type DogGroupMember,
+  type DogSize,
+  type TaskType,
+  type YesNoUnsure,
+} from '../types'
+import { dogDisplayName, pickCareNotes } from '../utils/dogDisplay'
 
 const MAX_DOGS_IN_GROUP = 3
 
 function emptyGroupMember(): DogGroupMember {
-  return { name: '', breed: '', size: 'medium' }
+  return { id: crypto.randomUUID(), name: '', breed: '', size: 'medium', ...pickCareNotes(defaultForm) }
 }
 
 const scheduleTypeOptions: { value: TaskType; label: string }[] = [
@@ -477,6 +487,192 @@ function PhotoCropField({
   )
 }
 
+/** One dog in the Dogs section: a summary row that folds the photo/name/breed/size
+ *  fields away. Folded content stays mounted (just hidden) so its photo can still save. */
+function DogCard({
+  open,
+  onToggle,
+  name,
+  breed,
+  size,
+  photoUrl,
+  children,
+}: {
+  open: boolean
+  onToggle: () => void
+  name: string
+  breed: string
+  size: DogSize
+  photoUrl?: string
+  children: React.ReactNode
+}) {
+  const sizeLabel = sizeOptions.find((o) => o.value === size)?.label ?? ''
+  const hasName = Boolean(name.trim())
+  return (
+    <div className="bg-white border border-border-light rounded-[16px] p-3 flex flex-col gap-3">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        className="flex items-center gap-3 text-left"
+      >
+        <span className="size-11 rounded-full overflow-hidden bg-[#f3f4f6] shrink-0 flex items-center justify-center text-text-muted">
+          {photoUrl ? (
+            <img src={photoUrl} alt="" className="size-full object-cover" />
+          ) : (
+            <DogIcon size={22} />
+          )}
+        </span>
+        <span className="flex-1 min-w-0">
+          <span
+            className={`block font-dm font-bold text-[16px] truncate ${
+              hasName ? 'text-text-primary' : 'text-text-muted'
+            }`}
+          >
+            {hasName ? name : 'New dog'}
+          </span>
+          <span className="block font-dm text-[13px] text-text-muted truncate">
+            {hasName
+              ? [breed.trim(), sizeLabel].filter(Boolean).join(' · ')
+              : 'Add a photo, name, breed and size'}
+          </span>
+        </span>
+        <ChevronDown
+          size={20}
+          className={`text-text-muted shrink-0 transition-transform duration-300 ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+      <div className={open ? 'flex flex-col gap-3' : 'hidden'}>{children}</div>
+    </div>
+  )
+}
+
+function DogSizePicker({ value, onChange }: { value: DogSize; onChange: (v: DogSize) => void }) {
+  return (
+    <div className="flex gap-2">
+      {sizeOptions.map(({ value: v, label, weight }) => (
+        <button
+          key={v}
+          type="button"
+          onClick={() => onChange(v)}
+          className={`flex-1 py-2.5 rounded-[12px] border transition-colors ${
+            value === v
+              ? 'bg-coral border-coral text-white'
+              : 'bg-white border-border-light text-text-secondary'
+          }`}
+        >
+          <span className="font-dm font-bold text-[14px] block leading-tight">{label}</span>
+          <span
+            className={`font-dm text-[11px] block leading-tight ${
+              value === v ? 'text-white/80' : 'text-text-muted'
+            }`}
+          >
+            {weight}
+          </span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+interface PhotoHandle {
+  src: () => string | null
+  /** Renders the visible crop rectangle to a JPEG Blob. Returns undefined if the
+   *  source image can't be read into a canvas (e.g. a remote photo without CORS). */
+  bake: () => Promise<Blob | undefined>
+}
+
+/** PhotoCropField that owns its own crop state, so each dog in a group can have one. */
+const DogPhotoField = forwardRef<
+  PhotoHandle,
+  { initialSrc: string | null; onSrcChange?: (src: string | null) => void }
+>(function DogPhotoField({ initialSrc, onSrcChange }, ref) {
+  const [src, setSrc] = useState(initialSrc)
+  const [pan, setPan] = useState({ x: 0, y: 0 })
+  const [zoom, setZoom] = useState(1)
+  const [natural, setNatural] = useState<{ w: number; h: number } | null>(null)
+  const boxRef = useRef<HTMLDivElement>(null)
+  // Only re-crop/re-upload when the user picked, dragged, or zoomed — an untouched
+  // saved photo keeps its URL.
+  const dirty = useRef(false)
+  // The crop box is hidden while its dog card is collapsed (0×0), so bake from
+  // the last size it was seen at.
+  const lastBox = useRef<{ width: number; height: number } | null>(null)
+  useLayoutEffect(() => {
+    const r = boxRef.current?.getBoundingClientRect()
+    if (r && r.width > 0) lastBox.current = { width: r.width, height: r.height }
+  })
+
+  useImperativeHandle(ref, () => ({
+    src: () => src,
+    async bake() {
+      const box = lastBox.current
+      if (!dirty.current || !src || !natural || !box) return undefined
+      const s = Math.max(box.width / natural.w, box.height / natural.h) * zoom
+      try {
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        img.src = src
+        await img.decode()
+        const canvas = document.createElement('canvas')
+        canvas.width = 800
+        canvas.height = 800
+        const ctx = canvas.getContext('2d')
+        if (!ctx) return undefined
+        ctx.drawImage(img, -pan.x / s, -pan.y / s, box.width / s, box.height / s, 0, 0, 800, 800)
+        return await new Promise<Blob | undefined>((resolve) =>
+          canvas.toBlob((blob) => resolve(blob ?? undefined), 'image/jpeg', 0.85),
+        )
+      } catch {
+        return undefined
+      }
+    },
+  }))
+
+  function changeSrc(next: string | null) {
+    setSrc(next)
+    onSrcChange?.(next)
+  }
+
+  return (
+    <PhotoCropField
+      src={src}
+      pan={pan}
+      zoom={zoom}
+      natural={natural}
+      boxRef={boxRef}
+      onPick={(dataUrl) => {
+        dirty.current = true
+        changeSrc(dataUrl)
+        setPan({ x: 0, y: 0 })
+        setZoom(1)
+        setNatural(null)
+      }}
+      onRemove={() => {
+        changeSrc(null)
+        setNatural(null)
+      }}
+      onPanChange={(p) => {
+        dirty.current = true
+        setPan(p)
+      }}
+      onZoomChange={(z) => {
+        dirty.current = true
+        setZoom(z)
+      }}
+      onNatural={(n) => {
+        setNatural(n)
+        // center the image in the crop box initially
+        if (boxRef.current) {
+          const box = boxRef.current.getBoundingClientRect()
+          const s = Math.max(box.width / n.w, box.height / n.h)
+          setPan({ x: (box.width - n.w * s) / 2, y: (box.height - n.h * s) / 2 })
+        }
+      }}
+    />
+  )
+})
+
 export default function AddEditDogPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -489,18 +685,20 @@ export default function AddEditDogPage() {
     ownerName: searchParams.get('owner') ?? defaultForm.ownerName,
   }))
   const [schedule, setSchedule] = useState<CareScheduleEntry[]>([])
-  const [photoSrc, setPhotoSrc] = useState<string | null>(null)
+  // Current photo per dog (PRIMARY_DOG_KEY or member id) — seeds each DogPhotoField
+  // and shows in the care-notes dog tabs.
+  const [photos, setPhotos] = useState<Record<string, string | null>>({})
+  const mainPhotoRef = useRef<PhotoHandle>(null)
+  const memberPhotoRefs = useRef<Record<string, PhotoHandle | null>>({})
+  const [careKey, setCareKey] = useState(PRIMARY_DOG_KEY)
+  // Which dog cards are unfolded. Editing starts all folded; adding starts with the new dog open.
+  const [openDogs, setOpenDogs] = useState<Set<string>>(() => new Set(isEdit ? [] : [PRIMARY_DOG_KEY]))
   const [existingId, setExistingId] = useState<string | null>(null)
   const [existingName, setExistingName] = useState('Dog')
   const [loadingExisting, setLoadingExisting] = useState(isEdit)
   const [notFound, setNotFound] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  const [pan, setPan] = useState({ x: 0, y: 0 })
-  const [zoom, setZoom] = useState(1)
-  const [natural, setNatural] = useState<{ w: number; h: number } | null>(null)
-  const boxRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!isEdit || !id) return
@@ -532,7 +730,10 @@ export default function AddEditDogPage() {
           walkTimeFlexible: d.walkTimeFlexible,
         })
         setSchedule(d.careSchedule.map((e) => ({ ...e })))
-        setPhotoSrc(d.photoUrl ?? null)
+        setPhotos({
+          [PRIMARY_DOG_KEY]: d.photoUrl ?? null,
+          ...Object.fromEntries(d.additionalDogs.map((m) => [m.id, m.photoUrl ?? null])),
+        })
         setExistingId(d.id)
         setExistingName(dogDisplayName(d))
       })
@@ -547,32 +748,9 @@ export default function AddEditDogPage() {
     return (value: FormState[K]) => setForm((prev) => ({ ...prev, [key]: value }))
   }
 
-  /** Renders the visible crop rectangle to a JPEG Blob. Returns undefined if the
-   *  source image can't be read into a canvas (e.g. a remote photo without CORS). */
-  async function bakePhotoBlob(): Promise<Blob | undefined> {
-    if (!photoSrc || !natural || !boxRef.current) return undefined
-    const box = boxRef.current.getBoundingClientRect()
-    const s = Math.max(box.width / natural.w, box.height / natural.h) * zoom
-    try {
-      const img = new Image()
-      img.crossOrigin = 'anonymous'
-      img.src = photoSrc
-      await img.decode()
-      const canvas = document.createElement('canvas')
-      canvas.width = 800
-      canvas.height = 800
-      const ctx = canvas.getContext('2d')
-      if (!ctx) return undefined
-      ctx.drawImage(img, -pan.x / s, -pan.y / s, box.width / s, box.height / s, 0, 0, 800, 800)
-      return await new Promise<Blob | undefined>((resolve) =>
-        canvas.toBlob((blob) => resolve(blob ?? undefined), 'image/jpeg', 0.85),
-      )
-    } catch {
-      return undefined
-    }
-  }
-
   const [scheduleWarning, setScheduleWarning] = useState<'empty' | 'no-walk' | null>(null)
+  // Index of the group member awaiting "Remove this dog?" confirmation.
+  const [confirmRemoveIndex, setConfirmRemoveIndex] = useState<number | null>(null)
   const [nameTouched, setNameTouched] = useState(false)
   const [additionalNameTouched, setAdditionalNameTouched] = useState(false)
   const [otherTitleTouched, setOtherTitleTouched] = useState(false)
@@ -590,24 +768,56 @@ export default function AddEditDogPage() {
     }))
   }
 
+  function setDogOpen(key: string, open: boolean) {
+    setOpenDogs((prev) => {
+      const next = new Set(prev)
+      if (open) next.add(key)
+      else next.delete(key)
+      return next
+    })
+  }
+
   function addAdditionalDog() {
-    setForm((prev) => ({ ...prev, additionalDogs: [...prev.additionalDogs, emptyGroupMember()] }))
+    const member = emptyGroupMember()
+    setForm((prev) => ({ ...prev, additionalDogs: [...prev.additionalDogs, member] }))
+    setDogOpen(member.id, true)
   }
 
   function removeAdditionalDog(i: number) {
+    const removedId = form.additionalDogs[i]?.id
     setForm((prev) => ({
       ...prev,
       additionalDogs: prev.additionalDogs.filter((_, j) => j !== i),
     }))
+    // Entries only for this dog (e.g. its medication) shouldn't fall back to the others.
+    setSchedule((prev) => prev.filter((e) => e.forDog !== removedId))
   }
 
+  // Care notes are edited one dog at a time; the tabs pick which.
+  const careIndex = form.additionalDogs.findIndex((m) => m.id === careKey)
+  const care: DogCareNotes = careIndex >= 0 ? form.additionalDogs[careIndex] : form
+  function setCare<K extends keyof DogCareNotes>(key: K) {
+    return (value: DogCareNotes[K]) =>
+      careIndex >= 0
+        ? updateAdditionalDog(careIndex, { [key]: value } as Partial<DogGroupMember>)
+        : setForm((prev) => ({ ...prev, [key]: value }))
+  }
+  const groupDogs = [
+    { key: PRIMARY_DOG_KEY, name: form.name.trim(), photoUrl: photos[PRIMARY_DOG_KEY] ?? undefined },
+    ...form.additionalDogs.map((m) => ({ key: m.id, name: m.name.trim(), photoUrl: photos[m.id] ?? undefined })),
+  ]
+  const isGroup = groupDogs.length > 1
+
   function handleSubmit() {
+    // Unfold any card hiding a missing-name error.
     if (!form.name.trim()) {
       setNameTouched(true)
+      setDogOpen(PRIMARY_DOG_KEY, true)
       return
     }
     if (hasMissingAdditionalName) {
       setAdditionalNameTouched(true)
+      setOpenDogs((prev) => new Set([...prev, ...form.additionalDogs.filter((m) => !m.name.trim()).map((m) => m.id)]))
       return
     }
     if (schedule.length === 0) {
@@ -631,16 +841,23 @@ export default function AddEditDogPage() {
     try {
       const dogId = existingId ?? crypto.randomUUID()
 
-      let photoUrl: string | null
-      if (photoSrc === null) {
-        photoUrl = null
-      } else {
-        const blob = await bakePhotoBlob()
-        photoUrl = blob ? await uploadDogPhoto(dogId, blob) : photoSrc
+      async function savePhoto(handle: PhotoHandle | null | undefined, memberId?: string) {
+        const src = handle?.src() ?? null
+        if (src === null) return null
+        const blob = await handle?.bake()
+        return blob ? await uploadDogPhoto(dogId, blob, memberId) : src
       }
 
+      const photoUrl = await savePhoto(mainPhotoRef.current)
+      const additionalDogs = await Promise.all(
+        form.additionalDogs.map(async (m) => ({
+          ...m,
+          photoUrl: (await savePhoto(memberPhotoRefs.current[m.id], m.id)) ?? undefined,
+        })),
+      )
+
       const careSchedule = [...schedule].sort((a, b) => a.time.localeCompare(b.time))
-      const input = { ...form, photoUrl, careSchedule }
+      const input = { ...form, additionalDogs, photoUrl, careSchedule }
 
       if (isEdit && existingId) {
         const updated = await updateDog(existingId, input)
@@ -701,101 +918,70 @@ export default function AddEditDogPage() {
 
       <div className="px-6 mt-4 flex flex-col gap-5">
 
-        {/* Photo */}
+        {/* Owner Info — shared by every dog, so it comes first */}
         <section>
           <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-3">
-            Photo
+            Owner
           </p>
-          <PhotoCropField
-            src={photoSrc}
-            pan={pan}
-            zoom={zoom}
-            natural={natural}
-            boxRef={boxRef}
-            onPick={(dataUrl) => {
-              setPhotoSrc(dataUrl)
-              setPan({ x: 0, y: 0 })
-              setZoom(1)
-              setNatural(null)
-            }}
-            onRemove={() => {
-              setPhotoSrc(null)
-              setNatural(null)
-            }}
-            onPanChange={setPan}
-            onZoomChange={setZoom}
-            onNatural={(n) => {
-              setNatural(n)
-              // center the image in the crop box initially
-              if (boxRef.current) {
-                const box = boxRef.current.getBoundingClientRect()
-                const s = Math.max(box.width / n.w, box.height / n.h)
-                setPan({ x: (box.width - n.w * s) / 2, y: (box.height - n.h * s) / 2 })
-              }
-            }}
-          />
+          <div>
+            <FieldLabel>Owner Name</FieldLabel>
+            <Input value={form.ownerName} onChange={set('ownerName')} placeholder="e.g. Sarah or Sarah K." />
+          </div>
         </section>
 
-        {/* Basic Info */}
+        {/* Dogs — one collapsible card per dog */}
         <section>
           <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-3">
-            Basic Info
+            Dogs
           </p>
           <div className="flex flex-col gap-3">
-            <div>
-              <FieldLabel required>Dog's Name</FieldLabel>
-              <Input value={form.name} onChange={set('name')} placeholder="e.g. Ollie" />
-              {nameTouched && !form.name.trim() && (
-                <p className="font-dm text-[12px] text-[#b91c1c] mt-1">Dog's name is required.</p>
-              )}
-            </div>
-            <div>
-              <FieldLabel>Breed</FieldLabel>
-              <BreedField value={form.breed} onChange={set('breed')} />
-            </div>
-            <div>
-              <FieldLabel>Size</FieldLabel>
-              <div className="flex gap-2">
-                {sizeOptions.map(({ value, label, weight }) => (
-                  <button
-                    key={value}
-                    onClick={() => set('size')(value)}
-                    className={`flex-1 py-2.5 rounded-[12px] border transition-colors ${
-                      form.size === value
-                        ? 'bg-coral border-coral text-white'
-                        : 'bg-white border-border-light text-text-secondary'
-                    }`}
-                  >
-                    <span className="font-dm font-bold text-[14px] block leading-tight">{label}</span>
-                    <span
-                      className={`font-dm text-[11px] block leading-tight ${
-                        form.size === value ? 'text-white/80' : 'text-text-muted'
-                      }`}
-                    >
-                      {weight}
-                    </span>
-                  </button>
-                ))}
+            <DogCard
+              open={openDogs.has(PRIMARY_DOG_KEY)}
+              onToggle={() => setDogOpen(PRIMARY_DOG_KEY, !openDogs.has(PRIMARY_DOG_KEY))}
+              name={form.name}
+              breed={form.breed}
+              size={form.size}
+              photoUrl={photos[PRIMARY_DOG_KEY] ?? undefined}
+            >
+              <DogPhotoField
+                ref={mainPhotoRef}
+                initialSrc={photos[PRIMARY_DOG_KEY] ?? null}
+                onSrcChange={(src) => setPhotos((prev) => ({ ...prev, [PRIMARY_DOG_KEY]: src }))}
+              />
+              <div>
+                <FieldLabel required>Dog's Name</FieldLabel>
+                <Input value={form.name} onChange={set('name')} placeholder="e.g. Ollie" />
+                {nameTouched && !form.name.trim() && (
+                  <p className="font-dm text-[12px] text-[#b91c1c] mt-1">Dog's name is required.</p>
+                )}
               </div>
-            </div>
+              <div>
+                <FieldLabel>Breed</FieldLabel>
+                <BreedField value={form.breed} onChange={set('breed')} />
+              </div>
+              <div>
+                <FieldLabel>Size</FieldLabel>
+                <DogSizePicker value={form.size} onChange={set('size')} />
+              </div>
+            </DogCard>
 
             {form.additionalDogs.map((member, i) => (
-              <div
-                key={i}
-                className="border-t border-border-faint pt-3 mt-1 flex flex-col gap-3"
+              <DogCard
+                key={member.id}
+                open={openDogs.has(member.id)}
+                onToggle={() => setDogOpen(member.id, !openDogs.has(member.id))}
+                name={member.name}
+                breed={member.breed}
+                size={member.size}
+                photoUrl={photos[member.id] ?? undefined}
               >
-                <div className="flex items-center justify-between">
-                  <p className="font-dm font-bold text-[12px] text-text-secondary uppercase tracking-widest">
-                    Dog {i + 2}
-                  </p>
-                  <button
-                    onClick={() => removeAdditionalDog(i)}
-                    aria-label="Remove this dog"
-                    className="size-8 rounded-full bg-[#f3f4f6] flex items-center justify-center text-text-secondary shrink-0 active:bg-[#e5e7eb] transition-colors"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
+                <DogPhotoField
+                  ref={(h) => {
+                    memberPhotoRefs.current[member.id] = h
+                  }}
+                  initialSrc={photos[member.id] ?? null}
+                  onSrcChange={(src) => setPhotos((prev) => ({ ...prev, [member.id]: src }))}
+                />
                 <div>
                   <FieldLabel required>Dog's Name</FieldLabel>
                   <Input
@@ -818,59 +1004,30 @@ export default function AddEditDogPage() {
                 </div>
                 <div>
                   <FieldLabel>Size</FieldLabel>
-                  <div className="flex gap-2">
-                    {sizeOptions.map(({ value, label, weight }) => (
-                      <button
-                        key={value}
-                        onClick={() => updateAdditionalDog(i, { size: value })}
-                        className={`flex-1 py-2.5 rounded-[12px] border transition-colors ${
-                          member.size === value
-                            ? 'bg-coral border-coral text-white'
-                            : 'bg-white border-border-light text-text-secondary'
-                        }`}
-                      >
-                        <span className="font-dm font-bold text-[14px] block leading-tight">
-                          {label}
-                        </span>
-                        <span
-                          className={`font-dm text-[11px] block leading-tight ${
-                            member.size === value ? 'text-white/80' : 'text-text-muted'
-                          }`}
-                        >
-                          {weight}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
+                  <DogSizePicker
+                    value={member.size}
+                    onChange={(v) => updateAdditionalDog(i, { size: v })}
+                  />
                 </div>
-              </div>
+                <button
+                  type="button"
+                  onClick={() => setConfirmRemoveIndex(i)}
+                  className="self-center py-1 font-dm font-bold text-[13px] text-[#b91c1c]"
+                >
+                  Remove {member.name.trim() || 'this dog'} from this profile
+                </button>
+              </DogCard>
             ))}
 
             {form.additionalDogs.length < MAX_DOGS_IN_GROUP - 1 && (
-              <div className="mt-4">
-                <p className="font-dm text-[13px] text-text-secondary mb-2">
-                  Sitting more than one dog for this owner with the same care and schedule?
-                </p>
-                <button
-                  onClick={addAdditionalDog}
-                  className="w-full py-3 rounded-[12px] border-2 border-dashed border-border-light flex items-center justify-center gap-1.5 font-dm font-bold text-[14px] text-text-secondary active:bg-gray-50 transition-colors"
-                >
-                  <Plus size={16} />
-                  Add another dog from the same owner
-                </button>
-              </div>
+              <button
+                onClick={addAdditionalDog}
+                className="w-full py-3 rounded-[12px] border-2 border-dashed border-border-light flex items-center justify-center gap-1.5 font-dm font-bold text-[14px] text-text-secondary active:bg-gray-50 transition-colors"
+              >
+                <Plus size={16} />
+                Add another dog from the same owner
+              </button>
             )}
-          </div>
-        </section>
-
-        {/* Owner Info */}
-        <section>
-          <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-3">
-            Owner
-          </p>
-          <div>
-            <FieldLabel>Owner Name</FieldLabel>
-            <Input value={form.ownerName} onChange={set('ownerName')} placeholder="e.g. Sarah or Sarah K." />
           </div>
         </section>
 
@@ -879,20 +1036,29 @@ export default function AddEditDogPage() {
           <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-3">
             Care Instructions
           </p>
+          {isGroup && (
+            <div className="mb-4">
+              <DogTabs
+                dogs={groupDogs}
+                value={careIndex >= 0 ? careKey : PRIMARY_DOG_KEY}
+                onChange={setCareKey}
+              />
+            </div>
+          )}
           <div className="flex flex-col gap-3">
             <div>
               <FieldLabel>Behavior Notes</FieldLabel>
               <Textarea
-                value={form.behaviorNotes}
-                onChange={set('behaviorNotes')}
+                value={care.behaviorNotes}
+                onChange={setCare('behaviorNotes')}
                 placeholder="Temperament, fears, habits, social behavior..."
               />
             </div>
             <div>
               <FieldLabel>Food Notes</FieldLabel>
               <Textarea
-                value={form.foodNotes}
-                onChange={set('foodNotes')}
+                value={care.foodNotes}
+                onChange={setCare('foodNotes')}
                 placeholder="Food type, portion size, allergies, schedule..."
               />
             </div>
@@ -902,9 +1068,9 @@ export default function AddEditDogPage() {
                 {yesNoUnsureOptions.map(({ value, label }) => (
                   <button
                     key={value}
-                    onClick={() => set('hasAllergies')(value)}
+                    onClick={() => setCare('hasAllergies')(value)}
                     className={`flex-1 py-2.5 rounded-[12px] border font-dm font-bold text-[14px] transition-colors ${
-                      form.hasAllergies === value
+                      care.hasAllergies === value
                         ? 'bg-coral border-coral text-white'
                         : 'bg-white border-border-light text-text-secondary'
                     }`}
@@ -913,13 +1079,13 @@ export default function AddEditDogPage() {
                   </button>
                 ))}
               </div>
-              {form.hasAllergies !== 'unsure' && (
+              {care.hasAllergies !== 'unsure' && (
                 <div className="mt-2">
                   <Textarea
-                    value={form.allergyNotes}
-                    onChange={set('allergyNotes')}
+                    value={care.allergyNotes}
+                    onChange={setCare('allergyNotes')}
                     placeholder={
-                      form.hasAllergies === 'yes'
+                      care.hasAllergies === 'yes'
                         ? 'Which allergen(s)? e.g. chicken, beef, grain...'
                         : 'Anything to watch? e.g. sensitive stomach, avoid rich treats'
                     }
@@ -934,9 +1100,9 @@ export default function AddEditDogPage() {
                 {yesNoUnsureOptions.map(({ value, label }) => (
                   <button
                     key={value}
-                    onClick={() => set('goesToDogParks')(value)}
+                    onClick={() => setCare('goesToDogParks')(value)}
                     className={`flex-1 py-2.5 rounded-[12px] border font-dm font-bold text-[14px] transition-colors ${
-                      form.goesToDogParks === value
+                      care.goesToDogParks === value
                         ? 'bg-coral border-coral text-white'
                         : 'bg-white border-border-light text-text-secondary'
                     }`}
@@ -945,13 +1111,13 @@ export default function AddEditDogPage() {
                   </button>
                 ))}
               </div>
-              {form.goesToDogParks !== 'unsure' && (
+              {care.goesToDogParks !== 'unsure' && (
                 <div className="mt-2">
                   <Textarea
-                    value={form.dogParkNotes}
-                    onChange={set('dogParkNotes')}
+                    value={care.dogParkNotes}
+                    onChange={setCare('dogParkNotes')}
                     placeholder={
-                      form.goesToDogParks === 'yes'
+                      care.goesToDogParks === 'yes'
                         ? 'Any conditions? e.g. fully fenced parks only, small-dog area...'
                         : 'Anything to know? e.g. reactive with big dogs'
                     }
@@ -963,24 +1129,24 @@ export default function AddEditDogPage() {
             <div>
               <FieldLabel>Medication Notes</FieldLabel>
               <Textarea
-                value={form.medicationNotes}
-                onChange={set('medicationNotes')}
+                value={care.medicationNotes}
+                onChange={setCare('medicationNotes')}
                 placeholder="Medication names, doses, timing..."
               />
             </div>
             <div>
               <FieldLabel>Walk Notes</FieldLabel>
               <Textarea
-                value={form.walkNotes}
-                onChange={set('walkNotes')}
+                value={care.walkNotes}
+                onChange={setCare('walkNotes')}
                 placeholder="Duration, preferred routes, leash behavior..."
               />
             </div>
             <div>
               <FieldLabel>Emergency Notes</FieldLabel>
               <Textarea
-                value={form.emergencyNotes}
-                onChange={set('emergencyNotes')}
+                value={care.emergencyNotes}
+                onChange={setCare('emergencyNotes')}
                 placeholder="Vet name & number, emergency contacts, allergies..."
                 rows={4}
               />
@@ -988,8 +1154,8 @@ export default function AddEditDogPage() {
             <div>
               <FieldLabel>Other Notes</FieldLabel>
               <Textarea
-                value={form.otherNotes}
-                onChange={set('otherNotes')}
+                value={care.otherNotes}
+                onChange={setCare('otherNotes')}
                 placeholder="Anything else worth knowing..."
               />
             </div>
@@ -1059,6 +1225,34 @@ export default function AddEditDogPage() {
                     <X size={14} />
                   </button>
                 </div>
+                {isGroup && (
+                  <div className="flex items-center gap-2">
+                    <span className="font-dm text-[12px] text-text-secondary shrink-0">For</span>
+                    <div className="flex flex-wrap gap-1">
+                      {[
+                        { key: undefined, name: groupDogs.length === 2 ? 'Both' : 'All dogs' },
+                        ...groupDogs,
+                      ].map((d) => (
+                        <button
+                          key={d.key ?? 'all'}
+                          type="button"
+                          onClick={() =>
+                            setSchedule((prev) =>
+                              prev.map((en, j) => (j === i ? { ...en, forDog: d.key } : en)),
+                            )
+                          }
+                          className={`px-3 py-1 rounded-full border font-dm font-bold text-[12px] transition-colors ${
+                            entry.forDog === d.key
+                              ? 'bg-coral border-coral text-white'
+                              : 'bg-white border-border-light text-text-secondary'
+                          }`}
+                        >
+                          {d.name || 'Unnamed'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {entry.taskType === 'other' && (
                   <div>
                     <input
@@ -1121,6 +1315,43 @@ export default function AddEditDogPage() {
           {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Dog'}
         </Button>
       </div>
+
+      {/* Remove-dog confirmation — removing drops that dog's photo, notes, and own schedule entries */}
+      {confirmRemoveIndex !== null && (() => {
+        const dogName = form.additionalDogs[confirmRemoveIndex]?.name.trim() || `Dog ${confirmRemoveIndex + 2}`
+        return (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center px-6">
+            <div
+              className="absolute inset-0 bg-black/40"
+              onClick={() => setConfirmRemoveIndex(null)}
+            />
+            <div className="relative w-full max-w-[380px] bg-cream rounded-[22px] p-6">
+              <p className="font-outfit font-bold text-[20px] text-text-primary leading-tight mb-2">
+                Remove {dogName}?
+              </p>
+              <p className="font-dm text-[14px] text-text-secondary leading-relaxed mb-5">
+                {dogName}'s photo, care notes, and any schedule times just for {dogName} will be
+                removed from this profile.
+              </p>
+              <div className="flex flex-col gap-2">
+                <Button
+                  fullWidth
+                  variant="danger"
+                  onClick={() => {
+                    removeAdditionalDog(confirmRemoveIndex)
+                    setConfirmRemoveIndex(null)
+                  }}
+                >
+                  Remove {dogName}
+                </Button>
+                <Button fullWidth variant="ghost" onClick={() => setConfirmRemoveIndex(null)}>
+                  Keep {dogName}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Missing-schedule / missing-walk confirmation */}
       {scheduleWarning && (

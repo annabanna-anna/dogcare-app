@@ -9,26 +9,14 @@ export interface CareScheduleEntry {
   taskType: TaskType
   note?: string
   customTitle?: string   // required when taskType is 'other' — short task title, e.g. "Nail trim"
+  forDog?: string        // one dog's key (PRIMARY_DOG_KEY or a group member's id); unset = every dog on the profile
 }
 
-/** A second or third dog sharing this profile's owner, care instructions,
- *  and schedule — e.g. two dogs from the same owner with identical care. */
-export interface DogGroupMember {
-  name: string
-  breed: string
-  size: DogSize
-}
+/** Key the profile's own (first) dog uses in CareScheduleEntry.forDog. */
+export const PRIMARY_DOG_KEY = 'primary'
 
-export interface Dog {
-  id: string
-  name: string
-  breed: string
-  size: DogSize
-  additionalDogs: DogGroupMember[]   // 0–2 more dogs sharing this profile
-  ownerName: string
-  ownerContact: string
-  photoUrl?: string
-  // Care instructions
+/** Care instructions kept per dog — each dog in a group has its own. */
+export interface DogCareNotes {
   behaviorNotes: string
   foodNotes: string
   medicationNotes: string
@@ -39,6 +27,27 @@ export interface Dog {
   allergyNotes: string   // which allergen(s) — optional detail when hasAllergies is 'yes' or 'no'
   goesToDogParks: YesNoUnsure
   dogParkNotes: string   // optional detail (e.g. fenced parks only) when goesToDogParks is 'yes' or 'no'
+}
+
+/** A second or third dog sharing this profile's owner, stays, and daily
+ *  schedule, with its own photo and care instructions. */
+export interface DogGroupMember extends DogCareNotes {
+  id: string
+  name: string
+  breed: string
+  size: DogSize
+  photoUrl?: string
+}
+
+export interface Dog extends DogCareNotes {
+  id: string
+  name: string
+  breed: string
+  size: DogSize
+  additionalDogs: DogGroupMember[]   // 0–2 more dogs sharing this profile
+  ownerName: string
+  ownerContact: string
+  photoUrl?: string
   // Regular daily schedule
   walkTimeFlexible: boolean
   careSchedule: CareScheduleEntry[]
