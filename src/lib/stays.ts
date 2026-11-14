@@ -11,6 +11,7 @@ function mapRow(row: StayRow): Stay {
     startDate: row.start_date,
     endDate: row.end_date,
     notes: row.notes ?? undefined,
+    dogKeys: row.dog_keys ?? undefined,
     createdAt: row.created_at,
   }
 }
@@ -32,6 +33,7 @@ export async function createStay(input: {
   startDate: string
   endDate: string
   notes?: string
+  dogKeys?: string[]
 }): Promise<Stay> {
   const ownerId = await currentUserId()
   const { data, error } = await supabase
@@ -42,6 +44,9 @@ export async function createStay(input: {
       start_date: input.startDate,
       end_date: input.endDate,
       notes: input.notes || null,
+      // Only sent for a partial stay, so whole-profile stays still save on a
+      // database that hasn't had the dog_keys column added yet
+      ...(input.dogKeys ? { dog_keys: input.dogKeys } : {}),
     })
     .select('*')
     .single()
@@ -57,7 +62,8 @@ export async function getStay(id: string): Promise<Stay | null> {
 
 export async function updateStay(
   id: string,
-  input: { startDate: string; endDate: string; notes?: string },
+  // dogKeys: null resets to every dog; undefined leaves it untouched
+  input: { startDate: string; endDate: string; notes?: string; dogKeys?: string[] | null },
 ): Promise<Stay> {
   const { data, error } = await supabase
     .from('stays')
@@ -65,6 +71,7 @@ export async function updateStay(
       start_date: input.startDate,
       end_date: input.endDate,
       notes: input.notes || null,
+      ...(input.dogKeys !== undefined ? { dog_keys: input.dogKeys } : {}),
     })
     .eq('id', id)
     .select('*')

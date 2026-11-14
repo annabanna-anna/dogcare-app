@@ -4,6 +4,7 @@ import { CalendarDays, ChevronDown, Check, Plus, Search, Trash2, X } from 'lucid
 import DogIcon from '../components/icons/DogIcon'
 import { TimePickerButton } from '../components/TimePicker'
 import PageHeader from '../components/PageHeader'
+import DogPhotoStack, { DogPhoto } from '../components/DogPhotoStack'
 import Button from '../components/Button'
 import { listDogs } from '../lib/dogs'
 import { getStay, updateStay, deleteStay } from '../lib/stays'
@@ -16,7 +17,16 @@ import {
   deletePushedTasksFromGoogle,
 } from '../lib/googleCalendar'
 import type { Dog } from '../types'
-import { dogDisplayBreed, dogDisplayName, dogSearchText } from '../utils/dogDisplay'
+import {
+  dogDisplayBreed,
+  dogDisplayName,
+  dogGroup,
+  dogSearchText,
+  dogsAtHome,
+  joinDogNames,
+  stayDisplayName,
+  stayingDogs,
+} from '../utils/dogDisplay'
 
 function pad(n: number) {
   return String(n).padStart(2, '0')
@@ -44,18 +54,16 @@ function roundUpToHour(date: Date): Date {
   return d
 }
 
-function DogAvatar({ dog, size }: { dog: Dog; size: number }) {
+/** A profile's photo — or its dogs stacked diagonally, first dog in front, like the Dogs page cards. */
+function ProfilePhoto({ dog, ringClassName }: { dog: Dog; ringClassName: string }) {
   return (
-    <div
-      className="rounded-[10px] overflow-hidden bg-[#f3f4f6] shrink-0 flex items-center justify-center"
-      style={{ width: size, height: size }}
-    >
-      {dog.photoUrl ? (
-        <img src={dog.photoUrl} alt={dog.name} className="size-full object-cover" />
-      ) : (
-        <DogIcon size={size * 0.5} className="text-text-muted" />
-      )}
-    </div>
+    <DogPhotoStack
+      dogs={[dog, ...dog.additionalDogs]}
+      size={44}
+      radius={10}
+      stackRadius={10}
+      ringClassName={ringClassName}
+    />
   )
 }
 
@@ -117,13 +125,13 @@ function DogPickerSheet({
               <button
                 key={dog.id}
                 onClick={() => onSelect(dog.id)}
-                className={`flex items-center gap-3 p-3 rounded-[14px] border transition-colors text-left shrink-0 ${
+                className={`flex items-center gap-3 p-3 rounded-[22px] border transition-colors text-left shrink-0 ${
                   isSelected
                     ? 'border-coral bg-[#fff5f3]'
                     : 'border-border-light bg-white active:bg-gray-50'
                 }`}
               >
-                <DogAvatar dog={dog} size={44} />
+                <ProfilePhoto dog={dog} ringClassName={isSelected ? 'ring-[#fff5f3]' : 'ring-white'} />
                 <div className="flex-1 min-w-0">
                   <p className="font-dm font-semibold text-[15px] text-text-primary leading-none">
                     {dogDisplayName(dog)}
@@ -146,7 +154,7 @@ function DogPickerSheet({
         <div className="px-6 pt-3 shrink-0">
           <button
             onClick={onAddDog}
-            className="w-full flex items-center gap-3 p-3 rounded-[14px] border border-dashed border-coral/40 text-left active:bg-[#fff5f3] transition-colors"
+            className="w-full flex items-center gap-3 p-3 rounded-[22px] border border-dashed border-coral/40 text-left active:bg-[#fff5f3] transition-colors"
           >
             <div className="size-11 rounded-[10px] bg-[#fff5f3] shrink-0 flex items-center justify-center">
               <Plus size={20} className="text-coral" />
@@ -204,6 +212,11 @@ function DateTimeField({
   )
 }
 
+/** Order-insensitive key for comparing dog selections; null (every dog) → "". */
+function dogKeysId(keys: string[] | null): string {
+  return (keys ?? []).slice().sort().join(',')
+}
+
 /** Parses an optional ISO date/datetime query param into day+time fields,
  *  falling back to the given default when absent or unparseable. */
 function parseDateParam(param: string | null, fallback: Date): { day: string; time: string } {
@@ -252,6 +265,15 @@ export default function StartStayPage() {
   const [endTime, setEndTime] = useState(endParam.time)
   const [endDayEdited, setEndDayEdited] = useState(isEditMode)
   const [notes, setNotes] = useState('')
+  // Which dogs on the profile are staying; null = every dog
+  const [dogKeys, setDogKeys] = useState<string[] | null>(null)
+  // Loaded values in edit mode — Save stays disabled until something differs
+  const [original, setOriginal] = useState<{
+    startDate: string
+    endDate: string
+    notes: string
+    dogKeys: string[] | null
+  } | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -287,6 +309,13 @@ export default function StartStayPage() {
         setEndTime(end.time)
         setEndDayEdited(true)
         setNotes(stay.notes ?? '')
+        setDogKeys(stay.dogKeys ?? null)
+        setOriginal({
+          startDate: combineLocalDateTime(start.day, start.time),
+          endDate: combineLocalDateTime(end.day, end.time),
+          notes: stay.notes ?? '',
+          dogKeys: stay.dogKeys ?? null,
+        })
       })
       .finally(() => !cancelled && setLoadingStay(false))
     return () => {
@@ -296,22 +325,43 @@ export default function StartStayPage() {
   }, [isEditMode, stayId])
 
   const selectedDog = dogs.find((d) => d.id === selectedDogId)
+  const group = selectedDog ? dogGroup(selectedDog) : []
+  const stayingKeys = new Set(selectedDog ? stayingDogs(selectedDog, dogKeys).map((d) => d.key) : [])
+  const homeNames = selectedDog ? joinDogNames(dogsAtHome(selectedDog, dogKeys).map((d) => d.name)) : ''
+  const stayName = selectedDog ? stayDisplayName(selectedDog, dogKeys) : ''
+
+  function toggleStaying(key: string) {
+    const next = stayingKeys.has(key)
+      ? [...stayingKeys].filter((k) => k !== key)
+      : [...stayingKeys, key]
+    if (next.length === 0) return // at least one dog has to be staying
+    // Profile order, and null once everyone's back on
+    setDogKeys(next.length === group.length ? null : group.map((d) => d.key).filter((k) => next.includes(k)))
+  }
+
   const startDate = combineLocalDateTime(startDay, startTime)
   const endDate = combineLocalDateTime(endDay, endTime)
 
   function handleGenerate() {
     if (!isValid) return
     navigate('/stays/preview', {
-      state: { dogId: selectedDogId, startDate, endDate, notes },
+      state: { dogId: selectedDogId, startDate, endDate, notes, dogKeys: dogKeys ?? undefined },
     })
   }
 
   async function handleSaveEdit() {
-    if (!isValid || !stayId || !selectedDog || saving) return
+    if (!isValid || !hasChanges || !stayId || !selectedDog || saving) return
     setSaving(true)
     setError(null)
     try {
-      const stay = await updateStay(stayId, { startDate, endDate, notes })
+      const stay = await updateStay(stayId, {
+        startDate,
+        endDate,
+        notes,
+        // Only touched when changed, so an untouched stay saves even before
+        // the dog_keys column exists
+        dogKeys: dogKeysChanged ? dogKeys : undefined,
+      })
       const oldTasks = await listTasksByStay(stayId)
       if (isGoogleCalendarConnected()) {
         // Clean up whatever these were pushed as before regenerating, so
@@ -353,6 +403,14 @@ export default function StartStayPage() {
 
   const isValid =
     selectedDogId && startDay && endDay && new Date(endDate) > new Date(startDate)
+  const dogKeysChanged = original !== null && dogKeysId(dogKeys) !== dogKeysId(original.dogKeys)
+  const hasChanges =
+    !isEditMode ||
+    (original !== null &&
+      (startDate !== original.startDate ||
+        endDate !== original.endDate ||
+        notes !== original.notes ||
+        dogKeysChanged))
 
   if (loadingStay) {
     return (
@@ -381,13 +439,13 @@ export default function StartStayPage() {
           <button
             onClick={() => !loading && !isEditMode && setPickerOpen(true)}
             disabled={loading || isEditMode}
-            className={`w-full flex items-center gap-3 p-3 rounded-[14px] border border-border-light bg-white transition-colors text-left ${
+            className={`w-full flex items-center gap-3 p-3 rounded-[22px] border border-border-light bg-white transition-colors text-left ${
               selectedDog ? '' : 'active:bg-gray-50'
             } ${isEditMode ? 'opacity-70' : ''}`}
           >
             {selectedDog ? (
               <>
-                <DogAvatar dog={selectedDog} size={44} />
+                <ProfilePhoto dog={selectedDog} ringClassName="ring-white" />
                 <div className="flex-1 min-w-0">
                   <p className="font-dm font-semibold text-[15px] text-text-primary leading-none">
                     {dogDisplayName(selectedDog)}
@@ -409,6 +467,48 @@ export default function StartStayPage() {
             )}
             {!isEditMode && <ChevronDown size={18} className="text-text-muted shrink-0" />}
           </button>
+
+          {/* Multi-dog profiles: everyone's on by default, tap a dog to leave it home */}
+          {group.length > 1 && (
+            <>
+              <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mt-5 mb-3">
+                Who's staying?
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {group.map((d) => {
+                  const on = stayingKeys.has(d.key)
+                  return (
+                    <button
+                      key={d.key}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => toggleStaying(d.key)}
+                      className={`flex items-center gap-2 rounded-full pl-1.5 pr-3.5 py-1.5 border transition-colors ${
+                        on ? 'border-coral bg-[#fff5f3]' : 'border-border-light bg-white active:bg-gray-50'
+                      }`}
+                    >
+                      <div className={on ? '' : 'opacity-40'}>
+                        {/* Round inside the pill (Shape Match Rule) */}
+                        <DogPhoto src={d.photoUrl} alt={d.name} iconSize={14} className="size-7 rounded-full shrink-0" />
+                      </div>
+                      <span
+                        className={`font-dm font-semibold text-[14px] ${
+                          on ? 'text-text-primary' : 'text-text-muted'
+                        }`}
+                      >
+                        {d.name}
+                      </span>
+                      {on ? (
+                        <Check size={16} className="text-coral" strokeWidth={2.5} />
+                      ) : (
+                        <Plus size={16} className="text-text-muted" />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </>
+          )}
         </section>
 
         {/* Date range */}
@@ -453,7 +553,7 @@ export default function StartStayPage() {
           fullWidth
           size="lg"
           onClick={isEditMode ? () => void handleSaveEdit() : handleGenerate}
-          disabled={!isValid || saving}
+          disabled={!isValid || !hasChanges || saving}
         >
           {isEditMode ? (saving ? 'Saving…' : 'Save Changes') : 'Generate Care Tasks'}
         </Button>
@@ -461,8 +561,9 @@ export default function StartStayPage() {
         {selectedDog && (
           <p className="font-dm text-[13px] text-text-secondary text-center">
             {isEditMode
-              ? `Care tasks will be regenerated from ${dogDisplayName(selectedDog)}'s care schedule for the new dates.`
-              : `Tasks will be generated from ${dogDisplayName(selectedDog)}'s care schedule.`}
+              ? `Care tasks will be regenerated from ${stayName}'s care schedule for the new dates.`
+              : `Tasks will be generated from ${stayName}'s care schedule.`}
+            {homeNames && ` Tasks just for ${homeNames} are skipped.`}
           </p>
         )}
 
@@ -486,7 +587,7 @@ export default function StartStayPage() {
             </p>
             <p className="font-dm text-[14px] text-text-secondary leading-relaxed mb-5">
               This removes the stay and every care task generated for it
-              {selectedDog ? ` for ${dogDisplayName(selectedDog)}` : ''}. This can't be undone.
+              {selectedDog ? ` for ${stayName}` : ''}. This can't be undone.
             </p>
             {deleteError && (
               <div className="bg-[#fee2e2] rounded-[12px] px-4 py-3 mb-3">
@@ -516,6 +617,7 @@ export default function StartStayPage() {
           selectedDogId={selectedDogId}
           onSelect={(id) => {
             setSelectedDogId(id)
+            setDogKeys(null)
             setPickerOpen(false)
           }}
           onClose={() => setPickerOpen(false)}

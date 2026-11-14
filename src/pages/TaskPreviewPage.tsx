@@ -11,7 +11,7 @@ import { generateTasksForStay } from '../utils/taskGenerator'
 import { isGoogleCalendarConnected, pushTasksToGoogleCalendar } from '../lib/googleCalendar'
 import { formatDayHeading, formatTime, toLocalDateKey } from '../utils/dateUtils'
 import type { Dog, Task, TaskType } from '../types'
-import { dogDisplayName } from '../utils/dogDisplay'
+import { stayDisplayName } from '../utils/dogDisplay'
 
 const typeIcon: Record<TaskType, React.ComponentType<{ size?: string | number; className?: string }>> = {
   walk: PawPrint,
@@ -34,6 +34,7 @@ interface LocationState {
   startDate: string
   endDate: string
   notes: string
+  dogKeys?: string[]
 }
 
 export default function TaskPreviewPage() {
@@ -69,6 +70,7 @@ export default function TaskPreviewPage() {
       startDate: state.startDate,
       endDate: state.endDate,
       notes: state.notes,
+      dogKeys: state.dogKeys,
       createdAt: new Date().toISOString(),
     })
   }, [dog, state])
@@ -117,6 +119,7 @@ export default function TaskPreviewPage() {
         startDate: state.startDate,
         endDate: state.endDate,
         notes: state.notes,
+        dogKeys: state.dogKeys,
       })
       const finalTasks = generateTasksForStay(dog, stay)
       // Push the rows createTasks returns, not finalTasks — only they carry
@@ -139,7 +142,7 @@ export default function TaskPreviewPage() {
       <PageHeader
         back
         title="Preview Tasks"
-        subtitle={`${dogDisplayName(dog)} · ${tasks.length} tasks`}
+        subtitle={`${stayDisplayName(dog, state.dogKeys)} · ${tasks.length} tasks`}
       />
 
       <div className="px-6 mt-4 flex flex-col gap-6">
@@ -155,7 +158,7 @@ export default function TaskPreviewPage() {
               No tasks generated
             </p>
             <p className="font-dm text-[14px] text-text-secondary">
-              {dogDisplayName(dog)} has no care schedule entries yet. Add them to the dog profile first.
+              {stayDisplayName(dog, state.dogKeys)} has no care schedule entries yet. Add them to the dog profile first.
             </p>
           </div>
         )}

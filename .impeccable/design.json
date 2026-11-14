@@ -97,6 +97,7 @@
     "rules": [
       { "name": "The One Voice Rule", "body": "Ember is the only color that carries free-floating meaning (status, action, active state) outside the fixed task-type set (green/ember/blue/gray) — if a color starts meaning \"done\" or \"urgent\" on its own, that's a bug.", "section": "colors" },
       { "name": "The Avatar Rule", "body": "Photo-less dog avatars are neutral: light gray (#f3f4f6) blocks with the Icon/dog face glyph in Ink Muted — never the paw icon, never a color. There is no pastel identity-accent bench.", "section": "colors" },
+      { "name": "The Shape Match Rule", "body": "A dog photo or avatar takes the shape of its container on every screen: a circle inside a pill (chips, toggles, active-care pills, tabs); concentric corners inside a rounded card (photo radius = container radius − padding). Never a rounded-square photo inside a pill.", "section": "components" },
       { "name": "The Eyebrow Restraint Rule", "body": "Uppercase tracked labels are reserved for section headers and status metadata — never used as decorative kicker text above every block.", "section": "typography" },
       { "name": "The Flat Rule", "body": "Depth cues come from a flatter/lighter background color (Card vs Studio White) and press feedback, never from shadows. No element in the system — including the bottom nav — carries a drop shadow.", "section": "elevation" }
     ],

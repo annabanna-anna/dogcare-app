@@ -807,7 +807,7 @@ const NOTIFICATION_SETTLE_DELAY_MS = 600
 function NotificationCard({ n }: { n: (typeof NOTIFICATIONS)[number] }) {
   return (
     <div
-      className="flex items-start gap-3 rounded-[14px] border border-border-light bg-white p-3"
+      className="flex items-start gap-3 rounded-[20px] border border-border-light bg-white p-3"
       style={{ width: NOTIFICATION_CARD_WIDTH }}
     >
       <img src={n.photo} alt="" className="w-10 h-10 rounded-[8px] object-cover shrink-0" />

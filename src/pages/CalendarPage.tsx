@@ -19,7 +19,7 @@ import {
 } from '../lib/googleCalendar'
 import { formatShortDate, formatTime } from '../utils/dateUtils'
 import type { Dog, Stay } from '../types'
-import { dogDisplayName } from '../utils/dogDisplay'
+import { dogsAtHome, joinDogNames, stayDisplayName } from '../utils/dogDisplay'
 
 function formatEventRange(event: GoogleCalendarEvent): string {
   if (event.allDay) {
@@ -140,7 +140,7 @@ export default function CalendarPage() {
 
       <div className="px-6 mt-4 flex flex-col gap-4">
         {!googleConnected && (
-          <div className="bg-[#eef1fd] border border-[#d3daf8] rounded-[16px] p-4 flex gap-3 items-start">
+          <div className="bg-[#eef1fd] border border-[#d3daf8] rounded-[26px] p-4 flex gap-3 items-start">
             <div className="size-9 rounded-[10px] bg-white flex items-center justify-center shrink-0">
               <CalendarDays size={18} className="text-cobalt" />
             </div>
@@ -233,7 +233,7 @@ export default function CalendarPage() {
           return (
             <div
               key={stay.id}
-              className="bg-white border border-border-light rounded-[16px] p-4 flex gap-4 items-center"
+              className="bg-white border border-border-light rounded-[26px] p-4 flex gap-4 items-center"
             >
               <div className="size-12 rounded-[10px] overflow-hidden bg-[#f3f4f6] shrink-0 flex items-center justify-center">
                 {dog.photoUrl ? (
@@ -245,7 +245,7 @@ export default function CalendarPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
                   <p className="font-outfit font-semibold text-[17px] text-text-primary leading-none">
-                    {dogDisplayName(dog)}
+                    {stayDisplayName(dog, stay.dogKeys)}
                   </p>
                   {isActive && (
                     <span className="text-[11px] font-dm font-bold bg-[#dcfce7] text-[#15803d] rounded-full px-2 py-0.5">
@@ -255,6 +255,8 @@ export default function CalendarPage() {
                 </div>
                 <p className="font-dm text-[13px] text-text-secondary">
                   {formatShortDate(stay.startDate)} → {formatShortDate(stay.endDate)}
+                  {dogsAtHome(dog, stay.dogKeys).length > 0 &&
+                    ` · ${joinDogNames(dogsAtHome(dog, stay.dogKeys).map((d) => d.name))} at home`}
                 </p>
                 {stay.notes && (
                   <p className="font-dm text-[13px] text-text-muted mt-1 truncate">
@@ -310,7 +312,7 @@ export default function CalendarPage() {
                 href={event.htmlLink}
                 target="_blank"
                 rel="noreferrer"
-                className="bg-white border border-border-light rounded-[16px] p-4 flex gap-4 items-center active:scale-[0.98] transition-transform"
+                className="bg-white border border-border-light rounded-[26px] p-4 flex gap-4 items-center active:scale-[0.98] transition-transform"
               >
                 <div className="size-12 rounded-[10px] bg-[#eef1fd] shrink-0 flex items-center justify-center">
                   <CalendarDays size={20} className="text-cobalt" />

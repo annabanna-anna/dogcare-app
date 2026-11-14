@@ -14,7 +14,7 @@ import {
   type GoogleCalendarEvent,
 } from '../lib/googleCalendar'
 import type { Dog, Stay, Task, TaskStatus } from '../types'
-import { dogDisplayName } from '../utils/dogDisplay'
+import { stayDisplayName, stayingDogs } from '../utils/dogDisplay'
 import {
   addDays,
   formatDayHeading,
@@ -371,7 +371,10 @@ export default function TodayPage() {
                     <button
                       key={key}
                       type="button"
-                      onClick={() => setSelectedDate(day)}
+                      onClick={() => {
+                        setSelectedDate(day)
+                        setViewMode('week')
+                      }}
                       className="flex flex-col items-center gap-0.5 active:scale-[0.94] transition-transform"
                     >
                       <span
@@ -422,10 +425,10 @@ export default function TodayPage() {
                 return (
                   <div
                     key={event.id}
-                    className="bg-[#eef1fd] border border-[#d3daf8] rounded-[16px] p-4"
+                    className="bg-[#eef1fd] border border-[#d3daf8] rounded-[26px] p-4"
                   >
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="size-10 rounded-full overflow-hidden bg-white flex items-center justify-center shrink-0">
+                      <div className="size-10 rounded-[10px] overflow-hidden bg-white flex items-center justify-center shrink-0">
                         {!ambiguous && dog.photoUrl ? (
                           <img src={dog.photoUrl} alt={dog.name} className="size-full object-cover" />
                         ) : (
@@ -455,9 +458,9 @@ export default function TodayPage() {
                                   `/stays/new?dog=${c.id}&start=${encodeURIComponent(event.start)}&end=${encodeURIComponent(event.end)}`,
                                 )
                               }
-                              className="flex items-center gap-3 bg-white rounded-[12px] px-3 py-2.5 text-left active:scale-[0.98] transition-transform"
+                              className="flex items-center gap-3 bg-white rounded-[16px] px-3 py-2.5 text-left active:scale-[0.98] transition-transform"
                             >
-                              <div className="size-9 rounded-full overflow-hidden bg-[#f3f4f6] flex items-center justify-center shrink-0">
+                              <div className="size-9 rounded-[6px] overflow-hidden bg-[#f3f4f6] flex items-center justify-center shrink-0">
                                 {c.photoUrl ? (
                                   <img src={c.photoUrl} alt={c.name} className="size-full object-cover" />
                                 ) : (
@@ -508,10 +511,10 @@ export default function TodayPage() {
               {newDogSuggestions.map(({ dogName, ownerName, event }) => (
                 <div
                   key={event.id}
-                  className="bg-[#eef1fd] border border-[#d3daf8] rounded-[16px] p-4"
+                  className="bg-[#eef1fd] border border-[#d3daf8] rounded-[26px] p-4"
                 >
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="size-10 rounded-full overflow-hidden bg-white flex items-center justify-center shrink-0">
+                    <div className="size-10 rounded-[10px] overflow-hidden bg-white flex items-center justify-center shrink-0">
                       <UserPlus size={18} className="text-cobalt" />
                     </div>
                     <p className="font-dm font-bold text-[15px] text-text-primary leading-snug">
@@ -547,7 +550,9 @@ export default function TodayPage() {
               <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
                 Active Care
               </p>
-              <div className="flex gap-3 flex-wrap">
+              {/* One row that scrolls sideways, bleeding to the screen edges so
+                  cards slide out of view instead of clipping at the gutter */}
+              <div className="no-scrollbar flex gap-3 overflow-x-auto -mx-6 px-6 py-0.5">
                 {activeDogs.map(({ dog, stay }) => {
                   const endDate = new Date(stay.endDate).toLocaleDateString('en-US', {
                     month: 'short',
@@ -555,22 +560,34 @@ export default function TodayPage() {
                   })
                   return (
                     <Link
-                      key={dog.id}
+                      key={stay.id}
                       to={`/dogs/${dog.id}`}
-                      className="flex items-center gap-3 rounded-full pl-1.5 pr-4 py-1.5 bg-cream border border-border-light active:scale-[0.97] transition-transform"
+                      className="flex shrink-0 items-center gap-2 rounded-full pl-1.5 pr-5 py-1.5 bg-cream border border-border-light active:scale-[0.97] transition-transform"
                     >
-                      <div className="size-9 rounded-full overflow-hidden bg-[#f3f4f6] flex items-center justify-center shrink-0">
-                        {dog.photoUrl ? (
-                          <img src={dog.photoUrl} alt={dog.name} className="size-full object-cover" />
-                        ) : (
-                          <DogIcon size={17} className="text-text-muted" />
-                        )}
+                      {/* A group's photos overlap side by side, first dog in front */}
+                      <div className="flex shrink-0">
+                        {stayingDogs(dog, stay.dogKeys).map((d, i) => (
+                          <div
+                            key={i}
+                            // ring in the pill color separates overlapping photos
+                            className={`relative size-9 rounded-full overflow-hidden bg-[#f3f4f6] flex items-center justify-center ring-2 ring-cream ${
+                              i > 0 ? '-ml-3' : ''
+                            }`}
+                            style={{ zIndex: 3 - i }}
+                          >
+                            {d.photoUrl ? (
+                              <img src={d.photoUrl} alt={d.name} className="size-full object-cover" />
+                            ) : (
+                              <DogIcon size={17} className="text-text-muted" />
+                            )}
+                          </div>
+                        ))}
                       </div>
                       <div>
-                        <p className="font-dm font-semibold text-[14px] text-text-primary leading-none">
-                          {dogDisplayName(dog)}
+                        <p className="font-dm font-semibold text-[14px] text-text-primary leading-none whitespace-nowrap">
+                          {stayDisplayName(dog, stay.dogKeys)}
                         </p>
-                        <p className="font-dm text-[12px] text-text-secondary mt-0.5">
+                        <p className="font-dm text-[12px] text-text-secondary mt-0.5 whitespace-nowrap">
                           Until {endDate}
                         </p>
                       </div>
@@ -580,7 +597,7 @@ export default function TodayPage() {
                 <button
                   type="button"
                   onClick={() => navigate('/stays/new')}
-                  className="flex items-center gap-1.5 rounded-full h-12 px-4 border border-dashed border-border-light text-text-muted font-dm font-medium text-[13px] active:scale-[0.97] transition-transform"
+                  className="flex shrink-0 self-center items-center gap-1.5 whitespace-nowrap rounded-full h-12 px-4 border border-dashed border-border-light text-text-muted font-dm font-medium text-[13px] active:scale-[0.97] transition-transform"
                 >
                   <CalendarPlus size={15} />
                   Start another stay

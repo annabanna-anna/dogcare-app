@@ -71,6 +71,7 @@ export interface Database {
           start_date: string
           end_date: string
           notes: string | null
+          dog_keys: string[] | null
           created_at: string
         }
         Insert: {
@@ -80,6 +81,7 @@ export interface Database {
           start_date: string
           end_date: string
           notes?: string | null
+          dog_keys?: string[] | null
           created_at?: string
         }
         Update: Partial<Database['public']['Tables']['stays']['Insert']>

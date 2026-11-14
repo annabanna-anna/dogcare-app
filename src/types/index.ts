@@ -63,6 +63,7 @@ export interface Stay {
   startDate: string   // ISO date string
   endDate: string     // ISO date string
   notes?: string
+  dogKeys?: string[]  // which dogs on the profile are staying (PRIMARY_DOG_KEY or member ids); unset = every dog
   createdAt: string
 }
 

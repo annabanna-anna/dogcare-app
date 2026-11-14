@@ -61,6 +61,7 @@ create table if not exists stays (
   start_date  timestamptz not null,
   end_date    timestamptz not null,
   notes       text,
+  dog_keys    jsonb,
   created_at  timestamptz not null default now()
 );
 
@@ -107,6 +108,10 @@ alter table dogs add column if not exists dog_park_notes text not null default '
 -- Up to 2 more dogs sharing this profile's owner/care instructions/schedule
 -- (e.g. two dogs from the same owner with identical care) — {name, breed, size} each.
 alter table dogs add column if not exists additional_dogs jsonb not null default '[]'::jsonb;
+
+-- Which dogs on the profile a stay covers ("primary" or an additional_dogs
+-- member id), for stays where some dogs stay home. Null = every dog.
+alter table stays add column if not exists dog_keys jsonb;
 
 -- One row per browser/device that turned on push reminders in Settings —
 -- the endpoint/p256dh/auth triple is the Web Push subscription the browser

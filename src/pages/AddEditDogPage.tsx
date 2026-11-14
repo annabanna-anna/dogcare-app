@@ -601,14 +601,14 @@ function DogCard({
   const sizeLabel = sizeOptions.find((o) => o.value === size)?.label ?? ''
   const hasName = Boolean(name.trim())
   return (
-    <div className="bg-white border border-border-light rounded-[16px] p-3 flex flex-col gap-3">
+    <div className="bg-white border border-border-light rounded-[22px] p-3 flex flex-col gap-3">
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={open}
         className="flex items-center gap-3 text-left"
       >
-        <span className="size-11 rounded-full overflow-hidden bg-[#f3f4f6] shrink-0 flex items-center justify-center text-text-muted">
+        <span className="size-11 rounded-[10px] overflow-hidden bg-[#f3f4f6] shrink-0 flex items-center justify-center text-text-muted">
           {photoUrl ? (
             <img src={photoUrl} alt="" className="size-full object-cover" />
           ) : (

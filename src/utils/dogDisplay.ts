@@ -2,14 +2,17 @@ import { PRIMARY_DOG_KEY, type Dog, type DogCareNotes, type DogSize } from '../t
 
 type DogLike = Pick<Dog, 'name' | 'breed' | 'additionalDogs'>
 
+/** "Alana" or "Alana & Eli" or "Alana, Eli & Momo". */
+export function joinDogNames(names: string[]): string {
+  const clean = names.map((n) => n.trim()).filter(Boolean)
+  if (clean.length <= 1) return clean[0] ?? ''
+  if (clean.length === 2) return `${clean[0]} & ${clean[1]}`
+  return `${clean.slice(0, -1).join(', ')} & ${clean[clean.length - 1]}`
+}
+
 /** "Alana" or "Alana & Eli" or "Alana, Eli & Momo" for a profile with grouped dogs. */
 export function dogDisplayName(dog: DogLike): string {
-  const names = [dog.name, ...dog.additionalDogs.map((d) => d.name)]
-    .map((n) => n.trim())
-    .filter(Boolean)
-  if (names.length <= 1) return names[0] ?? dog.name
-  if (names.length === 2) return `${names[0]} & ${names[1]}`
-  return `${names.slice(0, -1).join(', ')} & ${names[names.length - 1]}`
+  return joinDogNames([dog.name, ...dog.additionalDogs.map((d) => d.name)]) || dog.name
 }
 
 /** Same join, but for each dog's breed — used in subtitles alongside the name. */
@@ -67,6 +70,28 @@ export function dogGroup(
       photoUrl: m.photoUrl,
     })),
   ]
+}
+
+type GroupSource = Parameters<typeof dogGroup>[0]
+
+/** The dogs a stay covers. Unset keys — or keys that no longer match anyone,
+ *  e.g. after a dog was removed from the profile — mean every dog. */
+export function stayingDogs(dog: GroupSource, dogKeys?: string[] | null): GroupDog[] {
+  const group = dogGroup(dog)
+  if (!dogKeys?.length) return group
+  const staying = group.filter((d) => dogKeys.includes(d.key))
+  return staying.length > 0 ? staying : group
+}
+
+/** Dogs on the profile a stay leaves at home — empty when everyone stays. */
+export function dogsAtHome(dog: GroupSource, dogKeys?: string[] | null): GroupDog[] {
+  const staying = new Set(stayingDogs(dog, dogKeys).map((d) => d.key))
+  return dogGroup(dog).filter((d) => !staying.has(d.key))
+}
+
+/** Like dogDisplayName, but only the dogs a stay covers. */
+export function stayDisplayName(dog: GroupSource, dogKeys?: string[] | null): string {
+  return joinDogNames(stayingDogs(dog, dogKeys).map((d) => d.name)) || dog.name
 }
 
 /** Name of the dog a schedule entry is limited to, or undefined when it's for every dog. */

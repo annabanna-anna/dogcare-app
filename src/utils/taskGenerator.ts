@@ -1,5 +1,5 @@
 import type { Dog, Stay, Task, TaskType } from '../types'
-import { dogDisplayName, scheduleEntryDogName } from './dogDisplay'
+import { scheduleEntryDogName, stayDisplayName, stayingDogs } from './dogDisplay'
 
 const TASK_TITLES: Record<TaskType, string> = {
   walk: 'Walk',
@@ -20,8 +20,12 @@ export function generateTasksForStay(dog: Dog, stay: Stay): Task[] {
 
   let taskIndex = 0
 
+  // Entries limited to a dog who isn't on this stay are left out entirely
+  const staying = new Set(stayingDogs(dog, stay.dogKeys).map((d) => d.key))
+  const schedule = dog.careSchedule.filter((entry) => !entry.forDog || staying.has(entry.forDog))
+
   while (current <= end) {
-    for (const entry of dog.careSchedule) {
+    for (const entry of schedule) {
       const [hours, minutes] = entry.time.split(':').map(Number)
       const scheduledTime = new Date(current)
       scheduledTime.setHours(hours, minutes, 0, 0)
@@ -38,7 +42,7 @@ export function generateTasksForStay(dog: Dog, stay: Stay): Task[] {
         id: `generated-${stay.id}-${taskIndex++}`,
         stayId: stay.id,
         dogId: dog.id,
-        dogName: scheduleEntryDogName(dog, entry.forDog) ?? dogDisplayName(dog),
+        dogName: scheduleEntryDogName(dog, entry.forDog) ?? stayDisplayName(dog, stay.dogKeys),
         type: entry.taskType,
         title,
         scheduledTime: scheduledTime.toISOString(),

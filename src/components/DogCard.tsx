@@ -1,47 +1,28 @@
-import { useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import DogIcon from './icons/DogIcon'
+import DogPhotoStack from './DogPhotoStack'
 import type { Dog, Stay } from '../types'
-import { formatShortDate } from '../utils/dateUtils'
+import { formatShortDate, isSameDay } from '../utils/dateUtils'
 import { dogDisplayBreed, dogDisplayName } from '../utils/dogDisplay'
-
-// Diagonal stack for group profiles: photo size and step per dog count,
-// all fitting the single-dog 64px slot.
-const STACK = {
-  2: { size: 46, step: 18 },
-  3: { size: 40, step: 12 },
-} as const
-
-function DogPhoto({
-  src,
-  alt,
-  className,
-  iconSize,
-  style,
-}: {
-  src?: string
-  alt: string
-  className: string
-  iconSize: number
-  style?: React.CSSProperties
-}) {
-  const [failed, setFailed] = useState(false)
-  return (
-    <div className={`overflow-hidden bg-[#f3f4f6] flex items-center justify-center ${className}`} style={style}>
-      {src && !failed ? (
-        <img src={src} alt={alt} className="size-full object-cover" onError={() => setFailed(true)} />
-      ) : (
-        <DogIcon size={iconSize} className="text-text-muted" />
-      )}
-    </div>
-  )
-}
 
 interface Props {
   dog: Dog
   nextStay?: Stay
   index?: number
+}
+
+/** Stay tag text: "Until Nov 18" / "Ends today" while staying, otherwise the
+ *  range with the month written once when it doesn't change ("Nov 20 – 23"). */
+function stayLabel(stay: Stay, active: boolean): string {
+  const start = new Date(stay.startDate)
+  const end = new Date(stay.endDate)
+  if (active) return isSameDay(end, new Date()) ? 'Ends today' : `Until ${formatShortDate(stay.endDate)}`
+  if (isSameDay(start, end)) return formatShortDate(stay.startDate)
+  const endText =
+    start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()
+      ? String(end.getDate())
+      : formatShortDate(stay.endDate)
+  return `${formatShortDate(stay.startDate)} – ${endText}`
 }
 
 export default function DogCard({ dog, nextStay }: Props) {
@@ -50,7 +31,9 @@ export default function DogCard({ dog, nextStay }: Props) {
     { name: dog.name, photoUrl: dog.photoUrl },
     ...dog.additionalDogs.map((m) => ({ name: m.name, photoUrl: m.photoUrl })),
   ]
-  const stack = photos.length > 1 ? STACK[Math.min(photos.length, 3) as 2 | 3] : null
+  const now = new Date()
+  const stayActive =
+    !!nextStay && new Date(nextStay.startDate) <= now && new Date(nextStay.endDate) >= now
 
   return (
     <button
@@ -59,30 +42,9 @@ export default function DogCard({ dog, nextStay }: Props) {
       // card radius (26) = photo radius (12) + padding (14)
       className="w-full bg-cream border border-border-light rounded-[26px] p-3.5 flex items-center gap-4 active:scale-[0.98] transition-transform text-left"
     >
-      {/* Avatar — a group stacks each dog's photo diagonally, first dog in front */}
-      {stack ? (
-        <div className="shrink-0 size-16 relative">
-          {photos.slice(0, 3).map((p, i) => (
-            <DogPhoto
-              key={i}
-              src={p.photoUrl}
-              alt={p.name}
-              iconSize={Math.round(stack.size / 2)}
-              // ring in the card color separates overlapping photos
-              className="absolute rounded-[10px] ring-2 ring-cream"
-              style={{
-                width: stack.size,
-                height: stack.size,
-                left: i * stack.step,
-                top: i * stack.step,
-                zIndex: 3 - i,
-              }}
-            />
-          ))}
-        </div>
-      ) : (
-        <DogPhoto src={dog.photoUrl} alt={dog.name} iconSize={30} className="shrink-0 size-16 rounded-[12px]" />
-      )}
+      {/* Avatar — a group stacks each dog's photo diagonally, first dog in front.
+          The front photo sits in the card's corner, so it keeps the same 12px radius */}
+      <DogPhotoStack dogs={photos} size={64} radius={12} stackRadius={12} ringClassName="ring-cream" />
 
       {/* Info */}
       <div className="flex-1 min-w-0">
@@ -93,15 +55,23 @@ export default function DogCard({ dog, nextStay }: Props) {
           </p>
           <p className="font-dm text-[12px] leading-tight text-text-secondary truncate">{dogDisplayBreed(dog)}</p>
         </div>
-        {dog.ownerName && (
-          <p className="font-dm text-[13px] leading-tight text-text-primary mt-2.5 truncate">
-            {dog.ownerName}
-          </p>
-        )}
-        {nextStay && (
-          <span className="inline-flex items-center mt-1.5 rounded-full bg-coral px-2.5 py-1 text-[11px] font-dm font-bold uppercase tracking-wide text-white">
-            {formatShortDate(nextStay.startDate)} – {formatShortDate(nextStay.endDate)}
-          </span>
+        {/* Owner and stay tag share one line, so a stay never makes the card
+            taller — filled while staying now, outlined when upcoming */}
+        {(dog.ownerName || nextStay) && (
+          <div className="flex items-center gap-2 mt-2.5 min-w-0">
+            {dog.ownerName && (
+              <p className="font-dm text-[13px] leading-tight text-text-primary truncate">{dog.ownerName}</p>
+            )}
+            {nextStay && (
+              <span
+                className={`shrink-0 rounded-full px-[7px] h-4 inline-flex items-center text-[10px] leading-none font-dm font-bold uppercase tracking-wide ${
+                  stayActive ? 'bg-coral text-white' : 'border-[1.5px] border-coral text-coral'
+                }`}
+              >
+                {stayLabel(nextStay, stayActive)}
+              </span>
+            )}
+          </div>
         )}
       </div>
 

@@ -25,7 +25,15 @@ import { getDog, deleteDog } from '../lib/dogs'
 import { listStays } from '../lib/stays'
 import { formatTime, formatShortDate } from '../utils/dateUtils'
 import { PRIMARY_DOG_KEY, type Dog, type Stay, type TaskType, type YesNoUnsure } from '../types'
-import { dogDisplayBreed, dogDisplayName, dogGroup, scheduleEntryDogName } from '../utils/dogDisplay'
+import {
+  dogDisplayBreed,
+  dogDisplayName,
+  dogGroup,
+  dogsAtHome,
+  joinDogNames,
+  scheduleEntryDogName,
+  stayDisplayName,
+} from '../utils/dogDisplay'
 
 const typeLabel: Record<TaskType, string> = {
   walk: 'Walk',
@@ -262,7 +270,7 @@ export default function DogProfilePage() {
 
         {/* Current stay info + Edit Stay CTA, grouped in one card */}
         {currentStay ? (
-          <div className="bg-white border border-border-light rounded-[16px] p-4 flex flex-col gap-4">
+          <div className="bg-white border border-border-light rounded-[26px] p-4 flex flex-col gap-4">
             <div className="flex gap-3 items-center">
               <div className="size-9 rounded-[10px] bg-[#eef1fd] flex items-center justify-center shrink-0">
                 <CalendarDays size={18} className="text-cobalt" />
@@ -286,6 +294,12 @@ export default function DogProfilePage() {
                   {formatShortDate(currentStay.startDate)} {formatTime(currentStay.startDate)} →{' '}
                   {formatShortDate(currentStay.endDate)} {formatTime(currentStay.endDate)}
                 </p>
+                {dogsAtHome(dog, currentStay.dogKeys).length > 0 && (
+                  <p className="font-dm text-[13px] text-text-secondary mt-0.5">
+                    {stayDisplayName(dog, currentStay.dogKeys)} staying ·{' '}
+                    {joinDogNames(dogsAtHome(dog, currentStay.dogKeys).map((d) => d.name))} at home
+                  </p>
+                )}
                 {currentStay.notes && (
                   <p className="font-dm text-[13px] text-text-muted mt-1">{currentStay.notes}</p>
                 )}

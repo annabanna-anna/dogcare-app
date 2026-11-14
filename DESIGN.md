@@ -127,6 +127,8 @@ Four roles: Ember orange as the brand color, Cobalt blue as the secondary accent
 
 **The Avatar Rule.** Photo-less dog avatars are neutral: a light gray block (#f3f4f6) with the `Icon/dog` face glyph in Ink Muted — never the paw icon, never a color. There is no pastel identity-accent bench; every dog without a photo gets the same neutral glyph.
 
+**The Shape Match Rule.** A dog photo or avatar takes the shape of the container it sits in, on every screen. Inside a pill (`rounded-full` chip, toggle, active-care pill, tab), the photo is a circle (`rounded-full`). Inside a rounded card or row, the corners are concentric: photo radius = container radius − padding (e.g. a 26px card with 14px padding holds a 12px-radius photo). Never put a rounded-square photo inside a pill. The same concentric rule covers anything that sits in a card's corner: icon tiles, stacked group photos (the front photo shares the card's corner, so it takes the full photo radius), and rows nested in a card. When the inner radius is fixed, grow the container instead: container radius = inner radius + padding (a 10px tile in a 16px-padded card → 26px card).
+
 ### Semantic accents (status & task type only)
 - **Green Vivid** (#18ba1d): Walk task icons, "done" pills, positive toggles.
 - **Ember** (#ff4514): Meal task icons — the brand color doing double duty as the meal semantic, since feeding is the app's other everyday-frequency task alongside walks.
@@ -175,6 +177,7 @@ Tactile and confident: big touch targets, full pill rounding wherever a finger l
 - **Ghost:** Transparent, Ink Secondary text, `active:bg-gray-100` — lowest-emphasis action.
 - **Danger:** Soft red background/text pairing (#fee2e2 / #b91c1c), same pill shape — kept visually distinct from Ember so "delete" never gets confused with "brand emphasis."
 - **Press feedback:** `transition-all duration-100`, no hover states designed (mobile-first, touch-only).
+- **Edit screens:** The Save button stays disabled until the form differs from what was loaded. Compare against a snapshot taken on load, so changing a value and changing it back disables Save again. Destructive actions (Delete) stay enabled regardless.
 
 ### Chips (Status / Badges)
 - **Style:** Full pill, bold uppercase DM Sans at 11px, tracked wide.
