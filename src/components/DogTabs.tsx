@@ -45,7 +45,7 @@ export default function DogTabs({ dogs, value, onChange }: Props) {
   }, [activeIndex, dogs.length])
 
   return (
-    <div ref={trackRef} role="tablist" className="relative bg-card rounded-full p-1 flex gap-1">
+    <div ref={trackRef} role="tablist" className="relative isolate bg-card rounded-full p-1 flex gap-1">
       {pillRect && (
         <div
           className="absolute rounded-full bg-white border border-border-light transition-all duration-300 ease-out"

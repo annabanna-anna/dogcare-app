@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ImagePlus, RefreshCw, Trash2, Plus, ChevronDown, X } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
@@ -900,6 +900,17 @@ export default function AddEditDogPage() {
     setSchedule((prev) => prev.filter((e) => e.forDog !== removedId))
   }
 
+  // The care-notes tabs stick right under the sticky header, whose height
+  // changes when the title wraps or an error shows.
+  const [headerHeight, setHeaderHeight] = useState(0)
+  const headerObserver = useRef<ResizeObserver | null>(null)
+  const headerRef = useCallback((el: HTMLDivElement | null) => {
+    headerObserver.current?.disconnect()
+    if (!el) return
+    headerObserver.current = new ResizeObserver(() => setHeaderHeight(el.offsetHeight))
+    headerObserver.current.observe(el)
+  }, [])
+
   // Care notes are edited one dog at a time; the tabs pick which.
   const careIndex = form.additionalDogs.findIndex((m) => m.id === careKey)
   const care: DogCareNotes = careIndex >= 0 ? form.additionalDogs[careIndex] : form
@@ -1022,7 +1033,7 @@ export default function AddEditDogPage() {
 
   return (
     <div className="min-h-svh bg-cream">
-      <div className="sticky top-0 z-10 bg-cream">
+      <div ref={headerRef} className="sticky top-0 z-20 bg-cream">
         <PageHeader back onBack={handleBack} title={isEdit ? `Edit ${existingName}` : 'Add Dog'} />
         {error && (
           <div className="mx-6 mb-2 bg-[#fee2e2] rounded-[12px] px-4 py-3">
@@ -1155,8 +1166,12 @@ export default function AddEditDogPage() {
           <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-3">
             Care Instructions
           </p>
+          {/* Sticky within this section, so the tabs ride along until Care Instructions ends */}
           {isGroup && (
-            <div className="mb-4">
+            <div
+              className="sticky z-10 -mx-6 px-6 pt-2 pb-3 mb-1 bg-cream"
+              style={{ top: headerHeight }}
+            >
               <DogTabs
                 dogs={groupDogs}
                 value={careIndex >= 0 ? careKey : PRIMARY_DOG_KEY}
