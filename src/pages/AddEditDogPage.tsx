@@ -321,10 +321,23 @@ function Textarea({
   )
 }
 
+const MIN_ZOOM = 1
+const MAX_ZOOM = 3
+
+type CropGesture =
+  | { kind: 'drag'; startX: number; startY: number; panX: number; panY: number }
+  | {
+      kind: 'pinch'
+      startDist: number
+      startZoom: number
+      startPan: { x: number; y: number }
+      startMid: { x: number; y: number }   // box-relative
+    }
+
 /**
- * Square photo picker with adjustable crop:
- * drag the image to position it, slide to zoom. The visible
- * square is what gets saved (baked via canvas on submit).
+ * Square photo picker with adjustable crop: drag to position, pinch to zoom
+ * (trackpad pinch or ⌘/Ctrl + scroll on desktop). The visible square is what
+ * gets saved (baked via canvas on submit).
  */
 function PhotoCropField({
   src,
@@ -350,7 +363,9 @@ function PhotoCropField({
   onNatural: (n: { w: number; h: number }) => void
 }) {
   const fileRef = useRef<HTMLInputElement>(null)
-  const drag = useRef<{ startX: number; startY: number; panX: number; panY: number } | null>(null)
+  const pointers = useRef(new Map<number, { x: number; y: number }>())
+  const gesture = useRef<CropGesture | null>(null)
+  const [isTouch] = useState(() => window.matchMedia('(pointer: coarse)').matches)
 
   function scaledSize(z = zoom) {
     if (!natural || !boxRef.current) return null
@@ -375,17 +390,80 @@ function PhotoCropField({
     reader.readAsDataURL(file)
   }
 
-  function handleZoom(z: number) {
-    const dims = scaledSize()
-    if (dims) {
-      // keep the crop centered while zooming
-      const ratio = z / zoom
-      const cx = dims.bw / 2
-      const cy = dims.bh / 2
-      onPanChange(clamp({ x: cx - (cx - pan.x) * ratio, y: cy - (cy - pan.y) * ratio }, z))
-    }
-    onZoomChange(z)
+  /** Zoom to z keeping box-relative point (cx, cy) fixed, starting from a given zoom/pan. */
+  function zoomAt(z: number, cx: number, cy: number, from = { zoom, pan }, shift = { x: 0, y: 0 }) {
+    const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z))
+    const ratio = next / from.zoom
+    onPanChange(
+      clamp(
+        { x: cx - (cx - from.pan.x) * ratio + shift.x, y: cy - (cy - from.pan.y) * ratio + shift.y },
+        next,
+      ),
+    )
+    onZoomChange(next)
   }
+
+  function boxPoint(clientX: number, clientY: number) {
+    const r = boxRef.current!.getBoundingClientRect()
+    return { x: clientX - r.left, y: clientY - r.top }
+  }
+
+  /** (Re)start the gesture from whichever fingers/cursor are currently down. */
+  function startGesture() {
+    const pts = [...pointers.current.values()]
+    if (pts.length >= 2) {
+      const [a, b] = pts
+      gesture.current = {
+        kind: 'pinch',
+        startDist: Math.hypot(a.x - b.x, a.y - b.y) || 1,
+        startZoom: zoom,
+        startPan: pan,
+        startMid: boxPoint((a.x + b.x) / 2, (a.y + b.y) / 2),
+      }
+    } else if (pts.length === 1) {
+      gesture.current = { kind: 'drag', startX: pts[0].x, startY: pts[0].y, panX: pan.x, panY: pan.y }
+    } else {
+      gesture.current = null
+    }
+  }
+
+  // Desktop zoom: trackpad pinch (arrives as ctrl+wheel) or ⌘/Ctrl + scroll. Plain
+  // scrolling is left alone so the form still scrolls over the photo. Needs a
+  // non-passive native listener to preventDefault; the ref keeps it on fresh state.
+  const wheelZoom = useRef<(e: WheelEvent) => void>(() => {})
+  wheelZoom.current = (e) => {
+    if (!(e.ctrlKey || e.metaKey) || !boxRef.current) return
+    e.preventDefault()
+    const delta = Math.max(-50, Math.min(50, e.deltaY))
+    const p = boxPoint(e.clientX, e.clientY)
+    zoomAt(zoom * Math.exp(-delta * 0.006), p.x, p.y)
+  }
+  // Safari reports trackpad pinch as non-standard gesture events instead.
+  const safariPinch = useRef<{ zoom: number; pan: { x: number; y: number } } | null>(null)
+  const safariGesture = useRef<(type: string, e: Event & { scale?: number }) => void>(() => {})
+  safariGesture.current = (type, e) => {
+    if (!boxRef.current) return
+    e.preventDefault()
+    if (type === 'gesturestart') safariPinch.current = { zoom, pan }
+    else if (safariPinch.current && e.scale) {
+      const r = boxRef.current.getBoundingClientRect()
+      zoomAt(safariPinch.current.zoom * e.scale, r.width / 2, r.height / 2, safariPinch.current)
+    }
+  }
+  useEffect(() => {
+    const el = boxRef.current
+    if (!el) return
+    const onWheel = (e: WheelEvent) => wheelZoom.current(e)
+    const onGesture = (e: Event) => safariGesture.current(e.type, e)
+    el.addEventListener('wheel', onWheel, { passive: false })
+    el.addEventListener('gesturestart', onGesture)
+    el.addEventListener('gesturechange', onGesture)
+    return () => {
+      el.removeEventListener('wheel', onWheel)
+      el.removeEventListener('gesturestart', onGesture)
+      el.removeEventListener('gesturechange', onGesture)
+    }
+  }, [src, boxRef])
 
   const dims = scaledSize()
 
@@ -416,20 +494,40 @@ function PhotoCropField({
             ref={boxRef}
             className="relative w-full max-w-[280px] mx-auto aspect-square rounded-[16px] overflow-hidden bg-card touch-none cursor-grab active:cursor-grabbing select-none"
             onPointerDown={(e) => {
-              drag.current = { startX: e.clientX, startY: e.clientY, panX: pan.x, panY: pan.y }
-              ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+              e.currentTarget.setPointerCapture(e.pointerId)
+              pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+              startGesture()
             }}
             onPointerMove={(e) => {
-              if (!drag.current) return
-              onPanChange(
-                clamp({
-                  x: drag.current.panX + (e.clientX - drag.current.startX),
-                  y: drag.current.panY + (e.clientY - drag.current.startY),
-                }),
+              if (!pointers.current.has(e.pointerId)) return
+              pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+              const g = gesture.current
+              if (!g) return
+              if (g.kind === 'drag') {
+                onPanChange(
+                  clamp({ x: g.panX + (e.clientX - g.startX), y: g.panY + (e.clientY - g.startY) }),
+                )
+                return
+              }
+              // Pinch: scale around the starting midpoint, and follow the fingers as they move.
+              const [a, b] = [...pointers.current.values()]
+              const mid = boxPoint((a.x + b.x) / 2, (a.y + b.y) / 2)
+              zoomAt(
+                g.startZoom * (Math.hypot(a.x - b.x, a.y - b.y) / g.startDist),
+                g.startMid.x,
+                g.startMid.y,
+                { zoom: g.startZoom, pan: g.startPan },
+                { x: mid.x - g.startMid.x, y: mid.y - g.startMid.y },
               )
             }}
-            onPointerUp={() => (drag.current = null)}
-            onPointerCancel={() => (drag.current = null)}
+            onPointerUp={(e) => {
+              pointers.current.delete(e.pointerId)
+              startGesture()   // lifting one finger of a pinch continues as a drag
+            }}
+            onPointerCancel={(e) => {
+              pointers.current.delete(e.pointerId)
+              startGesture()
+            }}
           >
             {/* eslint-disable-next-line jsx-a11y/alt-text */}
             <img
@@ -453,32 +551,26 @@ function PhotoCropField({
               }
             />
           </div>
-          <p className="font-dm text-[12px] text-text-secondary mt-2">
-            Drag the photo to choose what shows. Use the slider to zoom.
-          </p>
-          <input
-            type="range"
-            min={1}
-            max={3}
-            step={0.01}
-            value={zoom}
-            onChange={(e) => handleZoom(Number(e.target.value))}
-            className="w-full mt-1 accent-coral"
-          />
+          {/* Drag/pinch is second nature on a phone; only desktop needs the zoom hint */}
+          {!isTouch && (
+            <p className="font-dm text-[12px] text-text-secondary mt-2">
+              Drag to position. Pinch your trackpad, or hold ⌘/Ctrl and scroll, to zoom.
+            </p>
+          )}
           <div className="flex gap-2 mt-2">
             <button
               onClick={() => fileRef.current?.click()}
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white border border-border-light font-dm font-bold text-[13px] text-text-secondary active:bg-gray-50 transition-colors"
             >
               <RefreshCw size={14} />
-              Replace
+              Replace photo
             </button>
             <button
               onClick={onRemove}
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-[#fee2e2] font-dm font-bold text-[13px] text-[#b91c1c] active:bg-[#fecaca] transition-colors"
             >
               <Trash2 size={14} />
-              Remove
+              Remove photo
             </button>
           </div>
         </>
@@ -575,6 +667,10 @@ function DogSizePicker({ value, onChange }: { value: DogSize; onChange: (v: DogS
   )
 }
 
+function snapshotOf(form: FormState, schedule: CareScheduleEntry[]): string {
+  return JSON.stringify({ form, schedule })
+}
+
 interface PhotoHandle {
   src: () => string | null
   /** Renders the visible crop rectangle to a JPEG Blob. Returns undefined if the
@@ -585,8 +681,8 @@ interface PhotoHandle {
 /** PhotoCropField that owns its own crop state, so each dog in a group can have one. */
 const DogPhotoField = forwardRef<
   PhotoHandle,
-  { initialSrc: string | null; onSrcChange?: (src: string | null) => void }
->(function DogPhotoField({ initialSrc, onSrcChange }, ref) {
+  { initialSrc: string | null; onSrcChange?: (src: string | null) => void; onEdit?: () => void }
+>(function DogPhotoField({ initialSrc, onSrcChange, onEdit }, ref) {
   const [src, setSrc] = useState(initialSrc)
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
@@ -632,6 +728,7 @@ const DogPhotoField = forwardRef<
   function changeSrc(next: string | null) {
     setSrc(next)
     onSrcChange?.(next)
+    onEdit?.()
   }
 
   return (
@@ -655,10 +752,12 @@ const DogPhotoField = forwardRef<
       onPanChange={(p) => {
         dirty.current = true
         setPan(p)
+        onEdit?.()
       }}
       onZoomChange={(z) => {
         dirty.current = true
         setZoom(z)
+        onEdit?.()
       }}
       onNatural={(n) => {
         setNatural(n)
@@ -685,6 +784,11 @@ export default function AddEditDogPage() {
     ownerName: searchParams.get('owner') ?? defaultForm.ownerName,
   }))
   const [schedule, setSchedule] = useState<CareScheduleEntry[]>([])
+  // Form + schedule as first shown, to tell whether leaving would lose edits.
+  const baselineRef = useRef<string | null>(null)
+  if (baselineRef.current === null && !isEdit) baselineRef.current = snapshotOf(form, schedule)
+  const [photoEdited, setPhotoEdited] = useState(false)
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
   // Current photo per dog (PRIMARY_DOG_KEY or member id) — seeds each DogPhotoField
   // and shows in the care-notes dog tabs.
   const [photos, setPhotos] = useState<Record<string, string | null>>({})
@@ -710,7 +814,7 @@ export default function AddEditDogPage() {
           setNotFound(true)
           return
         }
-        setForm({
+        const loaded: FormState = {
           name: d.name,
           breed: d.breed,
           size: d.size,
@@ -728,8 +832,11 @@ export default function AddEditDogPage() {
           goesToDogParks: d.goesToDogParks,
           dogParkNotes: d.dogParkNotes,
           walkTimeFlexible: d.walkTimeFlexible,
-        })
-        setSchedule(d.careSchedule.map((e) => ({ ...e })))
+        }
+        const loadedSchedule = d.careSchedule.map((e) => ({ ...e }))
+        setForm(loaded)
+        setSchedule(loadedSchedule)
+        baselineRef.current = snapshotOf(loaded, loadedSchedule)
         setPhotos({
           [PRIMARY_DOG_KEY]: d.photoUrl ?? null,
           ...Object.fromEntries(d.additionalDogs.map((m) => [m.id, m.photoUrl ?? null])),
@@ -807,6 +914,14 @@ export default function AddEditDogPage() {
     ...form.additionalDogs.map((m) => ({ key: m.id, name: m.name.trim(), photoUrl: photos[m.id] ?? undefined })),
   ]
   const isGroup = groupDogs.length > 1
+
+  const hasUnsavedChanges =
+    photoEdited || (baselineRef.current !== null && snapshotOf(form, schedule) !== baselineRef.current)
+
+  function handleBack() {
+    if (hasUnsavedChanges) setShowLeaveConfirm(true)
+    else navigate(-1)
+  }
 
   function handleSubmit() {
     // Unfold any card hiding a missing-name error.
@@ -906,9 +1021,9 @@ export default function AddEditDogPage() {
   }
 
   return (
-    <div className="min-h-svh bg-cream pb-28">
+    <div className="min-h-svh bg-cream">
       <div className="sticky top-0 z-10 bg-cream">
-        <PageHeader back title={isEdit ? `Edit ${existingName}` : 'Add Dog'} />
+        <PageHeader back onBack={handleBack} title={isEdit ? `Edit ${existingName}` : 'Add Dog'} />
         {error && (
           <div className="mx-6 mb-2 bg-[#fee2e2] rounded-[12px] px-4 py-3">
             <p className="font-dm text-[13px] text-[#b91c1c]">{error}</p>
@@ -947,6 +1062,7 @@ export default function AddEditDogPage() {
                 ref={mainPhotoRef}
                 initialSrc={photos[PRIMARY_DOG_KEY] ?? null}
                 onSrcChange={(src) => setPhotos((prev) => ({ ...prev, [PRIMARY_DOG_KEY]: src }))}
+                onEdit={() => setPhotoEdited(true)}
               />
               <div>
                 <FieldLabel required>Dog's Name</FieldLabel>
@@ -981,6 +1097,7 @@ export default function AddEditDogPage() {
                   }}
                   initialSrc={photos[member.id] ?? null}
                   onSrcChange={(src) => setPhotos((prev) => ({ ...prev, [member.id]: src }))}
+                  onEdit={() => setPhotoEdited(true)}
                 />
                 <div>
                   <FieldLabel required>Dog's Name</FieldLabel>
@@ -1009,12 +1126,14 @@ export default function AddEditDogPage() {
                     onChange={(v) => updateAdditionalDog(i, { size: v })}
                   />
                 </div>
+                {/* Removing lives inside the open card so it can't be hit while expanding */}
                 <button
                   type="button"
                   onClick={() => setConfirmRemoveIndex(i)}
-                  className="self-center py-1 font-dm font-bold text-[13px] text-[#b91c1c]"
+                  className="w-full py-3 rounded-full flex items-center justify-center gap-2 font-dm font-bold text-[15px] text-[#b91c1c] active:bg-[#fee2e2] transition-colors"
                 >
-                  Remove {member.name.trim() || 'this dog'} from this profile
+                  <Trash2 size={16} />
+                  Remove {member.name.trim() || 'this dog'}
                 </button>
               </DogCard>
             ))}
@@ -1311,10 +1430,54 @@ export default function AddEditDogPage() {
           </div>
         </section>
 
-        <Button fullWidth size="lg" onClick={handleSubmit} disabled={!form.name.trim() || saving}>
-          {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Dog'}
-        </Button>
+        {/* Save stays pinned to the bottom so it's reachable from any section */}
+        <div className="sticky bottom-0 z-10 -mx-6 px-6 pt-3 pb-[calc(16px+env(safe-area-inset-bottom))] bg-cream">
+          <Button
+            fullWidth
+            size="lg"
+            onClick={handleSubmit}
+            // Editing: nothing to save until something changed.
+            disabled={!form.name.trim() || saving || (isEdit && !hasUnsavedChanges)}
+          >
+            {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Dog'}
+          </Button>
+        </div>
       </div>
+
+      {/* Unsaved-changes confirmation when tapping back */}
+      {showLeaveConfirm && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center px-6">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setShowLeaveConfirm(false)}
+          />
+          <div className="relative w-full max-w-[380px] bg-cream rounded-[22px] p-6">
+            <p className="font-outfit font-bold text-[20px] text-text-primary leading-tight mb-2">
+              Save your changes?
+            </p>
+            <p className="font-dm text-[14px] text-text-secondary leading-relaxed mb-5">
+              {isEdit
+                ? `You've edited ${existingName}. Save before leaving, or your changes will be lost.`
+                : "This dog hasn't been added yet. Add it before leaving, or what you've entered will be lost."}
+            </p>
+            <div className="flex flex-col gap-2">
+              <Button
+                fullWidth
+                disabled={saving}
+                onClick={() => {
+                  setShowLeaveConfirm(false)
+                  handleSubmit()
+                }}
+              >
+                {isEdit ? 'Save Changes' : 'Add Dog'}
+              </Button>
+              <Button fullWidth variant="danger" onClick={() => navigate(-1)}>
+                Discard changes
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Remove-dog confirmation — removing drops that dog's photo, notes, and own schedule entries */}
       {confirmRemoveIndex !== null && (() => {

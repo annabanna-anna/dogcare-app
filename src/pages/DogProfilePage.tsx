@@ -231,55 +231,34 @@ export default function DogProfilePage() {
       />
 
       <div className="px-6 mt-2 flex flex-col gap-4">
-        {/* Photo + owner card — a group shows every dog's photo and the shared owner */}
-        <div className="bg-white border border-border-light rounded-[16px] p-4 flex gap-4 items-center">
-          {isGroup ? (
-            <div className="flex shrink-0">
-              {group.map((d, i) => (
-                <div
-                  key={d.key}
-                  className={`size-14 rounded-full overflow-hidden bg-[#f3f4f6] ring-[3px] ring-white flex items-center justify-center text-text-muted ${
-                    i > 0 ? '-ml-4' : ''
-                  }`}
-                >
-                  {d.photoUrl ? (
-                    <img src={d.photoUrl} alt={d.name} className="size-full object-cover" />
-                  ) : (
-                    <DogIcon size={26} />
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="size-20 rounded-[14px] overflow-hidden bg-[#f3f4f6] shrink-0">
-              {dog.photoUrl ? (
-                <img src={dog.photoUrl} alt={dog.name} className="size-full object-cover" />
+        {/* Photo + owner card — one per dog on a group profile */}
+        {group.map((d) => (
+          <div
+            key={d.key}
+            // Concentric corners: card radius (26) = photo radius (12) + padding (14)
+            className="bg-white border border-border-light rounded-[26px] p-3.5 flex gap-4 items-center"
+          >
+            <div className="size-16 rounded-[12px] overflow-hidden bg-[#f3f4f6] shrink-0">
+              {d.photoUrl ? (
+                <img src={d.photoUrl} alt={d.name} className="size-full object-cover" />
               ) : (
-                <div className="size-full flex items-center justify-center text-text-muted"><DogIcon size={36} /></div>
+                <div className="size-full flex items-center justify-center text-text-muted"><DogIcon size={30} /></div>
               )}
             </div>
-          )}
-          {isGroup ? (
             <div className="min-w-0">
-              <p className="font-outfit font-bold text-[22px] text-text-primary leading-none mb-1">
-                {dog.ownerName || dogDisplayName(dog)}
-              </p>
-              <p className="font-dm text-[14px] text-text-secondary">
-                Owner of {dogDisplayName(dog)}
-              </p>
-            </div>
-          ) : (
-            <div>
-              <p className="font-outfit font-bold text-[22px] text-text-primary leading-none mb-1">
-                {dogDisplayName(dog)}
-              </p>
-              <p className="font-dm text-[14px] text-text-secondary">{dogDisplayBreed(dog)}</p>
-              <p className="font-dm font-semibold text-[14px] text-text-primary mt-2">
+              {/* Name + breed read as one unit; the owner sits apart below */}
+              <div>
+                <p className="font-outfit font-semibold text-[18px] text-text-primary leading-tight truncate">
+                  {d.name}
+                </p>
+                <p className="font-dm text-[12px] leading-tight text-text-secondary truncate">{d.breed}</p>
+              </div>
+              <p className="font-dm text-[13px] leading-tight text-text-primary mt-2.5 truncate">
                 {dog.ownerName}
               </p>
             </div>
-          )}
-        </div>
+          </div>
+        ))}
 
         {/* Current stay info + Edit Stay CTA, grouped in one card */}
         {currentStay ? (

@@ -6,17 +6,19 @@ interface Props {
   title: string
   subtitle?: string
   back?: boolean
+  /** Runs instead of navigating back, e.g. to confirm unsaved changes first. */
+  onBack?: () => void
   right?: ReactNode
 }
 
-export default function PageHeader({ title, subtitle, back = false, right }: Props) {
+export default function PageHeader({ title, subtitle, back = false, onBack, right }: Props) {
   const navigate = useNavigate()
 
   return (
     <div className="flex items-start gap-3 px-6 pt-6 pb-2 w-full">
       {back && (
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => (onBack ? onBack() : navigate(-1))}
           className="mt-1 shrink-0 size-8 flex items-center justify-center rounded-full text-text-secondary active:bg-gray-100"
         >
           <ArrowLeft size={20} />
