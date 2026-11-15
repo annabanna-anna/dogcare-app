@@ -1,6 +1,6 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ImagePlus, RefreshCw, Trash2, Plus, ChevronDown, X } from 'lucide-react'
+import { ImagePlus, RefreshCw, Trash2, Plus, Minus, ChevronDown, Clock, X } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
 import DogTabs from '../components/DogTabs'
@@ -15,6 +15,7 @@ import {
   type DogCareNotes,
   type DogGroupMember,
   type DogSize,
+  type OutingRule,
   type TaskType,
   type YesNoUnsure,
 } from '../types'
@@ -60,7 +61,12 @@ interface FormState {
   goesToDogParks: YesNoUnsure
   dogParkNotes: string
   walkTimeFlexible: boolean
+  outingRule: OutingRule | null
 }
+
+const DEFAULT_OUTING_RULE: OutingRule = { everyHours: 4, overnightStart: '22:00', overnightEnd: '06:00' }
+const MIN_OUTING_HOURS = 1
+const MAX_OUTING_HOURS = 12
 
 const defaultForm: FormState = {
   name: '',
@@ -80,6 +86,7 @@ const defaultForm: FormState = {
   goesToDogParks: 'unsure',
   dogParkNotes: '',
   walkTimeFlexible: false,
+  outingRule: null,
 }
 
 const sizeOptions: { value: DogSize; label: string; weight: string }[] = [
@@ -832,6 +839,7 @@ export default function AddEditDogPage() {
           goesToDogParks: d.goesToDogParks,
           dogParkNotes: d.dogParkNotes,
           walkTimeFlexible: d.walkTimeFlexible,
+          outingRule: d.outingRule,
         }
         const loadedSchedule = d.careSchedule.map((e) => ({ ...e }))
         setForm(loaded)
@@ -863,6 +871,15 @@ export default function AddEditDogPage() {
   const [otherTitleTouched, setOtherTitleTouched] = useState(false)
   const scheduleSectionRef = useRef<HTMLElement>(null)
   const hasWalkEntry = schedule.some((e) => e.taskType === 'walk')
+  // Remembers the rule while "Set times" is picked, so switching back doesn't reset it.
+  const lastOutingRule = useRef<OutingRule>(DEFAULT_OUTING_RULE)
+  function setScheduleMode(everyXHours: boolean) {
+    if (form.outingRule) lastOutingRule.current = form.outingRule
+    set('outingRule')(everyXHours ? (form.outingRule ?? lastOutingRule.current) : null)
+  }
+  function patchOutingRule(patch: Partial<OutingRule>) {
+    setForm((prev) => (prev.outingRule ? { ...prev, outingRule: { ...prev.outingRule, ...patch } } : prev))
+  }
   const hasMissingOtherTitle = schedule.some(
     (e) => e.taskType === 'other' && !e.customTitle?.trim(),
   )
@@ -946,11 +963,12 @@ export default function AddEditDogPage() {
       setOpenDogs((prev) => new Set([...prev, ...form.additionalDogs.filter((m) => !m.name.trim()).map((m) => m.id)]))
       return
     }
-    if (schedule.length === 0) {
+    // An "every X hours" rule is a schedule on its own, walks included.
+    if (schedule.length === 0 && !form.outingRule) {
       setScheduleWarning('empty')
       return
     }
-    if (!hasWalkEntry && !form.walkTimeFlexible) {
+    if (!hasWalkEntry && !form.walkTimeFlexible && !form.outingRule) {
       setScheduleWarning('no-walk')
       return
     }
@@ -1304,6 +1322,87 @@ export default function AddEditDogPage() {
           <p className="font-dm text-[13px] text-text-secondary mb-3">
             Care tasks are generated from this schedule for every day of a stay.
           </p>
+          <div role="tablist" className="bg-card rounded-full p-1 flex gap-1 mb-3">
+            {[
+              { everyXHours: false, label: 'Set times' },
+              { everyXHours: true, label: 'Every X hours' },
+            ].map((tab) => {
+              const selected = !!form.outingRule === tab.everyXHours
+              return (
+                <button
+                  key={tab.label}
+                  type="button"
+                  role="tab"
+                  aria-selected={selected}
+                  onClick={() => setScheduleMode(tab.everyXHours)}
+                  className={`flex-1 py-2 rounded-full font-dm font-bold text-[13px] transition-colors ${
+                    selected ? 'bg-coral text-white' : 'text-text-secondary'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              )
+            })}
+          </div>
+          {form.outingRule && (
+            <div className="bg-card rounded-[20px] p-4 mb-4">
+              <p className="flex items-center justify-center gap-1.5 font-dm font-bold text-[12px] text-text-secondary uppercase tracking-widest mb-2">
+                <Clock size={14} />
+                Since last out
+              </p>
+              <p className="font-dm font-bold text-[17px] text-text-primary text-center mb-2">
+                Out at least every
+              </p>
+              <div className="flex items-center justify-center gap-5">
+                <button
+                  type="button"
+                  aria-label="Fewer hours"
+                  disabled={form.outingRule.everyHours <= MIN_OUTING_HOURS}
+                  onClick={() => patchOutingRule({ everyHours: form.outingRule!.everyHours - 1 })}
+                  className="size-10 rounded-full bg-white border border-border-light flex items-center justify-center text-text-primary disabled:opacity-40 active:scale-[0.94] transition-transform"
+                >
+                  <Minus size={16} />
+                </button>
+                <p className="font-outfit font-bold text-[32px] text-text-primary leading-none min-w-[96px] text-center">
+                  {form.outingRule.everyHours} {form.outingRule.everyHours === 1 ? 'hr' : 'hrs'}
+                </p>
+                <button
+                  type="button"
+                  aria-label="More hours"
+                  disabled={form.outingRule.everyHours >= MAX_OUTING_HOURS}
+                  onClick={() => patchOutingRule({ everyHours: form.outingRule!.everyHours + 1 })}
+                  className="size-10 rounded-full bg-white border border-border-light flex items-center justify-center text-text-primary disabled:opacity-40 active:scale-[0.94] transition-transform"
+                >
+                  <Plus size={16} />
+                </button>
+              </div>
+              <p className="font-dm text-[12px] text-text-secondary text-center mt-2">
+                Any walk or potty break resets the clock.
+              </p>
+              <div className="border-t border-border-light mt-4 pt-3 flex items-center gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="font-dm font-bold text-[14px] text-text-primary">Overnight</p>
+                  <p className="font-dm text-[12px] text-text-secondary">No breaks between these times</p>
+                </div>
+                <TimePickerButton
+                  value={form.outingRule.overnightStart}
+                  onChange={(v) => patchOutingRule({ overnightStart: v })}
+                  className="w-[104px] shrink-0 bg-white border border-border-light rounded-[10px] pl-3 pr-7 py-2 font-dm font-bold text-[13px] text-text-primary"
+                />
+                <span className="font-dm text-[13px] text-text-muted">–</span>
+                <TimePickerButton
+                  value={form.outingRule.overnightEnd}
+                  onChange={(v) => patchOutingRule({ overnightEnd: v })}
+                  className="w-[104px] shrink-0 bg-white border border-border-light rounded-[10px] pl-3 pr-7 py-2 font-dm font-bold text-[13px] text-text-primary"
+                />
+              </div>
+            </div>
+          )}
+          {form.outingRule ? (
+            <p className="font-dm font-bold text-[12px] text-text-secondary uppercase tracking-widest mb-1 px-1">
+              Set-time tasks (optional)
+            </p>
+          ) : (
           <label className="flex items-center gap-2 px-1 mb-3 cursor-pointer">
             <input
               type="checkbox"
@@ -1315,6 +1414,12 @@ export default function AddEditDogPage() {
               Walk time is flexible
             </span>
           </label>
+          )}
+          {form.outingRule && (
+            <p className="font-dm text-[12px] text-text-secondary mb-3 px-1">
+              Long walks, meals and meds that happen at a set time. A walk here resets the clock too.
+            </p>
+          )}
           <div className="flex flex-col gap-2">
             {schedule.map((entry, i) => (
               <div key={i} className="bg-white border border-border-light rounded-[12px] p-3 flex flex-col gap-2">

@@ -48,6 +48,23 @@ export async function listTasksByStay(stayId: string): Promise<Task[]> {
   return (data ?? []).map(mapRow)
 }
 
+/** The stay's most recently completed walk or potty break — what an
+ *  "every X hours" clock counts from. */
+export async function getLastOuting(stayId: string): Promise<Task | null> {
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('*')
+    .eq('stay_id', stayId)
+    .eq('status', 'done')
+    .in('type', ['walk', 'potty'])
+    .not('completed_at', 'is', null)
+    .order('completed_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error) throw error
+  return data ? mapRow(data) : null
+}
+
 /** Bulk-inserts generated tasks for a confirmed stay; ids are DB-assigned. */
 export async function createTasks(tasks: Task[]): Promise<Task[]> {
   const ownerId = await currentUserId()

@@ -23,6 +23,7 @@ const sampleDogs: (DogInput & { careSchedule: CareScheduleEntry[] })[] = [
     goesToDogParks: 'no',
     dogParkNotes: '',
     walkTimeFlexible: false,
+    outingRule: null,
     careSchedule: [
       { time: '08:00', taskType: 'walk', note: 'Avoid dog park' },
       { time: '08:30', taskType: 'meal', note: 'Two cups dry kibble' },
@@ -50,6 +51,7 @@ const sampleDogs: (DogInput & { careSchedule: CareScheduleEntry[] })[] = [
     goesToDogParks: 'unsure',
     dogParkNotes: '',
     walkTimeFlexible: false,
+    outingRule: null,
     careSchedule: [
       { time: '07:30', taskType: 'walk', note: '' },
       { time: '08:00', taskType: 'meal', note: 'Half cup kibble' },
@@ -75,6 +77,7 @@ const sampleDogs: (DogInput & { careSchedule: CareScheduleEntry[] })[] = [
     goesToDogParks: 'yes',
     dogParkNotes: '',
     walkTimeFlexible: false,
+    outingRule: null,
     careSchedule: [
       { time: '07:00', taskType: 'meal', note: 'With fish oil supplement' },
       { time: '07:30', taskType: 'walk', note: '45 min sniffy walk' },

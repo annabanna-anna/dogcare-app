@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { CareScheduleEntry, Dog, DogCareNotes, DogGroupMember, DogSize, YesNoUnsure } from '../types'
+import type { CareScheduleEntry, Dog, DogCareNotes, DogGroupMember, DogSize, OutingRule, YesNoUnsure } from '../types'
 import type { Database } from './database.types'
 
 type DogRow = Database['public']['Tables']['dogs']['Row']
@@ -42,6 +42,7 @@ function mapRow(row: DogRow): Dog {
     ...care,
     walkTimeFlexible: row.walk_time_flexible,
     careSchedule: row.care_schedule ?? [],
+    outingRule: row.outing_rule ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -67,6 +68,7 @@ export interface DogInput {
   dogParkNotes: string
   walkTimeFlexible: boolean
   careSchedule: CareScheduleEntry[]
+  outingRule: OutingRule | null
 }
 
 async function currentUserId(): Promise<string> {
@@ -115,6 +117,7 @@ export async function createDog(id: string, input: DogInput): Promise<Dog> {
       dog_park_notes: input.dogParkNotes,
       walk_time_flexible: input.walkTimeFlexible,
       care_schedule: input.careSchedule,
+      outing_rule: input.outingRule,
     })
     .select('*')
     .single()
@@ -145,6 +148,7 @@ export async function updateDog(id: string, input: DogInput): Promise<Dog> {
       dog_park_notes: input.dogParkNotes,
       walk_time_flexible: input.walkTimeFlexible,
       care_schedule: input.careSchedule,
+      outing_rule: input.outingRule,
     })
     .eq('id', id)
     .select('*')

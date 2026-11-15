@@ -12,6 +12,15 @@ export interface CareScheduleEntry {
   forDog?: string        // one dog's key (PRIMARY_DOG_KEY or a group member's id); unset = every dog on the profile
 }
 
+/** "Every X hours" schedule: any walk or potty break resets the clock, and
+ *  the next outing is due everyHours later — except inside the overnight
+ *  window, when no breaks are expected. Null on a dog = set times only. */
+export interface OutingRule {
+  everyHours: number
+  overnightStart: string   // e.g. "22:00"
+  overnightEnd: string     // e.g. "06:00"
+}
+
 /** Key the profile's own (first) dog uses in CareScheduleEntry.forDog. */
 export const PRIMARY_DOG_KEY = 'primary'
 
@@ -51,6 +60,7 @@ export interface Dog extends DogCareNotes {
   // Regular daily schedule
   walkTimeFlexible: boolean
   careSchedule: CareScheduleEntry[]
+  outingRule: OutingRule | null
   createdAt: string
   updatedAt: string
 }

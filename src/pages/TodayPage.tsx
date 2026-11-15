@@ -4,7 +4,8 @@ import DogIcon from '../components/icons/DogIcon'
 import { Link, useNavigate } from 'react-router-dom'
 import Button from '../components/Button'
 import TaskCard from '../components/TaskCard'
-import { listTasksBetween, updateTaskStatus } from '../lib/tasks'
+import SinceLastOutCard from '../components/SinceLastOutCard'
+import { createTasks, getLastOuting, listTasksBetween, updateTaskStatus } from '../lib/tasks'
 import { listStays } from '../lib/stays'
 import { listDogs } from '../lib/dogs'
 import {
@@ -13,7 +14,7 @@ import {
   parseRoverStyleTitle,
   type GoogleCalendarEvent,
 } from '../lib/googleCalendar'
-import type { Dog, Stay, Task, TaskStatus } from '../types'
+import type { Dog, Stay, Task, TaskStatus, TaskType } from '../types'
 import { stayDisplayName, stayingDogs } from '../utils/dogDisplay'
 import {
   addDays,
@@ -23,8 +24,13 @@ import {
   startOfWeek,
   toLocalDateKey,
 } from '../utils/dateUtils'
+import { latestOuting } from '../utils/outingClock'
 
 const DISMISSED_KEY = 'heypup-dismissed-stay-suggestions'
+const OUTING_TITLES: Partial<Record<TaskType, string>> = { walk: 'Walk', potty: 'Potty break' }
+// Logging a walk/potty break checks off a scheduled one when it's this close
+// ahead (or already overdue today), instead of adding a second entry.
+const LOG_MATCH_AHEAD_MS = 60 * 60_000
 const WEEKDAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
 export default function TodayPage() {
@@ -33,6 +39,10 @@ export default function TodayPage() {
   const [dogs, setDogs] = useState<Dog[]>([])
   const [activeDogs, setActiveDogs] = useState<{ dog: Dog; stay: Stay }[]>([])
   const [loading, setLoading] = useState(true)
+  // Last completed walk/potty break per stay, for "every X hours" dogs. Tasks
+  // checked off on this page are merged in live, so this only needs one fetch.
+  const [lastOutings, setLastOutings] = useState<Record<string, Task | null>>({})
+  const [now, setNow] = useState(() => new Date())
   const [error, setError] = useState<string | null>(null)
   // One entry per calendar event. `candidates` normally holds a single dog;
   // more than one means the event's name matched several dogs we couldn't tell
@@ -116,6 +126,21 @@ export default function TodayPage() {
       cancelled = true
     }
   }, [])
+
+  const clockStays = useMemo(() => activeDogs.filter(({ dog }) => dog.outingRule), [activeDogs])
+
+  useEffect(() => {
+    if (clockStays.length === 0) return
+    let cancelled = false
+    Promise.all(clockStays.map(({ stay }) => getLastOuting(stay.id).then((t) => [stay.id, t] as const)))
+      .then((entries) => !cancelled && setLastOutings(Object.fromEntries(entries)))
+      .catch(() => {}) // the clock falls back to drop-off time
+    const tick = setInterval(() => setNow(new Date()), 30_000)
+    return () => {
+      cancelled = true
+      clearInterval(tick)
+    }
+  }, [clockStays])
 
   useEffect(() => {
     let cancelled = false
@@ -229,6 +254,56 @@ export default function TodayPage() {
       ),
     )
     updateTaskStatus(id, status).catch((e) => setError(e instanceof Error ? e.message : 'Could not save.'))
+  }
+
+  function lastOutingFor(stayId: string): Task | undefined {
+    const loaded = tasks.filter((t) => t.stayId === stayId)
+    const fetched = lastOutings[stayId]
+    // The page's own copy wins, so un-checking that task is reflected too.
+    const extra = fetched && !loaded.some((t) => t.id === fetched.id) ? [fetched] : []
+    return latestOuting([...loaded, ...extra])
+  }
+
+  async function logOuting(dog: Dog, stay: Stay, type: TaskType) {
+    const at = new Date()
+    setNow(at)
+    const todayKey = toLocalDateKey(at)
+    const scheduled = tasks
+      .filter(
+        (t) =>
+          t.stayId === stay.id &&
+          t.type === type &&
+          t.status !== 'done' &&
+          toLocalDateKey(new Date(t.scheduledTime)) === todayKey &&
+          new Date(t.scheduledTime).getTime() <= at.getTime() + LOG_MATCH_AHEAD_MS,
+      )
+      .sort(
+        (a, b) =>
+          Math.abs(new Date(a.scheduledTime).getTime() - at.getTime()) -
+          Math.abs(new Date(b.scheduledTime).getTime() - at.getTime()),
+      )[0]
+    if (scheduled) {
+      updateStatus(scheduled.id, 'done')
+      return
+    }
+    try {
+      const created = await createTasks([
+        {
+          id: '',
+          stayId: stay.id,
+          dogId: dog.id,
+          dogName: stayDisplayName(dog, stay.dogKeys),
+          type,
+          title: OUTING_TITLES[type] ?? 'Care task',
+          scheduledTime: at.toISOString(),
+          status: 'done',
+          completedAt: at.toISOString(),
+        },
+      ])
+      setTasks((prev) => [...prev, ...created])
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not save.')
+    }
   }
 
   return (
@@ -603,6 +678,26 @@ export default function TodayPage() {
                   Start another stay
                 </button>
               </div>
+            </section>
+          )}
+
+          {/* "Every X hours" clocks — one per stay whose dog has the rule */}
+          {isTodaySelected && clockStays.length > 0 && (
+            <section className="px-6 mb-6 flex flex-col gap-3">
+              {clockStays.map(({ dog, stay }) => {
+                const last = lastOutingFor(stay.id)
+                return (
+                  <SinceLastOutCard
+                    key={stay.id}
+                    rule={dog.outingRule!}
+                    lastOutAt={new Date(last?.completedAt ?? stay.startDate)}
+                    lastOutLabel={last ? last.title : null}
+                    now={now}
+                    dogName={clockStays.length > 1 ? stayDisplayName(dog, stay.dogKeys) : undefined}
+                    onLog={(type) => void logOuting(dog, stay, type)}
+                  />
+                )
+              })}
             </section>
           )}
 

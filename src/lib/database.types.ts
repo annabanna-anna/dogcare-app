@@ -1,4 +1,4 @@
-import type { CareScheduleEntry, DogGroupMember, DogSize, TaskStatus, TaskType, YesNoUnsure } from '../types'
+import type { CareScheduleEntry, DogGroupMember, DogSize, OutingRule, TaskStatus, TaskType, YesNoUnsure } from '../types'
 
 // Hand-written types matching supabase/schema.sql.
 // If the schema changes, regenerate with:
@@ -32,6 +32,7 @@ export interface Database {
           dog_park_notes: string
           walk_time_flexible: boolean
           care_schedule: CareScheduleEntry[]
+          outing_rule: OutingRule | null
           created_at: string
           updated_at: string
         }
@@ -57,6 +58,7 @@ export interface Database {
           dog_park_notes?: string
           walk_time_flexible?: boolean
           care_schedule?: CareScheduleEntry[]
+          outing_rule?: OutingRule | null
           created_at?: string
           updated_at?: string
         }

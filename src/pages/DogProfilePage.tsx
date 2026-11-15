@@ -155,7 +155,12 @@ export default function DogProfilePage() {
               {dogDisplayName(dog)}
             </span>
           )}
-          {dog.walkTimeFlexible && (
+          {dog.outingRule && (
+            <span className="text-[11px] font-dm font-bold bg-coral-soft text-coral rounded-full px-2 py-0.5">
+              Out every {dog.outingRule.everyHours} {dog.outingRule.everyHours === 1 ? 'hr' : 'hrs'}
+            </span>
+          )}
+          {dog.walkTimeFlexible && !dog.outingRule && (
             <span className="text-[11px] font-dm font-bold bg-[#eef1fd] text-cobalt rounded-full px-2 py-0.5">
               Walk time flexible
             </span>
@@ -163,6 +168,28 @@ export default function DogProfilePage() {
         </div>
       </div>
       <div className="flex flex-col gap-3">
+        {dog.outingRule && (
+          <div className="flex gap-3 items-start">
+            <span className="font-dm font-bold text-[13px] text-coral w-[68px] shrink-0 pt-0.5">
+              Every {dog.outingRule.everyHours} {dog.outingRule.everyHours === 1 ? 'hr' : 'hrs'}
+            </span>
+            <div className={`size-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${TASK_TYPE_STYLE.potty.bg}`}>
+              <TASK_TYPE_STYLE.potty.icon size={12} className="text-white" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-dm font-bold text-[14px] text-text-primary leading-none">
+                Out at least every {dog.outingRule.everyHours} {dog.outingRule.everyHours === 1 ? 'hr' : 'hrs'}
+              </p>
+              <p className="font-dm text-[12px] text-text-secondary mt-0.5">
+                Any walk or potty break resets it
+                {dog.outingRule.overnightStart !== dog.outingRule.overnightEnd &&
+                  ` · none ${formatTime(`2000-01-01T${dog.outingRule.overnightStart}:00`)}–${formatTime(
+                    `2000-01-01T${dog.outingRule.overnightEnd}:00`,
+                  )}`}
+              </p>
+            </div>
+          </div>
+        )}
         {dog.careSchedule.map((entry, i) => {
           const { icon: Icon, bg } = TASK_TYPE_STYLE[entry.taskType] ?? TASK_TYPE_STYLE.other
           const onlyFor = isGroup ? scheduleEntryDogName(dog, entry.forDog) : undefined
