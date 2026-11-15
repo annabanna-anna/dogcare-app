@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react'
-import { PawPrint, Pill, Bone, Toilet, CheckCircle2, RotateCcw } from 'lucide-react'
-import DogBowlIcon from './icons/DogBowlIcon'
+import { CheckCircle2, RotateCcw } from 'lucide-react'
+import { TASK_TYPE_STYLE } from './taskTypeStyle'
 import PawPrintFilled from './icons/PawPrintFilled'
-import type { Task, TaskType } from '../types'
+import type { Task } from '../types'
 import { formatTime } from '../utils/dateUtils'
 
 interface Props {
@@ -24,16 +24,8 @@ interface Props {
 const SWIPE_THRESHOLD = 84
 const SWIPE_MAX = 140
 
-const typeConfig: Record<TaskType, { icon: React.ComponentType<{ size?: string | number; className?: string }>; bg: string; iconColor: string }> = {
-  walk:       { icon: PawPrint,       bg: 'bg-blue-task',   iconColor: 'text-white' },
-  meal:       { icon: DogBowlIcon,   bg: 'bg-coral',       iconColor: 'text-white' },
-  medication: { icon: Pill,           bg: 'bg-purple-task', iconColor: 'text-white' },
-  potty:      { icon: Toilet,         bg: 'bg-green-vivid', iconColor: 'text-white' },
-  other:      { icon: Bone,           bg: 'bg-[#6b7280]',   iconColor: 'text-white' },
-}
-
 export default function TaskCard({ task, onDone, onUndo, showDogName = true, dense = false }: Props) {
-  const { icon: Icon, bg } = typeConfig[task.type] ?? typeConfig.other
+  const { icon: Icon, bg } = TASK_TYPE_STYLE[task.type] ?? TASK_TYPE_STYLE.other
   const isDone = task.status === 'done'
   const isSkipped = task.status === 'skipped'
   const isCompleted = isDone || isSkipped

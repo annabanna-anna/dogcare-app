@@ -47,9 +47,10 @@ export default function DogCard({ dog, nextStay }: Props) {
       <DogPhotoStack dogs={photos} size={64} radius={12} stackRadius={12} ringClassName="ring-cream" />
 
       {/* Info */}
-      <div className="flex-1 min-w-0">
+      {/* Stretches to the photo's height so the owner line pins to the bottom */}
+      <div className="flex-1 min-w-0 self-stretch flex flex-col justify-between gap-2.5">
         {/* Name + breed read as one unit; the owner sits apart below */}
-        <div>
+        <div className="flex flex-col gap-0.5">
           <p className="font-outfit font-semibold text-[18px] text-text-primary leading-tight truncate">
             {dogDisplayName(dog)}
           </p>
@@ -58,7 +59,7 @@ export default function DogCard({ dog, nextStay }: Props) {
         {/* Owner and stay tag share one line, so a stay never makes the card
             taller — filled while staying now, outlined when upcoming */}
         {(dog.ownerName || nextStay) && (
-          <div className="flex items-center gap-2 mt-2.5 min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
             {dog.ownerName && (
               <p className="font-dm text-[13px] leading-tight text-text-primary truncate">{dog.ownerName}</p>
             )}

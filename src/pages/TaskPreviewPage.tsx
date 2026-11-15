@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { PawPrint, Pill, Toilet } from 'lucide-react'
-import DogBowlIcon from '../components/icons/DogBowlIcon'
+import { TASK_TYPE_STYLE } from '../components/taskTypeStyle'
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
 import { getDog } from '../lib/dogs'
@@ -10,24 +9,8 @@ import { createTasks } from '../lib/tasks'
 import { generateTasksForStay } from '../utils/taskGenerator'
 import { isGoogleCalendarConnected, pushTasksToGoogleCalendar } from '../lib/googleCalendar'
 import { formatDayHeading, formatTime, toLocalDateKey } from '../utils/dateUtils'
-import type { Dog, Task, TaskType } from '../types'
+import type { Dog, Task } from '../types'
 import { stayDisplayName } from '../utils/dogDisplay'
-
-const typeIcon: Record<TaskType, React.ComponentType<{ size?: string | number; className?: string }>> = {
-  walk: PawPrint,
-  meal: DogBowlIcon,
-  medication: Pill,
-  potty: Toilet,
-  other: PawPrint,
-}
-
-const typeBg: Record<TaskType, string> = {
-  walk: 'bg-green-vivid',
-  meal: 'bg-coral',
-  medication: 'bg-blue-task',
-  potty: 'bg-purple-task',
-  other: 'bg-[#6b7280]',
-}
 
 interface LocationState {
   dogId: string
@@ -170,8 +153,7 @@ export default function TaskPreviewPage() {
             </p>
             <div className="bg-white border border-border-light rounded-[16px] divide-y divide-border-faint overflow-hidden">
               {dayTasks.map((task) => {
-                const Icon = typeIcon[task.type] ?? PawPrint
-                const bg = typeBg[task.type] ?? 'bg-[#6b7280]'
+                const { icon: Icon, bg } = TASK_TYPE_STYLE[task.type] ?? TASK_TYPE_STYLE.other
                 return (
                   <div key={task.id} className="flex items-start gap-3 p-4">
                     <div

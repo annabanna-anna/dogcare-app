@@ -130,11 +130,23 @@ Four roles: Ember orange as the brand color, Cobalt blue as the secondary accent
 **The Shape Match Rule.** A dog photo or avatar takes the shape of the container it sits in, on every screen. Inside a pill (`rounded-full` chip, toggle, active-care pill, tab), the photo is a circle (`rounded-full`). Inside a rounded card or row, the corners are concentric: photo radius = container radius − padding (e.g. a 26px card with 14px padding holds a 12px-radius photo). Never put a rounded-square photo inside a pill. The same concentric rule covers anything that sits in a card's corner: icon tiles, stacked group photos (the front photo shares the card's corner, so it takes the full photo radius), and rows nested in a card. When the inner radius is fixed, grow the container instead: container radius = inner radius + padding (a 10px tile in a 16px-padded card → 26px card).
 
 ### Semantic accents (status & task type only)
-- **Green Vivid** (#18ba1d): Walk task icons, "done" pills, positive toggles.
+- **Blue Task** (= Cobalt #2344dd): Walk task icons. Shares the Cobalt accent value so the system has exactly one blue.
 - **Ember** (#ff4514): Meal task icons — the brand color doing double duty as the meal semantic, since feeding is the app's other everyday-frequency task alongside walks.
-- **Blue Task** (= Cobalt #2344dd): Medication — the one task type that gets a ring-highlight treatment, because missing it matters more than missing a walk. Shares the Cobalt accent value so the system has exactly one blue.
-- **Purple Task** (#9333ea): Potty break task icons — kept distinct from Walk's green so the two everyday task types don't share a color.
-- **Ink Muted** (#6b7280): Other/uncategorized task icons — the fallback for any task type outside walk, meal, potty, and medication.
+- **Purple Task** (#9333ea): Medication task icons — the one task type that gets a ring-highlight treatment, because missing it matters more than missing a walk.
+- **Green Vivid** (#18ba1d): Potty break task icons, "done" pills, positive toggles.
+- **Ink Muted** (#6b7280): Other/custom task icons — the fallback for any task type outside walk, meal, potty, and medication.
+
+**The Task Icon Rule.** Every task type has exactly one icon and one color, and every screen that shows a task badge (Today, dog profile Daily Schedule, task preview, marketing mockups) uses the same pair. Never pick an icon or color locally — import `TASK_TYPE_STYLE` from `src/components/taskTypeStyle.ts`.
+
+| Task type | Icon | Badge color |
+|---|---|---|
+| Walk | Paw print (`PawPrint`) | Blue Task |
+| Meal | Dog bowl (`DogBowlIcon`) | Ember |
+| Medication | Pill (`Pill`) | Purple Task |
+| Potty break | Toilet (`Toilet`) | Green Vivid |
+| Other (custom) | Bone (`Bone`) | Ink Muted |
+
+Icons are white on the colored circle. An "other" task shows its own title (e.g. "Snack", "Nail trim") wherever a label appears, never the generic "Task".
 
 ## 3. Typography
 

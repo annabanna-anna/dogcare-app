@@ -22,9 +22,9 @@
         "canonical": "oklch(96% 0.003 100)",
         "tonalRamp": ["#232320", "#454540", "#67675f", "#8a8a80", "#adada2", "#cfcfc5", "#e2e2da", "#f4f4ef"]
       },
-      "green-vivid": { "role": "semantic", "displayName": "Walk Green", "canonical": "oklch(63% 0.19 138)" },
+      "green-vivid": { "role": "semantic", "displayName": "Potty Green", "canonical": "oklch(63% 0.19 138)" },
       "cobalt": { "role": "accent", "displayName": "Cobalt", "canonical": "oklch(47% 0.24 268)" },
-      "blue-task": { "role": "semantic", "displayName": "Medication Blue (= Cobalt)", "canonical": "oklch(47% 0.24 268)" },
+      "blue-task": { "role": "semantic", "displayName": "Walk Blue (= Cobalt)", "canonical": "oklch(47% 0.24 268)" },
       "meal-task": { "role": "semantic", "displayName": "Meal Ember (= Ember)", "canonical": "oklch(63% 0.22 33)" },
       "other-task": { "role": "semantic", "displayName": "Other Gray (= Ink Muted)", "canonical": "oklch(55% 0.02 258)" },
       "ink": { "role": "neutral", "displayName": "Ink", "canonical": "oklch(20% 0 0)" }
@@ -95,7 +95,7 @@
       "A warm, dog-forward voice (paw prints, a wagging mascot) kept in check by a display font with real gravity"
     ],
     "rules": [
-      { "name": "The One Voice Rule", "body": "Ember is the only color that carries free-floating meaning (status, action, active state) outside the fixed task-type set (green/ember/blue/gray) — if a color starts meaning \"done\" or \"urgent\" on its own, that's a bug.", "section": "colors" },
+      { "name": "The One Voice Rule", "body": "Ember is the only color that carries free-floating meaning (status, action, active state) outside the fixed task-type set (blue/ember/purple/green/gray) — if a color starts meaning \"done\" or \"urgent\" on its own, that's a bug.", "section": "colors" },
       { "name": "The Avatar Rule", "body": "Photo-less dog avatars are neutral: light gray (#f3f4f6) blocks with the Icon/dog face glyph in Ink Muted — never the paw icon, never a color. There is no pastel identity-accent bench.", "section": "colors" },
       { "name": "The Shape Match Rule", "body": "A dog photo or avatar takes the shape of its container on every screen: a circle inside a pill (chips, toggles, active-care pills, tabs); concentric corners inside a rounded card (photo radius = container radius − padding). Never a rounded-square photo inside a pill.", "section": "components" },
       { "name": "The Eyebrow Restraint Rule", "body": "Uppercase tracked labels are reserved for section headers and status metadata — never used as decorative kicker text above every block.", "section": "typography" },

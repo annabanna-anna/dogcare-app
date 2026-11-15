@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   Pill,
   PawPrint,
-  Toilet,
 } from 'lucide-react'
 import PublicPageShell from '../components/PublicPageShell'
 import PhoneFrame from '../components/PhoneFrame'
@@ -20,6 +19,7 @@ import TaskCard from '../components/TaskCard'
 import Button from '../components/Button'
 import DogBowlIcon from '../components/icons/DogBowlIcon'
 import PawPrintFilled from '../components/icons/PawPrintFilled'
+import { TASK_TYPE_STYLE } from '../components/taskTypeStyle'
 import type { Task } from '../types'
 import { formatTodayHeading } from '../utils/dateUtils'
 
@@ -492,16 +492,6 @@ function StartStayCollage() {
   )
 }
 
-const TASK_BADGE_CONFIG: Record<
-  'meal' | 'medication' | 'walk' | 'potty',
-  { icon: React.ComponentType<{ size?: string | number; className?: string }>; bg: string }
-> = {
-  meal: { icon: DogBowlIcon, bg: 'bg-coral' },
-  medication: { icon: Pill, bg: 'bg-blue-task' },
-  walk: { icon: PawPrint, bg: 'bg-green-vivid' },
-  potty: { icon: Toilet, bg: 'bg-purple-task' },
-}
-
 function GeneratedTaskRow({
   time,
   title,
@@ -515,7 +505,7 @@ function GeneratedTaskRow({
   type: 'meal' | 'medication' | 'walk' | 'potty'
   divider?: boolean
 }) {
-  const { icon: Icon, bg } = TASK_BADGE_CONFIG[type]
+  const { icon: Icon, bg } = TASK_TYPE_STYLE[type]
   return (
     <div className={divider ? 'border-b border-border-faint' : ''}>
       <div className="flex items-start gap-3 p-4">
@@ -619,7 +609,7 @@ function CheckOffTaskRow({
   swipe?: boolean
   last?: boolean
 }) {
-  const { icon: Icon, bg } = TASK_BADGE_CONFIG[type]
+  const { icon: Icon, bg } = TASK_TYPE_STYLE[type]
   return (
     <div className="relative h-[72px] rounded-[10px] overflow-hidden">
       <div className="absolute inset-0 rounded-[10px] bg-[#dcfce7] flex items-center justify-end pr-[6px]">

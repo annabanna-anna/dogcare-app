@@ -13,9 +13,9 @@ import {
   StickyNote,
   ShieldAlert,
   Trees,
-  Toilet,
 } from 'lucide-react'
 import DogBowlIcon from '../components/icons/DogBowlIcon'
+import { TASK_TYPE_STYLE } from '../components/taskTypeStyle'
 import DogIcon from '../components/icons/DogIcon'
 import PageHeader from '../components/PageHeader'
 import CareNoteSection from '../components/CareNoteSection'
@@ -41,22 +41,6 @@ const typeLabel: Record<TaskType, string> = {
   medication: 'Medication',
   potty: 'Potty break',
   other: 'Task',
-}
-
-const typeBg: Record<TaskType, string> = {
-  walk: '#2344dd',
-  meal: '#ff4514',
-  medication: '#9333ea',
-  potty: '#18ba1d',
-  other: '#6b7280',
-}
-
-const typeIcon: Record<TaskType, React.ComponentType<{ size?: string | number; className?: string }>> = {
-  walk: PawPrint,
-  meal: DogBowlIcon,
-  medication: Pill,
-  potty: Toilet,
-  other: PawPrint,
 }
 
 const yesNoUnsureLabel: Record<YesNoUnsure, string> = {
@@ -180,7 +164,7 @@ export default function DogProfilePage() {
       </div>
       <div className="flex flex-col gap-3">
         {dog.careSchedule.map((entry, i) => {
-          const Icon = typeIcon[entry.taskType] ?? PawPrint
+          const { icon: Icon, bg } = TASK_TYPE_STYLE[entry.taskType] ?? TASK_TYPE_STYLE.other
           const onlyFor = isGroup ? scheduleEntryDogName(dog, entry.forDog) : undefined
           return (
           <div key={i} className={`flex gap-3 ${entry.note ? 'items-start' : 'items-center'}`}>
@@ -192,17 +176,16 @@ export default function DogProfilePage() {
               {formatTime(`2000-01-01T${entry.time}:00`)}
             </span>
             <div
-              className={`size-6 rounded-full flex items-center justify-center shrink-0 ${
+              className={`size-6 rounded-full flex items-center justify-center shrink-0 ${bg} ${
                 entry.note ? 'mt-0.5' : ''
               }`}
-              style={{ backgroundColor: typeBg[entry.taskType] ?? '#6b7280' }}
             >
               <Icon size={12} className="text-white" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="font-dm font-bold text-[14px] text-text-primary leading-none">
-                  {typeLabel[entry.taskType]}
+                  {(entry.taskType === 'other' && entry.customTitle?.trim()) || typeLabel[entry.taskType]}
                 </p>
                 {onlyFor && (
                   <span className="text-[11px] font-dm font-bold bg-[#f2f2f2] text-text-secondary rounded-full px-2 py-0.5">
