@@ -12,6 +12,7 @@ function mapRow(row: StayRow): Stay {
     endDate: row.end_date,
     notes: row.notes ?? undefined,
     dogKeys: row.dog_keys ?? undefined,
+    lastOutAt: row.last_out_at ?? undefined,
     createdAt: row.created_at,
   }
 }
@@ -78,6 +79,12 @@ export async function updateStay(
     .single()
   if (error) throw error
   return mapRow(data)
+}
+
+/** Saves "the dog was last out at …" for a stay's going-out clock. */
+export async function setStayLastOut(id: string, at: string): Promise<void> {
+  const { error } = await supabase.from('stays').update({ last_out_at: at }).eq('id', id)
+  if (error) throw error
 }
 
 export async function deleteStay(id: string): Promise<void> {

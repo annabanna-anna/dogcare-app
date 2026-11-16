@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type MouseEvent, type PointerEvent, type ReactNode } from 'react'
 import { ArrowLeft, Check, Plus, X } from 'lucide-react'
 import Button from './Button'
 import DogTabs from './DogTabs'
@@ -16,6 +16,7 @@ import {
   type YesNoUnsure,
 } from '../types'
 import { DAY_PARTS, DEFAULT_OUTING_RULE } from '../utils/outingClock'
+import { autosize } from '../utils/autosize'
 
 // ─── Answers ─────────────────────────────────────────────────────────────────
 
@@ -23,15 +24,16 @@ export type SetupStep = 'meals' | 'long-walks' | 'going-out' | 'medicine' | 'any
 
 export const SETUP_STEPS: SetupStep[] = ['meals', 'long-walks', 'going-out', 'medicine', 'anything', 'review']
 
-/** Which of the 4 questions each step belongs to (the step bar). */
+/** Which question each step is (the step bar). */
 const QUESTION_OF: Record<SetupStep, number> = {
   meals: 1,
   'long-walks': 2,
-  'going-out': 2,
-  medicine: 3,
-  anything: 4,
-  review: 5,
+  'going-out': 3,
+  medicine: 4,
+  anything: 5,
+  review: 6,
 }
+const QUESTION_COUNT = 5
 
 export interface MedicineDraft {
   id: string
@@ -170,17 +172,14 @@ function TextField({
       value={value}
       onChange={(e) => {
         onChange(e.target.value)
-        e.target.style.height = 'auto'
-        e.target.style.height = `${e.target.scrollHeight}px`
+        autosize(e.target)
       }}
       ref={(el) => {
-        if (!el) return
-        el.style.height = 'auto'
-        el.style.height = `${el.scrollHeight}px`
+        if (el) autosize(el)
       }}
       rows={2}
       placeholder={placeholder}
-      className={`${fieldClass} resize-none overflow-hidden`}
+      className={`${fieldClass} resize-none overscroll-contain`}
     />
   ) : (
     <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={fieldClass} />
@@ -298,24 +297,41 @@ export default function DogSetupWizard(props: Props) {
   }
 
   const heading: Record<SetupStep, { eyebrow: string; title: string; sub?: string }> = {
-    meals: { eyebrow: 'Meals · 1 of 4', title: `When does ${dogName} eat?` },
+    meals: { eyebrow: `Meals · 1 of ${QUESTION_COUNT}`, title: `When does ${dogName} eat?` },
     'long-walks': {
-      eyebrow: 'Going out · 2 of 4',
+      eyebrow: `Walks · 2 of ${QUESTION_COUNT}`,
       title: `When are ${dogName}’s long walks?`,
       sub: 'Potty breaks fill the gaps in between.',
     },
     'going-out': {
-      eyebrow: 'Going out · 2 of 4',
+      eyebrow: `Going out · 3 of ${QUESTION_COUNT}`,
       title: `How often does ${dogName} need to go out?`,
       sub: 'Walks and potty breaks both count — any time out resets the clock.',
     },
-    medicine: { eyebrow: 'Medicine · 3 of 4', title: `Does ${dogName} take any medicine?` },
+    medicine: { eyebrow: `Medicine · 4 of ${QUESTION_COUNT}`, title: `Does ${dogName} take any medicine?` },
     anything: {
-      eyebrow: 'Anything else · 4 of 4',
+      eyebrow: `Anything else · 5 of ${QUESTION_COUNT}`,
       title: `Anything else ${dogName} needs?`,
       sub: 'Tap what applies. Walks and potty breaks are already covered.',
     },
     review: { eyebrow: 'All set', title: `${dogName}’s day`, sub: 'Tap anything to change it.' },
+  }
+
+  // Moving on only counts when the finger came down on the button itself. When
+  // a tap elsewhere closes the keyboard, the page jumps and the lifted finger
+  // can land on Next/Skip — that stray click is ignored. (detail 0 = keyboard.)
+  const pressedOn = useRef<EventTarget | null>(null)
+  function deliberate(action: () => void) {
+    return {
+      onPointerDown: (e: PointerEvent<HTMLButtonElement>) => {
+        pressedOn.current = e.currentTarget
+      },
+      onClick: (e: MouseEvent<HTMLButtonElement>) => {
+        const ok = e.detail === 0 || pressedOn.current === e.currentTarget
+        pressedOn.current = null
+        if (ok) action()
+      },
+    }
   }
 
   // The sticky header gets a hairline once content scrolls under it.
@@ -348,7 +364,7 @@ export default function DogSetupWizard(props: Props) {
           </p>
           <button
             type="button"
-            onClick={() => goTo(step === 'review' ? 'review' : nextStep[step])}
+            {...deliberate(() => goTo(step === 'review' ? 'review' : nextStep[step]))}
             className={`shrink-0 w-8 font-dm font-bold text-[14px] text-text-secondary text-right ${
               step === 'review' ? 'invisible' : ''
             }`}
@@ -361,10 +377,10 @@ export default function DogSetupWizard(props: Props) {
           role="progressbar"
           aria-label="Setup progress"
           aria-valuemin={0}
-          aria-valuemax={4}
-          aria-valuenow={Math.min(question, 4)}
+          aria-valuemax={QUESTION_COUNT}
+          aria-valuenow={Math.min(question, QUESTION_COUNT)}
         >
-          {[1, 2, 3, 4].map((n) => (
+          {Array.from({ length: QUESTION_COUNT }, (_, i) => i + 1).map((n) => (
             <span
               key={n}
               className={`h-1 flex-1 rounded-full transition-colors ${n <= question ? 'bg-coral' : 'bg-border-light'}`}
@@ -397,7 +413,7 @@ export default function DogSetupWizard(props: Props) {
             <p className="font-dm text-[13px] text-[#b91c1c]">{error}</p>
           </div>
         )}
-        <Button fullWidth size="lg" onClick={handleNext} disabled={saving}>
+        <Button fullWidth size="lg" {...deliberate(handleNext)} disabled={saving}>
           {step === 'review' ? (saving ? 'Saving…' : `Save ${dogName}`) : step === 'anything' ? 'Review' : 'Next'}
         </Button>
       </div>

@@ -4,7 +4,7 @@ import { TASK_TYPE_STYLE } from './taskTypeStyle'
 import PawPrintFilled from './icons/PawPrintFilled'
 import type { Task } from '../types'
 import { formatTime } from '../utils/dateUtils'
-import { atTime, dayPartInfo } from '../utils/outingClock'
+import { atTime, dayPartInfo, formatDuration } from '../utils/outingClock'
 
 interface Props {
   task: Task
@@ -18,6 +18,12 @@ interface Props {
    *  space-constrained contexts (the marketing site's phone mockups), off
    *  by default so every other screen keeps its current sizing. */
   dense?: boolean
+  /** A long walk the going-out clock has placed: shows "~3:00 PM" and why,
+   *  plus a countdown when it's the next time out. */
+  plan?: { at: Date; reason: string; next: boolean }
+  /** A long walk whose window closed before the going-out clock started —
+   *  listed with past tasks, muted and never overdue. */
+  passed?: boolean
 }
 
 // Distance (px) a swipe must travel before it commits to Done/Undo, and the
@@ -25,7 +31,7 @@ interface Props {
 const SWIPE_THRESHOLD = 84
 const SWIPE_MAX = 140
 
-export default function TaskCard({ task, onDone, onUndo, showDogName = true, dense = false }: Props) {
+export default function TaskCard({ task, onDone, onUndo, showDogName = true, dense = false, plan, passed }: Props) {
   const { icon: Icon, bg } = TASK_TYPE_STYLE[task.type] ?? TASK_TYPE_STYLE.other
   const isDone = task.status === 'done'
   const isSkipped = task.status === 'skipped'
@@ -39,8 +45,11 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, den
   // and only counts as overdue once that window has ended.
   const dayPart = task.dayPart ? dayPartInfo(task.dayPart) : undefined
   const dueBy = dayPart ? atTime(new Date(task.scheduledTime), dayPart.end) : new Date(task.scheduledTime)
-  const isOverdue = !dense && task.status === 'pending' && dueBy < new Date()
-  const displayTime = dayPart
+  const now = new Date()
+  const isOverdue = !dense && !passed && task.status === 'pending' && (plan ? plan.at : dueBy) < now
+  const displayTime = plan
+    ? `~${formatTime(plan.at.toISOString())}`
+    : dayPart
     ? dayPart.label
     : dense
       ? formatTime(task.scheduledTime).replace(':00 ', ' ')
@@ -232,17 +241,22 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, den
         {/* Time column — narrower in dense mode: compact times ("8 AM", "12
             PM") never need the full 68px the app's longest label ("11:30
             AM") does. */}
-        <div className={`${dense ? 'w-12 pl-6' : 'w-[68px] pl-2'} shrink-0 pt-1 ${isCompleted ? 'opacity-50' : ''}`}>
-          <span className={`font-dm font-bold whitespace-nowrap ${dense ? 'text-[12px]' : 'text-[13px]'} text-text-primary`}>
+        <div className={`${dense ? 'w-12 pl-6' : 'w-[68px] pl-2'} shrink-0 pt-1 flex flex-col items-start ${isCompleted || passed ? 'opacity-50' : ''}`}>
+          <span className={`font-dm font-bold whitespace-nowrap ${dense ? 'text-[12px]' : 'text-[13px]'} ${plan ? 'text-text-secondary' : 'text-text-primary'}`}>
             {displayTime}
           </span>
+          {plan?.next && !isOverdue && task.status === 'pending' && (
+            <span className="mt-1 inline-block px-1.5 py-0.5 rounded-full bg-coral-soft font-dm font-bold text-[11px] text-coral whitespace-nowrap">
+              in {formatDuration(plan.at.getTime() - now.getTime())}
+            </span>
+          )}
         </div>
 
         {/* Timeline column — icon badge is 1.5rem (size-6) in dense mode vs
             the app's usual 2rem (size-8). */}
         <div
           className={`flex flex-col items-center ${dense ? 'w-6' : 'w-8'} shrink-0 ${
-            isCompleted ? 'opacity-50' : ''
+            isCompleted || passed ? 'opacity-50' : ''
           }`}
         >
           <div
@@ -258,7 +272,7 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, den
             dog name or note) as tall as the icon badge beside it. */}
         <div
           className={`flex-1 min-w-0 flex flex-col justify-start ${dense ? 'min-h-9 pr-3 max-w-[150px]' : 'min-h-16 pr-5'} py-1 ${
-            isCompleted ? 'opacity-50' : ''
+            isCompleted || passed ? 'opacity-50' : ''
           }`}
         >
           {showDogName && (
@@ -277,10 +291,13 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, den
           {/* Rendered even without a note — an invisible placeholder line —
               so every row reserves the same one-line-of-description height
               instead of shrinking when a task happens to have no note. */}
+          {plan && task.status === 'pending' && (
+            <p className="font-dm text-[13px] text-text-secondary mt-1 leading-snug">{plan.reason}</p>
+          )}
           <p
             className={`font-dm ${dense ? 'text-[10px] truncate' : 'text-[13px]'} text-text-secondary mt-1 leading-snug ${
               task.note ? '' : 'invisible'
-            }`}
+            } ${plan && !task.note ? 'hidden' : ''}`}
           >
             {task.note || 'placeholder'}
           </p>

@@ -89,6 +89,7 @@ export interface Stay {
   endDate: string     // ISO date string
   notes?: string
   dogKeys?: string[]  // which dogs on the profile are staying (PRIMARY_DOG_KEY or member ids); unset = every dog
+  lastOutAt?: string  // "when was the dog last out?" answered on Today — starts the going-out clock
   createdAt: string
 }
 

@@ -119,15 +119,9 @@ function Wheel({
   )
 }
 
-export function TimeWheelSheet({
-  value,
-  onConfirm,
-  onClose,
-}: {
-  value: string // "HH:mm" 24h
-  onConfirm: (v: string) => void
-  onClose: () => void
-}) {
+/** The hour / minute / am-pm wheels on their own, for embedding in a sheet.
+ *  `value` is only read on mount; every change reports "HH:mm" (24h). */
+export function TimeWheel({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [h24, m] = value.split(':').map(Number)
   const snappedMin = pad(Math.round(m / 5) * 5 === 60 ? 55 : Math.round(m / 5) * 5)
   const [hour, setHour] = useState(String(h24 % 12 === 0 ? 12 : h24 % 12))
@@ -144,11 +138,55 @@ export function TimeWheelSheet({
     setHour(nextHour)
   }
 
-  function handleDone() {
+  const onChangeRef = useRef(onChange)
+  onChangeRef.current = onChange
+  const first = useRef(true)
+  useEffect(() => {
+    if (first.current) {
+      first.current = false
+      return
+    }
     let h = Number(hour) % 12
     if (meridiem === 'pm') h += 12
-    onConfirm(`${pad(h)}:${minute}`)
-  }
+    onChangeRef.current(`${pad(h)}:${minute}`)
+  }, [hour, minute, meridiem])
+
+  return (
+    <div className="relative">
+      {/* highlight band */}
+      <div
+        className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-[#f3f4f6] rounded-[14px] pointer-events-none"
+        style={{ height: ROW + 8 }}
+      />
+      <div className="relative flex items-stretch justify-center">
+        <Wheel options={HOURS} value={hour} onChange={handleHourChange} width="w-[72px]" loop />
+        <div
+          className="flex items-center justify-center font-dm font-bold text-[24px] text-text-primary w-6"
+          style={{ height: ROW * VISIBLE }}
+        >
+          :
+        </div>
+        <Wheel options={MINUTES} value={minute} onChange={setMinute} width="w-[72px]" loop />
+        <Wheel options={MERIDIEMS} value={meridiem} onChange={setMeridiem} width="w-[80px]" />
+      </div>
+    </div>
+  )
+}
+
+export function TimeWheelSheet({
+  value,
+  onConfirm,
+  onClose,
+}: {
+  value: string // "HH:mm" 24h
+  onConfirm: (v: string) => void
+  onClose: () => void
+}) {
+  const [picked, setPicked] = useState(() => {
+    const [h, m] = value.split(':').map(Number)
+    const snapped = Math.min(Math.round(m / 5) * 5, 55)
+    return `${pad(h)}:${pad(snapped)}`
+  })
 
   return (
     <div className="fixed inset-0 z-[70] flex items-end justify-center">
@@ -157,26 +195,9 @@ export function TimeWheelSheet({
         <p className="font-outfit font-bold text-[22px] text-text-primary text-center mb-2">
           Time
         </p>
-        <div className="relative">
-          {/* highlight band */}
-          <div
-            className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-[#f3f4f6] rounded-[14px] pointer-events-none"
-            style={{ height: ROW + 8 }}
-          />
-          <div className="relative flex items-stretch justify-center">
-            <Wheel options={HOURS} value={hour} onChange={handleHourChange} width="w-[72px]" loop />
-            <div
-              className="flex items-center justify-center font-dm font-bold text-[24px] text-text-primary w-6"
-              style={{ height: ROW * VISIBLE }}
-            >
-              :
-            </div>
-            <Wheel options={MINUTES} value={minute} onChange={setMinute} width="w-[72px]" loop />
-            <Wheel options={MERIDIEMS} value={meridiem} onChange={setMeridiem} width="w-[80px]" />
-          </div>
-        </div>
+        <TimeWheel value={value} onChange={setPicked} />
         <div className="mt-5">
-          <Button fullWidth onClick={handleDone}>
+          <Button fullWidth onClick={() => onConfirm(picked)}>
             Done
           </Button>
         </div>
@@ -190,16 +211,19 @@ export function TimePickerButton({
   value,
   onChange,
   className = '',
+  label,
 }: {
   value: string
   onChange: (v: string) => void
   className?: string
+  /** Shown instead of the time, e.g. "Other time" before one is picked. */
+  label?: string
 }) {
   const [open, setOpen] = useState(false)
   return (
     <>
-      <button onClick={() => setOpen(true)} className={`relative text-left ${className}`}>
-        {formatTimeValue(value)}
+      <button type="button" onClick={() => setOpen(true)} className={`relative text-left ${className}`}>
+        {label ?? formatTimeValue(value)}
         <ChevronDown
           size={14}
           className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"

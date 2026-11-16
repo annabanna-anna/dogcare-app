@@ -4,6 +4,7 @@ import { ImagePlus, RefreshCw, Trash2, Plus, ChevronDown, Clock, X } from 'lucid
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
 import DogTabs from '../components/DogTabs'
+import { autosize } from '../utils/autosize'
 import DogIcon from '../components/icons/DogIcon'
 import DogSetupWizard, {
   SETUP_STEPS,
@@ -325,17 +326,14 @@ function Textarea({
       value={value}
       onChange={(e) => {
         onChange(e.target.value)
-        e.target.style.height = 'auto'
-        e.target.style.height = `${e.target.scrollHeight}px`
+        autosize(e.target)
       }}
       ref={(el) => {
-        if (!el) return
-        el.style.height = 'auto'
-        el.style.height = `${el.scrollHeight}px`
+        if (el) autosize(el)
       }}
       placeholder={placeholder}
       rows={rows}
-      className="w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-dm text-[15px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors resize-none overflow-hidden"
+      className="w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-dm text-[15px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors resize-none overscroll-contain"
     />
   )
 }

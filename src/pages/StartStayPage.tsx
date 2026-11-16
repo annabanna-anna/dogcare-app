@@ -216,13 +216,22 @@ function DateTimeField({
   time,
   onDayChange,
   onTimeChange,
+  invalid = false,
 }: {
   label: string
   day: string
   time: string
   onDayChange: (v: string) => void
   onTimeChange: (v: string) => void
+  /** Struck through in red — e.g. an end that falls before the start. */
+  invalid?: boolean
 }) {
+  // Red + strikethrough, like iOS Calendar. The ::-webkit-datetime-edit
+  // variants reach the date input's inner text, which ignores the input's own
+  // text-decoration on iOS Safari.
+  const invalidText = invalid
+    ? 'text-[#b91c1c] line-through decoration-[#b91c1c] [&::-webkit-datetime-edit]:text-[#b91c1c] [&::-webkit-datetime-edit]:line-through'
+    : 'text-text-primary'
   return (
     <div>
       <label className="block font-dm font-bold text-[12px] text-text-secondary uppercase tracking-widest mb-1.5">
@@ -238,7 +247,7 @@ function DateTimeField({
               const input = e.currentTarget
               if (typeof input.showPicker === 'function') input.showPicker()
             }}
-            className="w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-dm text-[15px] text-text-primary focus:outline-none focus:border-coral transition-colors appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0"
+            className={`w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-dm text-[15px] ${invalidText} focus:outline-none focus:border-coral transition-colors appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0`}
           />
           <CalendarDays
             size={18}
@@ -248,7 +257,7 @@ function DateTimeField({
         <TimePickerButton
           value={time}
           onChange={onTimeChange}
-          className="w-[132px] shrink-0 bg-white border border-border-light rounded-[12px] pl-4 pr-8 py-3 font-dm text-[15px] text-text-primary"
+          className={`w-[132px] shrink-0 bg-white border border-border-light rounded-[12px] pl-4 pr-8 py-3 font-dm text-[15px] ${invalidText}`}
         />
       </div>
     </div>
@@ -444,6 +453,10 @@ export default function StartStayPage() {
     }
   }
 
+  // Only flag it once both ends are filled in — an empty field isn't "wrong".
+  const endBeforeStart =
+    !!startDay && !!endDay && new Date(endDate) <= new Date(startDate)
+
   const isValid =
     selectedDogId && startDay && endDay && new Date(endDate) > new Date(startDate)
   const dogKeysChanged = original !== null && dogKeysId(dogKeys) !== dogKeysId(original.dogKeys)
@@ -573,6 +586,7 @@ export default function StartStayPage() {
               time={endTime}
               onDayChange={handleEndDayChange}
               onTimeChange={setEndTime}
+              invalid={endBeforeStart}
             />
           </div>
         </section>

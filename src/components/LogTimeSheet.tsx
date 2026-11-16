@@ -52,11 +52,12 @@ export default function LogTimeSheet({ type, title, dogName, rule, onConfirm, on
     }`
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center" role="dialog" aria-modal="true">
+    // Above the bottom nav (also z-50), so the Save button isn't covered.
+    <div className="fixed inset-0 z-[60] flex items-end justify-center" role="dialog" aria-modal="true">
       <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/40" />
-      <div className="relative w-full max-w-[480px] bg-white rounded-t-[24px] px-6 pt-3 pb-[calc(24px+env(safe-area-inset-bottom))]">
+      <div className="relative w-full max-w-[480px] max-h-[90svh] overflow-y-auto bg-white rounded-t-[24px] px-6 pt-3 pb-[calc(24px+env(safe-area-inset-bottom))]">
         <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border-light" />
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 mb-5">
           <span className={`size-9 rounded-full flex items-center justify-center shrink-0 ${bg}`}>
             <Icon size={18} className="text-white" />
           </span>
@@ -65,7 +66,7 @@ export default function LogTimeSheet({ type, title, dogName, rule, onConfirm, on
             <p className="font-dm text-[13px] text-text-secondary">{dogName} · when did it happen?</p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2 mb-4">
+        <div className="flex flex-wrap gap-2 mb-5">
           <button
             type="button"
             onClick={() => {
@@ -92,6 +93,7 @@ export default function LogTimeSheet({ type, title, dogName, rule, onConfirm, on
           <TimePickerButton
             value={toHhmm(at)}
             onChange={pickOther}
+            label={choice === 'other' ? undefined : 'Other time'}
             className={`${chipClass(choice === 'other')} pr-8`}
           />
         </div>

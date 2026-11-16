@@ -77,3 +77,100 @@ export function formatDuration(ms: number): string {
   const m = totalMinutes % 60
   return h > 0 ? `${h}h ${m}m` : `${m}m`
 }
+
+/** One planned time out: a long walk pulled into place, or a potty break in a gap. */
+export interface PlannedOuting {
+  at: Date
+  type: 'walk' | 'potty'
+  /** The long-walk task this fills (walks only). */
+  taskId?: string
+  /** "4 hrs after last out", "Before the 2–5 PM window ends", … */
+  reason: string
+}
+
+interface PlanInput {
+  lastOut: Date
+  /** What the clock counts from, for the first reason: "last out", "the morning walk". */
+  lastLabel: string
+  rule: OutingRule
+  /** Today's pending walks and potty breaks for this stay. */
+  pending: Task[]
+  /** The day being planned. */
+  today: Date
+  /** When the stay ends (pick-up) — nothing is planned from then on. */
+  until?: Date
+}
+
+/** The rest of the day from the last time out: every `everyHours` the dog goes
+ *  out again. A slot inside a long-walk window becomes that walk (or the walk
+ *  moves up so the window isn't missed); any other slot is a potty break. A
+ *  set-time walk or potty break (e.g. "Before bed") restarts the clock where it
+ *  sits. Stops at bedtime, or when the stay ends. */
+export function planOutings({ lastOut, lastLabel, rule, pending, today, until }: PlanInput): PlannedOuting[] {
+  const hrs = `${rule.everyHours} ${rule.everyHours === 1 ? 'hr' : 'hrs'}`
+  const day = today
+  const wake = atTime(today, WAKE_TIME)
+  const bedtime = atTime(day, rule.bedtime)
+  const windows = pending
+    .filter((t) => t.type === 'walk' && t.dayPart)
+    .map((t) => {
+      const info = dayPartInfo(t.dayPart!)
+      const date = new Date(t.scheduledTime)
+      return { task: t, range: info.range, start: atTime(date, info.start), end: atTime(date, info.end) }
+    })
+    .sort((a, b) => a.start.getTime() - b.start.getTime())
+  const fixed = pending
+    .filter((t) => !t.dayPart)
+    .map((t) => ({ task: t, at: new Date(t.scheduledTime) }))
+    .sort((a, b) => a.at.getTime() - b.at.getTime())
+
+  const plan: PlannedOuting[] = []
+  const used = new Set<string>()
+  let t = lastOut
+  let label = lastLabel
+  for (let guard = 0; guard < 24; guard++) {
+    // Overnight (or a last time out before today) starts the day at wake-up.
+    const nextDue = nextOutingDue(t, rule)
+    const due = nextDue < wake ? wake : nextDue
+    const after =
+      due.getTime() === t.getTime() + rule.everyHours * 3_600_000 ? `${hrs} after ${label}` : 'First time out today'
+    const set = fixed.find((f) => f.at > t && f.at <= due)
+    const w = windows.find((x) => !used.has(x.task.id) && x.end > t)
+    // Inside the window → the walk; past its end → moved up to the end; a
+    // window that opens later than `due` waits for a later slot.
+    const walkAt = w ? new Date(Math.min(Math.max(due.getTime(), w.start.getTime()), w.end.getTime())) : null
+    const walk = w && walkAt && walkAt <= due ? { w, at: walkAt } : null
+
+    const nextAt = set && (!walk || set.at <= walk.at) ? set.at : walk ? walk.at : due
+    if (until && nextAt >= until) break
+    if (set && (!walk || set.at <= walk.at)) {
+      t = set.at
+      label = `the ${set.task.title.toLowerCase()}`
+    } else if (walk) {
+      used.add(walk.w.task.id)
+      plan.push({
+        at: walk.at,
+        type: 'walk',
+        taskId: walk.w.task.id,
+        reason:
+          walk.at.getTime() === due.getTime()
+            ? `${after} · inside ${walk.w.range}`
+            : `Before the ${walk.w.range} window ends`,
+      })
+      t = walk.at
+      label = `the ${walk.w.task.title.toLowerCase()}`
+    } else {
+      // The bedtime break covers anything this close to it.
+      if (due.getTime() >= bedtime.getTime() - 30 * 60_000 || !isSameLocalDay(due, day)) break
+      plan.push({ at: due, type: 'potty', reason: after })
+      t = due
+      label = 'the potty break'
+    }
+    if (t >= bedtime || !isSameLocalDay(t, day)) break
+  }
+  return plan
+}
+
+function isSameLocalDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+}

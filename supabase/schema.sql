@@ -120,6 +120,11 @@ alter table tasks add column if not exists day_part text;
 -- member id), for stays where some dogs stay home. Null = every dog.
 alter table stays add column if not exists dog_keys jsonb;
 
+-- "When was the dog last out?" answered on Today, for a going-out dog with
+-- nothing logged yet (or corrected later) — the clock counts from whichever
+-- is later: this or the last checked-off walk/potty break.
+alter table stays add column if not exists last_out_at timestamptz;
+
 -- One row per browser/device that turned on push reminders in Settings —
 -- the endpoint/p256dh/auth triple is the Web Push subscription the browser
 -- issued, and reminder_minutes is how far ahead that device wants nudging.

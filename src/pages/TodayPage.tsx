@@ -1,13 +1,15 @@
 import { useState, useMemo, useEffect, useRef, type PointerEvent } from 'react'
-import { CalendarPlus, UserPlus, CalendarDays, CalendarCheck2, ChevronLeft, ChevronRight, PartyPopper } from 'lucide-react'
+import { CalendarPlus, Clock, UserPlus, CalendarDays, CalendarCheck2, ChevronLeft, ChevronRight, PartyPopper } from 'lucide-react'
 import DogIcon from '../components/icons/DogIcon'
 import { Link, useNavigate } from 'react-router-dom'
 import Button from '../components/Button'
 import TaskCard from '../components/TaskCard'
 import NextOutingCard from '../components/NextOutingCard'
 import LogTimeSheet from '../components/LogTimeSheet'
+import LastOutSheet from '../components/LastOutSheet'
+import LastOutPrompt from '../components/LastOutPrompt'
 import { createTasks, getLastOuting, listTasksBetween, updateTaskStatus } from '../lib/tasks'
-import { listStays } from '../lib/stays'
+import { listStays, setStayLastOut } from '../lib/stays'
 import { listDogs } from '../lib/dogs'
 import {
   isGoogleCalendarConnected,
@@ -20,12 +22,13 @@ import { stayDisplayName, stayingDogs } from '../utils/dogDisplay'
 import {
   addDays,
   formatDayHeading,
+  formatTime,
   formatTodayHeading,
   isSameDay,
   startOfWeek,
   toLocalDateKey,
 } from '../utils/dateUtils'
-import { OUTING_TYPES, atTime, latestOuting, nextOutingDue } from '../utils/outingClock'
+import { OUTING_TYPES, atTime, dayPartInfo, latestOuting, planOutings } from '../utils/outingClock'
 
 const DISMISSED_KEY = 'heypup-dismissed-stay-suggestions'
 const OUTING_TITLES: Partial<Record<TaskType, string>> = { walk: 'Walk', potty: 'Potty break' }
@@ -46,6 +49,8 @@ export default function TodayPage() {
   const [now, setNow] = useState(() => new Date())
   // The walk/potty break just logged, while the "when did it happen?" sheet is open.
   const [logPrompt, setLogPrompt] = useState<{ task: Task; dog: Dog } | null>(null)
+  // "When was the dog last out?" — Pick a time, or Change on the clock strip.
+  const [lastOutSheet, setLastOutSheet] = useState<{ dog: Dog; stay: Stay; initial: Date; task?: Task } | null>(null)
   const [error, setError] = useState<string | null>(null)
   // One entry per calendar event. `candidates` normally holds a single dog;
   // more than one means the event's name matched several dogs we couldn't tell
@@ -238,7 +243,6 @@ export default function TodayPage() {
   const pendingTasks = useMemo(() => dayTasks.filter((t) => t.status !== 'done'), [dayTasks])
   const pastTasks = useMemo(() => dayTasks.filter((t) => t.status === 'done'), [dayTasks])
   const pendingByDog = useMemo(() => groupByDog(pendingTasks), [pendingTasks])
-  const pastByDog = useMemo(() => groupByDog(pastTasks), [pastTasks])
   const isMultiDog = useMemo(() => new Set(dayTasks.map((t) => t.dogName)).size > 1, [dayTasks])
 
   useEffect(() => {
@@ -272,6 +276,8 @@ export default function TodayPage() {
     return latestOuting([...loaded, ...extra])
   }
 
+  /** Logs a walk/potty break just now: checks off the scheduled one nearest
+   *  now if there is one, otherwise adds a done task. */
   async function logOuting(dog: Dog, stay: Stay, type: TaskType) {
     const at = new Date()
     setNow(at)
@@ -315,51 +321,149 @@ export default function TodayPage() {
     }
   }
 
-  // The estimated next potty break for each going-out stay: last time out +
-  // every X hrs. Skipped when it lands overnight or at the bedtime break.
-  const estimates = isTodaySelected
-    ? clockStays.flatMap(({ dog, stay }) => {
+  /** What a stay's clock counts from: the later of the last checked-off walk
+   *  or potty break and the "when was the dog last out?" answer. */
+  function lastOutFor(stay: Stay): { at: Date; label: string; task?: Task } | null {
+    const task = lastOutingFor(stay.id)
+    const taskAt = task?.completedAt ? new Date(task.completedAt) : null
+    const stayAt = stay.lastOutAt ? new Date(stay.lastOutAt) : null
+    if (task && taskAt && (!stayAt || taskAt >= stayAt)) {
+      return { at: taskAt, label: `the ${task.title.toLowerCase()}`, task }
+    }
+    return stayAt ? { at: stayAt, label: 'last out' } : null
+  }
+
+  /** Saves when the dog was last out. Correcting a checked-off walk/potty break
+   *  moves that task; otherwise the time is kept on the stay. */
+  async function saveLastOut(stay: Stay, at: Date, task?: Task) {
+    setNow(new Date())
+    if (task) {
+      updateStatus(task.id, 'done', at.toISOString())
+      return
+    }
+    const iso = at.toISOString()
+    const setLocal = (lastOutAt: string | undefined) =>
+      setActiveDogs((prev) => prev.map((a) => (a.stay.id === stay.id ? { ...a, stay: { ...a.stay, lastOutAt } } : a)))
+    const previous = stay.lastOutAt
+    setLocal(iso)
+    try {
+      await setStayLastOut(stay.id, iso)
+    } catch (e) {
+      setLocal(previous) // didn't save — don't show a clock that isn't stored
+      // Supabase errors are plain objects, not Error instances.
+      const message = (e as { message?: string } | null)?.message
+      setError(message ? `Could not save the last-out time: ${message}` : 'Could not save the last-out time.')
+    }
+  }
+
+  const todayKey = toLocalDateKey(now)
+  /** Today's pending walks and potty breaks for a stay. */
+  const pendingOutings = (stayId: string) =>
+    tasks.filter(
+      (t) =>
+        t.stayId === stayId &&
+        t.status === 'pending' &&
+        OUTING_TYPES.includes(t.type) &&
+        toLocalDateKey(new Date(t.scheduledTime)) === todayKey,
+    )
+
+  // One going-out clock per stay: what it counts from, and the rest of today
+  // planned from there — long walks placed in their windows, potty breaks in
+  // the gaps. Nothing logged yet → ask when the dog was last out.
+  const clocks = isTodaySelected
+    ? clockStays.map(({ dog, stay }) => {
         const rule = dog.outingRule!
-        const last = lastOutingFor(stay.id)
-        const lastAt = new Date(last?.completedAt ?? stay.startDate)
-        const due = nextOutingDue(lastAt, rule)
-        const bedtime = atTime(now, rule.bedtime)
-        if (!isSameDay(due, now) || due.getTime() >= bedtime.getTime() - 30 * 60_000) return []
-        const hrs = `${rule.everyHours} ${rule.everyHours === 1 ? 'hr' : 'hrs'}`
-        const planned = tasks
-          .filter(
-            (t) =>
-              t.stayId === stay.id &&
-              t.status === 'pending' &&
-              OUTING_TYPES.includes(t.type) &&
-              new Date(t.scheduledTime) > lastAt &&
-              new Date(t.scheduledTime) <= due,
-          )
-          .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime))[0]
-        return [
-          {
-            dog,
-            stay,
-            due,
-            dogName: stayDisplayName(dog, stay.dogKeys),
-            conditional: !!planned,
-            reason: planned
-              ? `Only if the ${planned.title.toLowerCase()} isn’t done by then`
-              : `${hrs} after ${last ? `the ${last.title.toLowerCase()}` : 'drop-off'}`,
-          },
-        ]
+        const last = lastOutFor(stay)
+        const firstDay = toLocalDateKey(new Date(stay.startDate)) === todayKey
+        // On the first day, a long walk whose window closed before the clock
+        // started (or before now, if it hasn't) is past — we can't know whether
+        // it happened, so it moves to past tasks instead of showing overdue.
+        const startedAt = stay.lastOutAt ? new Date(stay.lastOutAt) : last ? null : now
+        const passed = new Set(
+          pendingOutings(stay.id)
+            .filter((t) => {
+              if (!firstDay || !startedAt || !t.dayPart) return false
+              return atTime(new Date(t.scheduledTime), dayPartInfo(t.dayPart).end) <= startedAt
+            })
+            .map((t) => t.id),
+        )
+        const pending = pendingOutings(stay.id).filter((t) => !passed.has(t.id))
+        const plan = last
+          ? planOutings({ lastOut: last.at, lastLabel: last.label, rule, pending, today: now, until: new Date(stay.endDate) })
+          : []
+        return {
+          dog,
+          stay,
+          rule,
+          dogName: stayDisplayName(dog, stay.dogKeys),
+          last,
+          // Wait for the last-outing fetch before asking, so the card doesn't flash.
+          ask: !last && stay.id in lastOutings,
+          plan,
+          passed,
+        }
       })
     : []
-  const pendingGroups = [...new Set([...Object.keys(pendingByDog), ...estimates.map((e) => e.dogName)])].map(
-    (dogName) => ({
-      dogName,
-      items: [
-        ...(pendingByDog[dogName] ?? []).map((task) => ({ time: new Date(task.scheduledTime), task, estimate: null })),
-        ...estimates.filter((e) => e.dogName === dogName).map((estimate) => ({ time: estimate.due, task: null, estimate })),
-      ].sort((a, b) => a.time.getTime() - b.time.getTime()),
-    }),
+  const walkPlans = new Map(
+    clocks.flatMap((c) =>
+      c.plan.flatMap((p, i) => (p.taskId ? [[p.taskId, { at: p.at, reason: p.reason, next: i === 0 }] as const] : [])),
+    ),
+  )
+  const passedIds = new Set(clocks.flatMap((c) => [...c.passed]))
+  const pottyPlans = clocks.flatMap((c) =>
+    c.plan.flatMap((p, i) => (p.type === 'potty' ? [{ clock: c, at: p.at, reason: p.reason, next: i === 0 }] : [])),
   )
 
+  /** "Then today" in the pick-a-time sheet: the plan if the dog was last out at `at`. */
+  function previewFor(stay: Stay, rule: NonNullable<Dog['outingRule']>, at: Date) {
+    const pending = pendingOutings(stay.id).filter((t) => !passedIds.has(t.id))
+    const plan = planOutings({ lastOut: at, lastLabel: 'last out', rule, pending, today: new Date(), until: new Date(stay.endDate) })
+    const titleOf = (id?: string) => pending.find((t) => t.id === id)?.title ?? 'Walk'
+    return [
+      ...plan.map((p) => ({ at: p.at, type: p.type, title: p.type === 'walk' ? titleOf(p.taskId) : 'Potty break' })),
+      ...pending
+        .filter((t) => !t.dayPart && new Date(t.scheduledTime) > at && new Date(t.scheduledTime) < new Date(stay.endDate))
+        .map((t) => ({
+          at: new Date(t.scheduledTime),
+          type: 'fixed' as const,
+          fixedType: t.type as 'walk' | 'potty',
+          title: t.title,
+        })),
+    ].sort((a, b) => a.at.getTime() - b.at.getTime())
+  }
+
+  // Past tasks: done ones, plus first-day walks whose window had already passed.
+  const pastList = [...pastTasks, ...pendingTasks.filter((t) => passedIds.has(t.id))].sort(
+    (a, b) => new Date(a.scheduledTime).getTime() - new Date(b.scheduledTime).getTime(),
+  )
+  const pastListByDog = groupByDog(pastList)
+
+  type Item =
+    | { kind: 'task'; time: Date; task: Task }
+    | { kind: 'potty'; time: Date; potty: (typeof pottyPlans)[number] }
+    | { kind: 'ask'; time: Date; clock: (typeof clocks)[number] }
+  const pendingGroups = [
+    ...new Set([...Object.keys(pendingByDog), ...clocks.filter((c) => c.ask || c.plan.length).map((c) => c.dogName)]),
+  ].map((dogName) => {
+    const dogTasks = pendingByDog[dogName] ?? []
+    const items: Item[] = [
+      ...dogTasks
+        .filter((task) => !passedIds.has(task.id))
+        .map((task) => ({
+          kind: 'task' as const,
+          time: walkPlans.get(task.id)?.at ?? new Date(task.scheduledTime),
+          task,
+        })),
+      ...pottyPlans.filter((p) => p.clock.dogName === dogName).map((potty) => ({ kind: 'potty' as const, time: potty.at, potty })),
+    ].sort((a, b) => a.time.getTime() - b.time.getTime())
+    const clock = clocks.find((c) => c.dogName === dogName)
+    if (clock?.ask) items.unshift({ kind: 'ask', time: now, clock })
+    return {
+      dogName,
+      clock,
+      items,
+    }
+  })
   return (
     <div className="min-h-svh bg-cream pb-28">
       {/* Header */}
@@ -736,31 +840,60 @@ export default function TodayPage() {
           )}
 
           {/* Tasks grouped by dog */}
-          {pendingGroups.map(({ dogName, items }) => (
+          {pendingGroups.map(({ dogName, clock, items }) => (
             <section key={dogName} className="px-6 mb-4">
               {isMultiDog && (
                 <p className="font-dm font-bold text-[12px] text-coral uppercase tracking-widest mb-3">
                   {dogName}
                 </p>
               )}
+              {/* What the going-out clock is counting from, with a way to fix it */}
+              {clock?.last && (
+                <div className="mb-4 bg-card rounded-[12px] pl-3 pr-1 py-1 flex items-center gap-2.5">
+                  <Clock size={16} className="text-green-vivid shrink-0" />
+                  <p className="flex-1 min-w-0 font-dm font-medium text-[13px] text-text-primary leading-snug py-2">
+                    Out every {clock.rule.everyHours} {clock.rule.everyHours === 1 ? 'hr' : 'hrs'} · last out{' '}
+                    {formatTime(clock.last.at.toISOString())}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setLastOutSheet({ dog: clock.dog, stay: clock.stay, initial: clock.last!.at, task: clock.last!.task })
+                    }
+                    className="shrink-0 px-3 py-2 rounded-full font-dm font-bold text-[13px] text-coral active:bg-coral-soft"
+                  >
+                    Change
+                  </button>
+                </div>
+              )}
               <div>
-                {items.map(({ task, estimate }, i) =>
-                  estimate ? (
-                    <NextOutingCard
-                      key={`estimate-${estimate.stay.id}`}
-                      due={estimate.due}
-                      now={now}
-                      reason={estimate.reason}
-                      conditional={estimate.conditional}
-                      onLog={() => void logOuting(estimate.dog, estimate.stay, 'potty')}
+                {items.map((item, i) =>
+                  item.kind === 'ask' ? (
+                    <LastOutPrompt
+                      key={`last-out-${item.clock.stay.id}`}
+                      dogName={item.clock.dogName}
+                      onJustNow={() => void saveLastOut(item.clock.stay, new Date())}
+                      onPickTime={() => setLastOutSheet({ dog: item.clock.dog, stay: item.clock.stay, initial: new Date() })}
                     />
+                  ) : item.kind === 'potty' ? (
+<div key={`potty-${item.potty.clock.stay.id}-${item.time.getTime()}`} className={i === items.length - 1 ? '[&_.connector]:opacity-0' : ''}>
+                                        <NextOutingCard
+                      due={item.potty.at}
+                      now={now}
+                      reason={item.potty.reason}
+                      next={item.potty.next}
+                      dogName={isMultiDog ? item.potty.clock.dogName : undefined}
+                      onLog={() => void logOuting(item.potty.clock.dog, item.potty.clock.stay, 'potty')}
+                    />
+                    </div>
                   ) : (
-                    <div key={task!.id} className={i === items.length - 1 ? '[&_.connector]:opacity-0' : ''}>
+                    <div key={item.task.id} className={i === items.length - 1 ? '[&_.connector]:opacity-0' : ''}>
                       <TaskCard
-                        task={task!}
-                        onDone={() => completeTask(task!)}
+                        task={item.task}
+                        onDone={() => completeTask(item.task)}
                         onUndo={(id) => updateStatus(id, 'pending')}
                         showDogName={isMultiDog}
+                        plan={walkPlans.get(item.task.id)}
                       />
                     </div>
                   ),
@@ -769,7 +902,7 @@ export default function TodayPage() {
             </section>
           ))}
 
-          {isTodaySelected && dayTasks.length > 0 && pendingTasks.length === 0 && estimates.length === 0 && (
+          {isTodaySelected && dayTasks.length > 0 && pendingTasks.every((t) => passedIds.has(t.id)) && pottyPlans.length === 0 && !clocks.some((c) => c.ask) && (
             <div className="px-6 mb-6">
               <div className="rise-in bg-[#dcfce7] rounded-[20px] p-6 flex flex-col items-center text-center gap-2">
                 <div className="size-12 rounded-full bg-white flex items-center justify-center">
@@ -785,17 +918,17 @@ export default function TodayPage() {
             </div>
           )}
 
-          {pastTasks.length > 0 && (
+          {pastList.length > 0 && (
             <section className="px-6 mb-4">
               <button
                 type="button"
                 onClick={() => setShowPastTasks((v) => !v)}
                 className="font-dm font-bold text-[12px] text-text-muted uppercase tracking-widest mb-3"
               >
-                {showPastTasks ? 'Hide' : 'Show'} past tasks ({pastTasks.length})
+                {showPastTasks ? 'Hide' : 'Show'} past tasks ({pastList.length})
               </button>
               {showPastTasks &&
-                Object.entries(pastByDog).map(([dogName, dogTasks]) => (
+                Object.entries(pastListByDog).map(([dogName, dogTasks]) => (
                   <div key={dogName} className="mb-4 last:mb-0">
                     {/* Always labeled, even for a single dog — once a stay ends,
                         the Active Care card that named the dog is gone, so this
@@ -813,6 +946,7 @@ export default function TodayPage() {
                           onDone={(id) => updateStatus(id, 'done')}
                           onUndo={(id) => updateStatus(id, 'pending')}
                           showDogName={isMultiDog}
+                          passed={passedIds.has(task.id)}
                         />
                       </div>
                     ))}
@@ -856,6 +990,19 @@ export default function TodayPage() {
             setLogPrompt(null)
           }}
           onClose={() => setLogPrompt(null)}
+        />
+      )}
+      {lastOutSheet && (
+        <LastOutSheet
+          dogName={stayDisplayName(lastOutSheet.dog, lastOutSheet.stay.dogKeys)}
+          initial={lastOutSheet.initial}
+          previewFor={(at) => previewFor(lastOutSheet.stay, lastOutSheet.dog.outingRule!, at)}
+          onSave={(at) => {
+            const { stay, task } = lastOutSheet
+            setLastOutSheet(null)
+            void saveLastOut(stay, at, task)
+          }}
+          onClose={() => setLastOutSheet(null)}
         />
       )}
     </div>
