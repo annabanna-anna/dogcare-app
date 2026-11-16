@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { CalendarDays, ChevronDown, Check, Plus, Search, Trash2, X } from 'lucide-react'
 import DogIcon from '../components/icons/DogIcon'
@@ -89,10 +89,22 @@ function DogPickerSheet({
       .filter((d) => !q || dogSearchText(d).includes(q))
   }, [query, dogs])
 
+  // Lock the sheet to the height it opened at, so filtering doesn't make it
+  // collapse while typing.
+  const sheetRef = useRef<HTMLDivElement>(null)
+  const [lockedHeight, setLockedHeight] = useState<number | null>(null)
+  useLayoutEffect(() => {
+    if (sheetRef.current) setLockedHeight(sheetRef.current.offsetHeight)
+  }, [])
+
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative w-full max-w-[430px] bg-cream rounded-t-[22px] pt-5 pb-8 max-h-[75svh] flex flex-col">
+      <div
+        ref={sheetRef}
+        style={lockedHeight ? { height: lockedHeight } : undefined}
+        className="relative w-full max-w-[430px] bg-cream rounded-t-[22px] pt-5 pb-8 max-h-[75svh] flex flex-col"
+      >
         <div className="px-6 flex items-start justify-between mb-3">
           <p className="font-outfit font-bold text-[22px] text-text-primary leading-tight">
             Choose a dog
@@ -118,7 +130,7 @@ function DogPickerSheet({
           </div>
         </div>
 
-        <div className="px-6 overflow-y-auto flex flex-col gap-2">
+        <div className="px-6 flex-1 min-h-0 overflow-y-auto flex flex-col gap-2">
           {filtered.map((dog) => {
             const isSelected = dog.id === selectedDogId
             return (
