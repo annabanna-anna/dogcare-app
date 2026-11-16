@@ -1,6 +1,7 @@
 import { supabase } from './supabase'
 import type { CareScheduleEntry, Dog, DogCareNotes, DogGroupMember, DogSize, OutingRule, YesNoUnsure } from '../types'
 import type { Database } from './database.types'
+import { DEFAULT_OUTING_RULE } from '../utils/outingClock'
 
 type DogRow = Database['public']['Tables']['dogs']['Row']
 
@@ -42,7 +43,7 @@ function mapRow(row: DogRow): Dog {
     ...care,
     walkTimeFlexible: row.walk_time_flexible,
     careSchedule: row.care_schedule ?? [],
-    outingRule: row.outing_rule ?? null,
+    outingRule: row.outing_rule ? { ...DEFAULT_OUTING_RULE, ...row.outing_rule } : null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }

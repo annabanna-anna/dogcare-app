@@ -21,6 +21,7 @@ import PageHeader from '../components/PageHeader'
 import CareNoteSection from '../components/CareNoteSection'
 import DogTabs from '../components/DogTabs'
 import Button from '../components/Button'
+import GoingOutBlock from '../components/GoingOutBlock'
 import { getDog, deleteDog } from '../lib/dogs'
 import { listStays } from '../lib/stays'
 import { formatTime, formatShortDate } from '../utils/dateUtils'
@@ -168,29 +169,10 @@ export default function DogProfilePage() {
         </div>
       </div>
       <div className="flex flex-col gap-3">
-        {dog.outingRule && (
-          <div className="flex gap-3 items-start">
-            <span className="font-dm font-bold text-[13px] text-coral w-[68px] shrink-0 pt-0.5">
-              Every {dog.outingRule.everyHours} {dog.outingRule.everyHours === 1 ? 'hr' : 'hrs'}
-            </span>
-            <div className={`size-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${TASK_TYPE_STYLE.potty.bg}`}>
-              <TASK_TYPE_STYLE.potty.icon size={12} className="text-white" />
-            </div>
-            <div className="min-w-0">
-              <p className="font-dm font-bold text-[14px] text-text-primary leading-none">
-                Out at least every {dog.outingRule.everyHours} {dog.outingRule.everyHours === 1 ? 'hr' : 'hrs'}
-              </p>
-              <p className="font-dm text-[12px] text-text-secondary mt-0.5">
-                Any walk or potty break resets it
-                {dog.outingRule.overnightStart !== dog.outingRule.overnightEnd &&
-                  ` · none ${formatTime(`2000-01-01T${dog.outingRule.overnightStart}:00`)}–${formatTime(
-                    `2000-01-01T${dog.outingRule.overnightEnd}:00`,
-                  )}`}
-              </p>
-            </div>
-          </div>
-        )}
+        {dog.outingRule && <GoingOutBlock rule={dog.outingRule} careSchedule={dog.careSchedule} />}
         {dog.careSchedule.map((entry, i) => {
+          // With a going-out rule, walks are listed in the block above.
+          if (dog.outingRule && entry.taskType === 'walk') return null
           const { icon: Icon, bg } = TASK_TYPE_STYLE[entry.taskType] ?? TASK_TYPE_STYLE.other
           const onlyFor = isGroup ? scheduleEntryDogName(dog, entry.forDog) : undefined
           return (
@@ -212,7 +194,7 @@ export default function DogProfilePage() {
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="font-dm font-bold text-[14px] text-text-primary leading-none">
-                  {(entry.taskType === 'other' && entry.customTitle?.trim()) || typeLabel[entry.taskType]}
+                  {entry.customTitle?.trim() || typeLabel[entry.taskType]}
                 </p>
                 {onlyFor && (
                   <span className="text-[11px] font-dm font-bold bg-[#f2f2f2] text-text-secondary rounded-full px-2 py-0.5">

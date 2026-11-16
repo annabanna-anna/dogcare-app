@@ -16,6 +16,7 @@ function mapRow(row: TaskRow): Task {
     note: row.note ?? undefined,
     status: row.status,
     completedAt: row.completed_at ?? undefined,
+    dayPart: row.day_part ?? undefined,
     googleExtId: row.google_ext_id ?? undefined,
     googleExtKind: (row.google_ext_kind as 'event' | 'task' | null) ?? undefined,
   }
@@ -79,6 +80,9 @@ export async function createTasks(tasks: Task[]): Promise<Task[]> {
     note: t.note || null,
     status: t.status,
     completed_at: t.completedAt || null,
+    // Only sent when set, so ordinary tasks still insert on a database that
+    // predates the column.
+    ...(t.dayPart ? { day_part: t.dayPart } : {}),
   }))
   const { data, error } = await supabase.from('tasks').insert(rows).select('*')
   if (error) throw error
@@ -96,10 +100,11 @@ export async function deleteTasksByIds(ids: string[]): Promise<void> {
   if (error) throw error
 }
 
-export async function updateTaskStatus(id: string, status: TaskStatus): Promise<void> {
+/** completedAt defaults to now — pass it when the sitter logs a walk late. */
+export async function updateTaskStatus(id: string, status: TaskStatus, completedAt?: string): Promise<void> {
   const { error } = await supabase
     .from('tasks')
-    .update({ status, completed_at: status === 'done' ? new Date().toISOString() : null })
+    .update({ status, completed_at: status === 'done' ? (completedAt ?? new Date().toISOString()) : null })
     .eq('id', id)
   if (error) throw error
 }

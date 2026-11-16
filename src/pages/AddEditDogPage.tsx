@@ -1,10 +1,18 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ImagePlus, RefreshCw, Trash2, Plus, Minus, ChevronDown, Clock, X } from 'lucide-react'
+import { ImagePlus, RefreshCw, Trash2, Plus, ChevronDown, Clock, X } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
 import DogTabs from '../components/DogTabs'
 import DogIcon from '../components/icons/DogIcon'
+import DogSetupWizard, {
+  SETUP_STEPS,
+  applySetupAnswers,
+  emptySetupAnswers,
+  type SetupAnswers,
+  type SetupStep,
+} from '../components/DogSetupWizard'
+import { LongWalkChoice, OutingSettingsCard, hrsLabel } from '../components/GoingOutFields'
 import { getDog, createDog, updateDog, uploadDogPhoto } from '../lib/dogs'
 import { regenerateFutureTasksForDog } from '../lib/stayTaskSync'
 import { TimePickerButton } from '../components/TimePicker'
@@ -20,6 +28,8 @@ import {
   type YesNoUnsure,
 } from '../types'
 import { dogDisplayName, pickCareNotes } from '../utils/dogDisplay'
+import { DEFAULT_OUTING_RULE } from '../utils/outingClock'
+import { formatTime } from '../utils/dateUtils'
 
 const MAX_DOGS_IN_GROUP = 3
 
@@ -43,6 +53,12 @@ const scheduleNotePlaceholder: Record<TaskType, string> = {
   other: 'Note (optional)',
 }
 
+const titlePlaceholder: Partial<Record<TaskType, string>> = {
+  other: 'Task title — e.g. Nail trim',
+  medication: 'Medicine name — e.g. Apoquel',
+  meal: 'Title — e.g. Snack time',
+}
+
 interface FormState {
   name: string
   breed: string
@@ -64,10 +80,6 @@ interface FormState {
   outingRule: OutingRule | null
 }
 
-const DEFAULT_OUTING_RULE: OutingRule = { everyHours: 4, overnightStart: '22:00', overnightEnd: '06:00' }
-const MIN_OUTING_HOURS = 1
-const MAX_OUTING_HOURS = 12
-
 const defaultForm: FormState = {
   name: '',
   breed: '',
@@ -86,7 +98,7 @@ const defaultForm: FormState = {
   goesToDogParks: 'unsure',
   dogParkNotes: '',
   walkTimeFlexible: false,
-  outingRule: null,
+  outingRule: DEFAULT_OUTING_RULE,
 }
 
 const sizeOptions: { value: DogSize; label: string; weight: string }[] = [
@@ -674,8 +686,8 @@ function DogSizePicker({ value, onChange }: { value: DogSize; onChange: (v: DogS
   )
 }
 
-function snapshotOf(form: FormState, schedule: CareScheduleEntry[]): string {
-  return JSON.stringify({ form, schedule })
+function snapshotOf(form: FormState, schedule: CareScheduleEntry[], answers: SetupAnswers): string {
+  return JSON.stringify({ form, schedule, answers })
 }
 
 interface PhotoHandle {
@@ -782,7 +794,7 @@ const DogPhotoField = forwardRef<
 export default function AddEditDogPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const isEdit = Boolean(id && id !== 'new')
 
   const [form, setForm] = useState<FormState>(() => ({
@@ -791,9 +803,25 @@ export default function AddEditDogPage() {
     ownerName: searchParams.get('owner') ?? defaultForm.ownerName,
   }))
   const [schedule, setSchedule] = useState<CareScheduleEntry[]>([])
+  // Adding a dog: basic info, then the setup questions. Each question is its
+  // own history entry, so the phone's back gesture steps back through them.
+  const [answers, setAnswers] = useState<SetupAnswers>(emptySetupAnswers)
+  const stepParam = searchParams.get('step') as SetupStep | null
+  // A reload mid-setup has lost the answers, so it starts over at basic info.
+  const step = !isEdit && form.name.trim() && stepParam && SETUP_STEPS.includes(stepParam) ? stepParam : null
+  function goTo(next: SetupStep) {
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev)
+      params.set('step', next)
+      return params
+    })
+  }
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [step])
   // Form + schedule as first shown, to tell whether leaving would lose edits.
   const baselineRef = useRef<string | null>(null)
-  if (baselineRef.current === null && !isEdit) baselineRef.current = snapshotOf(form, schedule)
+  if (baselineRef.current === null && !isEdit) baselineRef.current = snapshotOf(form, schedule, answers)
   const [photoEdited, setPhotoEdited] = useState(false)
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
   // Current photo per dog (PRIMARY_DOG_KEY or member id) — seeds each DogPhotoField
@@ -844,7 +872,7 @@ export default function AddEditDogPage() {
         const loadedSchedule = d.careSchedule.map((e) => ({ ...e }))
         setForm(loaded)
         setSchedule(loadedSchedule)
-        baselineRef.current = snapshotOf(loaded, loadedSchedule)
+        baselineRef.current = snapshotOf(loaded, loadedSchedule, emptySetupAnswers)
         setPhotos({
           [PRIMARY_DOG_KEY]: d.photoUrl ?? null,
           ...Object.fromEntries(d.additionalDogs.map((m) => [m.id, m.photoUrl ?? null])),
@@ -944,23 +972,33 @@ export default function AddEditDogPage() {
   const isGroup = groupDogs.length > 1
 
   const hasUnsavedChanges =
-    photoEdited || (baselineRef.current !== null && snapshotOf(form, schedule) !== baselineRef.current)
+    photoEdited || (baselineRef.current !== null && snapshotOf(form, schedule, answers) !== baselineRef.current)
 
   function handleBack() {
     if (hasUnsavedChanges) setShowLeaveConfirm(true)
     else navigate(-1)
   }
 
-  function handleSubmit() {
-    // Unfold any card hiding a missing-name error.
+  /** Unfolds any card hiding a missing-name error. */
+  function namesValid(): boolean {
     if (!form.name.trim()) {
       setNameTouched(true)
       setDogOpen(PRIMARY_DOG_KEY, true)
-      return
+      return false
     }
     if (hasMissingAdditionalName) {
       setAdditionalNameTouched(true)
       setOpenDogs((prev) => new Set([...prev, ...form.additionalDogs.filter((m) => !m.name.trim()).map((m) => m.id)]))
+      return false
+    }
+    return true
+  }
+
+  function handleSubmit() {
+    if (!namesValid()) return
+    // A new dog's schedule comes from the setup questions, each skippable.
+    if (!isEdit) {
+      void doSave()
       return
     }
     // An "every X hours" rule is a schedule on its own, walks included.
@@ -1000,8 +1038,17 @@ export default function AddEditDogPage() {
         })),
       )
 
-      const careSchedule = [...schedule].sort((a, b) => a.time.localeCompare(b.time))
-      const input = { ...form, additionalDogs, photoUrl, careSchedule }
+      const saved = isEdit ? { form, schedule } : applySetupAnswers(form, schedule, answers)
+      const careSchedule = [...saved.schedule]
+        .filter((e) => !(e.taskType === 'walk' && form.outingRule && form.outingRule.longWalks !== 'set-times'))
+        .sort((a, b) => a.time.localeCompare(b.time))
+      const savedById = new Map(saved.form.additionalDogs.map((m) => [m.id, m]))
+      const input = {
+        ...saved.form,
+        additionalDogs: additionalDogs.map((m) => ({ ...savedById.get(m.id)!, photoUrl: m.photoUrl })),
+        photoUrl,
+        careSchedule,
+      }
 
       if (isEdit && existingId) {
         const updated = await updateDog(existingId, input)
@@ -1049,8 +1096,161 @@ export default function AddEditDogPage() {
     )
   }
 
+  const renderEntry = (
+    entry: CareScheduleEntry,
+    i: number,
+    typeOptions = scheduleTypeOptions,
+    opts: { hideTitle?: boolean } = {},
+  ) => (
+              <div key={i} className="bg-white border border-border-light rounded-[12px] p-3 flex flex-col gap-2">
+                <div className="flex gap-2 items-center">
+                  <TimePickerButton
+                    value={entry.time}
+                    onChange={(v) =>
+                      setSchedule((prev) =>
+                        prev.map((en, j) => (j === i ? { ...en, time: v } : en)),
+                      )
+                    }
+                    className="w-[118px] shrink-0 bg-white border border-border-light rounded-[10px] pl-3 pr-7 py-2 font-dm font-bold text-[13px] text-text-primary"
+                  />
+                  <div className="relative flex-1 min-w-0">
+                    <select
+                      value={entry.taskType}
+                      onChange={(e) =>
+                        setSchedule((prev) =>
+                          prev.map((en, j) =>
+                            j === i ? { ...en, taskType: e.target.value as TaskType } : en,
+                          ),
+                        )
+                      }
+                      className="w-full bg-white border border-border-light rounded-[10px] pl-3 pr-7 py-2 font-dm font-bold text-[13px] text-text-primary focus:outline-none focus:border-coral transition-colors appearance-none"
+                    >
+                      {typeOptions.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      size={14}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
+                    />
+                  </div>
+                  <button
+                    onClick={() => setSchedule((prev) => prev.filter((_, j) => j !== i))}
+                    className="size-8 rounded-full bg-[#f3f4f6] flex items-center justify-center text-text-secondary shrink-0 active:bg-[#e5e7eb] transition-colors"
+                    aria-label="Remove schedule entry"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+                {isGroup && (
+                  <div className="flex items-center gap-2">
+                    <span className="font-dm text-[12px] text-text-secondary shrink-0">For</span>
+                    <div className="flex flex-wrap gap-1">
+                      {[
+                        { key: undefined, name: groupDogs.length === 2 ? 'Both' : 'All dogs' },
+                        ...groupDogs,
+                      ].map((d) => (
+                        <button
+                          key={d.key ?? 'all'}
+                          type="button"
+                          onClick={() =>
+                            setSchedule((prev) =>
+                              prev.map((en, j) => (j === i ? { ...en, forDog: d.key } : en)),
+                            )
+                          }
+                          className={`px-3 py-1 rounded-full border font-dm font-bold text-[12px] transition-colors ${
+                            entry.forDog === d.key
+                              ? 'bg-coral border-coral text-white'
+                              : 'bg-white border-border-light text-text-secondary'
+                          }`}
+                        >
+                          {d.name || 'Unnamed'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {(entry.taskType === 'other' || entry.customTitle !== undefined) && !opts.hideTitle && (
+                  <div>
+                    <input
+                      type="text"
+                      value={entry.customTitle ?? ''}
+                      onChange={(e) => {
+                        const v = e.target.value.slice(0, 30)
+                        setSchedule((prev) =>
+                          prev.map((en, j) => (j === i ? { ...en, customTitle: v } : en)),
+                        )
+                      }}
+                      maxLength={30}
+                      placeholder={titlePlaceholder[entry.taskType] ?? 'Title'}
+                      className={`w-full bg-white border rounded-[10px] px-3 py-2 font-dm font-bold text-[13px] text-text-primary placeholder:text-[#c4c4c4] placeholder:font-normal focus:outline-none focus:border-coral transition-colors ${
+                        entry.taskType === 'other' && otherTitleTouched && !entry.customTitle?.trim()
+                          ? 'border-red-400'
+                          : 'border-border-light'
+                      }`}
+                    />
+                    {entry.taskType === 'other' && otherTitleTouched && !entry.customTitle?.trim() && (
+                      <p className="font-dm text-[12px] text-red-500 mt-1 px-1">
+                        Give this task a short title
+                      </p>
+                    )}
+                  </div>
+                )}
+                <textarea
+                  value={entry.note ?? ''}
+                  onChange={(e) => {
+                    setSchedule((prev) =>
+                      prev.map((en, j) => (j === i ? { ...en, note: e.target.value } : en)),
+                    )
+                    e.target.style.height = 'auto'
+                    e.target.style.height = `${e.target.scrollHeight}px`
+                  }}
+                  ref={(el) => {
+                    if (!el) return
+                    el.style.height = 'auto'
+                    el.style.height = `${el.scrollHeight}px`
+                  }}
+                  rows={1}
+                  placeholder={scheduleNotePlaceholder[entry.taskType]}
+                  className="w-full bg-white border border-border-faint rounded-[10px] px-3 py-2 font-dm text-[13px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors resize-none overflow-hidden"
+                />
+              </div>
+  )
+
+  const addDogName = dogDisplayName(form) || 'this dog'
+
   return (
-    <div className="min-h-svh bg-cream">
+    <>
+    {step && (
+      <DogSetupWizard
+        step={step}
+        goTo={goTo}
+        onBack={() => navigate(-1)}
+        dogName={addDogName}
+        groupDogs={groupDogs}
+        careKey={careKey}
+        onCareKey={setCareKey}
+        care={care}
+        setCare={setCare}
+        schedule={schedule}
+        setSchedule={setSchedule}
+        rule={form.outingRule ?? DEFAULT_OUTING_RULE}
+        onRuleChange={set('outingRule')}
+        answers={answers}
+        setAnswers={setAnswers}
+        result={applySetupAnswers(form, schedule, answers)}
+        renderEntry={renderEntry}
+        missingOtherTitle={hasMissingOtherTitle}
+        onOtherTitleTouched={() => setOtherTitleTouched(true)}
+        onSave={handleSubmit}
+        saving={saving}
+        error={error}
+      />
+    )}
+    {/* Kept mounted (hidden) during setup so the photo crops survive until saving. */}
+    <div className={step ? 'hidden' : 'min-h-svh bg-cream'}>
       <div ref={headerRef} className="sticky top-0 z-20 bg-cream">
         <PageHeader back onBack={handleBack} title={isEdit ? `Edit ${existingName}` : 'Add Dog'} />
         {error && (
@@ -1179,6 +1379,8 @@ export default function AddEditDogPage() {
           </div>
         </section>
 
+        {/* A new dog's care notes and schedule come from the setup questions. */}
+        {isEdit && (<>
         {/* Care Notes */}
         <section>
           <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-3">
@@ -1322,225 +1524,82 @@ export default function AddEditDogPage() {
           <p className="font-dm text-[13px] text-text-secondary mb-3">
             Care tasks are generated from this schedule for every day of a stay.
           </p>
-          <div role="tablist" className="bg-card rounded-full p-1 flex gap-1 mb-3">
-            {[
-              { everyXHours: false, label: 'Set times' },
-              { everyXHours: true, label: 'Every X hours' },
-            ].map((tab) => {
-              const selected = !!form.outingRule === tab.everyXHours
-              return (
-                <button
-                  key={tab.label}
-                  type="button"
-                  role="tab"
-                  aria-selected={selected}
-                  onClick={() => setScheduleMode(tab.everyXHours)}
-                  className={`flex-1 py-2 rounded-full font-dm font-bold text-[13px] transition-colors ${
-                    selected ? 'bg-coral text-white' : 'text-text-secondary'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              )
-            })}
-          </div>
-          {form.outingRule && (
-            <div className="bg-card rounded-[20px] p-4 mb-4">
-              <p className="flex items-center justify-center gap-1.5 font-dm font-bold text-[12px] text-text-secondary uppercase tracking-widest mb-2">
-                <Clock size={14} />
-                Since last out
-              </p>
-              <p className="font-dm font-bold text-[17px] text-text-primary text-center mb-2">
-                Out at least every
-              </p>
-              <div className="flex items-center justify-center gap-5">
-                <button
-                  type="button"
-                  aria-label="Fewer hours"
-                  disabled={form.outingRule.everyHours <= MIN_OUTING_HOURS}
-                  onClick={() => patchOutingRule({ everyHours: form.outingRule!.everyHours - 1 })}
-                  className="size-10 rounded-full bg-white border border-border-light flex items-center justify-center text-text-primary disabled:opacity-40 active:scale-[0.94] transition-transform"
-                >
-                  <Minus size={16} />
-                </button>
-                <p className="font-outfit font-bold text-[32px] text-text-primary leading-none min-w-[96px] text-center">
-                  {form.outingRule.everyHours} {form.outingRule.everyHours === 1 ? 'hr' : 'hrs'}
-                </p>
-                <button
-                  type="button"
-                  aria-label="More hours"
-                  disabled={form.outingRule.everyHours >= MAX_OUTING_HOURS}
-                  onClick={() => patchOutingRule({ everyHours: form.outingRule!.everyHours + 1 })}
-                  className="size-10 rounded-full bg-white border border-border-light flex items-center justify-center text-text-primary disabled:opacity-40 active:scale-[0.94] transition-transform"
-                >
-                  <Plus size={16} />
-                </button>
-              </div>
-              <p className="font-dm text-[12px] text-text-secondary text-center mt-2">
-                Any walk or potty break resets the clock.
-              </p>
-              <div className="border-t border-border-light mt-4 pt-3 flex items-center gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="font-dm font-bold text-[14px] text-text-primary">Overnight</p>
-                  <p className="font-dm text-[12px] text-text-secondary">No breaks between these times</p>
-                </div>
-                <TimePickerButton
-                  value={form.outingRule.overnightStart}
-                  onChange={(v) => patchOutingRule({ overnightStart: v })}
-                  className="w-[104px] shrink-0 bg-white border border-border-light rounded-[10px] pl-3 pr-7 py-2 font-dm font-bold text-[13px] text-text-primary"
-                />
-                <span className="font-dm text-[13px] text-text-muted">–</span>
-                <TimePickerButton
-                  value={form.outingRule.overnightEnd}
-                  onChange={(v) => patchOutingRule({ overnightEnd: v })}
-                  className="w-[104px] shrink-0 bg-white border border-border-light rounded-[10px] pl-3 pr-7 py-2 font-dm font-bold text-[13px] text-text-primary"
-                />
-              </div>
-            </div>
-          )}
           {form.outingRule ? (
-            <p className="font-dm font-bold text-[12px] text-text-secondary uppercase tracking-widest mb-1 px-1">
-              Set-time tasks (optional)
-            </p>
+            <div className="flex flex-col gap-3 mb-6">
+              <p className="font-dm font-bold text-[12px] text-text-secondary uppercase tracking-widest px-1">
+                Going out
+              </p>
+              <OutingSettingsCard rule={form.outingRule} onPatch={patchOutingRule} />
+
+              <p className="font-dm font-bold text-[14px] text-text-primary px-1 mt-2">
+                When are the long walks?
+              </p>
+              <LongWalkChoice
+                rule={form.outingRule}
+                onPatch={patchOutingRule}
+                setTimeWalks={schedule.map((entry, i) => (entry.taskType === 'walk' ? renderEntry(entry, i) : null))}
+                onAddWalk={() => setSchedule((prev) => [...prev, { time: '08:00', taskType: 'walk', note: '' }])}
+              />
+              <p className="font-dm text-[12px] text-text-secondary px-1">
+                Potty breaks fill the gaps — out at least every {hrsLabel(form.outingRule.everyHours)}, plus{' '}
+                {formatTime(`2000-01-01T${form.outingRule.bedtime}:00`)} before bed.
+              </p>
+              <button
+                type="button"
+                onClick={() => setScheduleMode(false)}
+                className="self-start px-1 font-dm font-bold text-[12px] text-text-muted underline underline-offset-2"
+              >
+                Turn off going out
+              </button>
+            </div>
           ) : (
-          <label className="flex items-center gap-2 px-1 mb-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={form.walkTimeFlexible}
-              onChange={(e) => set('walkTimeFlexible')(e.target.checked)}
-              className="accent-coral size-4 shrink-0"
-            />
-            <span className="font-dm text-[13px] text-text-secondary">
-              Walk time is flexible
-            </span>
-          </label>
+            <>
+              <button
+                type="button"
+                onClick={() => setScheduleMode(true)}
+                className="w-full text-left bg-card rounded-[16px] p-4 mb-3 flex items-center gap-3 active:scale-[0.99] transition-transform"
+              >
+                <Clock size={18} className="text-text-secondary shrink-0" />
+                <span className="flex-1 min-w-0">
+                  <span className="block font-dm font-bold text-[14px] text-text-primary">Going out every few hours</span>
+                  <span className="block font-dm text-[12px] text-text-secondary">
+                    Walks and potty breaks both count — potty breaks fill the gaps.
+                  </span>
+                </span>
+                <span className="font-dm font-bold text-[13px] text-coral shrink-0">Set up</span>
+              </button>
+              <label className="flex items-center gap-2 px-1 mb-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.walkTimeFlexible}
+                  onChange={(e) => set('walkTimeFlexible')(e.target.checked)}
+                  className="accent-coral size-4 shrink-0"
+                />
+                <span className="font-dm text-[13px] text-text-secondary">
+                  Walk time is flexible
+                </span>
+              </label>
+            </>
           )}
           {form.outingRule && (
-            <p className="font-dm text-[12px] text-text-secondary mb-3 px-1">
-              Long walks, meals and meds that happen at a set time. A walk here resets the clock too.
+            <p className="font-dm font-bold text-[12px] text-text-secondary uppercase tracking-widest mb-3 px-1">
+              Meals, meds &amp; more
             </p>
           )}
           <div className="flex flex-col gap-2">
-            {schedule.map((entry, i) => (
-              <div key={i} className="bg-white border border-border-light rounded-[12px] p-3 flex flex-col gap-2">
-                <div className="flex gap-2 items-center">
-                  <TimePickerButton
-                    value={entry.time}
-                    onChange={(v) =>
-                      setSchedule((prev) =>
-                        prev.map((en, j) => (j === i ? { ...en, time: v } : en)),
-                      )
-                    }
-                    className="w-[118px] shrink-0 bg-white border border-border-light rounded-[10px] pl-3 pr-7 py-2 font-dm font-bold text-[13px] text-text-primary"
-                  />
-                  <div className="relative flex-1 min-w-0">
-                    <select
-                      value={entry.taskType}
-                      onChange={(e) =>
-                        setSchedule((prev) =>
-                          prev.map((en, j) =>
-                            j === i ? { ...en, taskType: e.target.value as TaskType } : en,
-                          ),
-                        )
-                      }
-                      className="w-full bg-white border border-border-light rounded-[10px] pl-3 pr-7 py-2 font-dm font-bold text-[13px] text-text-primary focus:outline-none focus:border-coral transition-colors appearance-none"
-                    >
-                      {scheduleTypeOptions.map((o) => (
-                        <option key={o.value} value={o.value}>
-                          {o.label}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown
-                      size={14}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
-                    />
-                  </div>
-                  <button
-                    onClick={() => setSchedule((prev) => prev.filter((_, j) => j !== i))}
-                    className="size-8 rounded-full bg-[#f3f4f6] flex items-center justify-center text-text-secondary shrink-0 active:bg-[#e5e7eb] transition-colors"
-                    aria-label="Remove schedule entry"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-                {isGroup && (
-                  <div className="flex items-center gap-2">
-                    <span className="font-dm text-[12px] text-text-secondary shrink-0">For</span>
-                    <div className="flex flex-wrap gap-1">
-                      {[
-                        { key: undefined, name: groupDogs.length === 2 ? 'Both' : 'All dogs' },
-                        ...groupDogs,
-                      ].map((d) => (
-                        <button
-                          key={d.key ?? 'all'}
-                          type="button"
-                          onClick={() =>
-                            setSchedule((prev) =>
-                              prev.map((en, j) => (j === i ? { ...en, forDog: d.key } : en)),
-                            )
-                          }
-                          className={`px-3 py-1 rounded-full border font-dm font-bold text-[12px] transition-colors ${
-                            entry.forDog === d.key
-                              ? 'bg-coral border-coral text-white'
-                              : 'bg-white border-border-light text-text-secondary'
-                          }`}
-                        >
-                          {d.name || 'Unnamed'}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {entry.taskType === 'other' && (
-                  <div>
-                    <input
-                      type="text"
-                      value={entry.customTitle ?? ''}
-                      onChange={(e) => {
-                        const v = e.target.value.slice(0, 30)
-                        setSchedule((prev) =>
-                          prev.map((en, j) => (j === i ? { ...en, customTitle: v } : en)),
-                        )
-                      }}
-                      maxLength={30}
-                      placeholder="Task title — e.g. Nail trim"
-                      className={`w-full bg-white border rounded-[10px] px-3 py-2 font-dm font-bold text-[13px] text-text-primary placeholder:text-[#c4c4c4] placeholder:font-normal focus:outline-none focus:border-coral transition-colors ${
-                        otherTitleTouched && !entry.customTitle?.trim()
-                          ? 'border-red-400'
-                          : 'border-border-light'
-                      }`}
-                    />
-                    {otherTitleTouched && !entry.customTitle?.trim() && (
-                      <p className="font-dm text-[12px] text-red-500 mt-1 px-1">
-                        Give this task a short title
-                      </p>
-                    )}
-                  </div>
-                )}
-                <textarea
-                  value={entry.note ?? ''}
-                  onChange={(e) => {
-                    setSchedule((prev) =>
-                      prev.map((en, j) => (j === i ? { ...en, note: e.target.value } : en)),
-                    )
-                    e.target.style.height = 'auto'
-                    e.target.style.height = `${e.target.scrollHeight}px`
-                  }}
-                  ref={(el) => {
-                    if (!el) return
-                    el.style.height = 'auto'
-                    el.style.height = `${el.scrollHeight}px`
-                  }}
-                  rows={1}
-                  placeholder={scheduleNotePlaceholder[entry.taskType]}
-                  className="w-full bg-white border border-border-faint rounded-[10px] px-3 py-2 font-dm text-[13px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors resize-none overflow-hidden"
-                />
-              </div>
-            ))}
+            {schedule.map((entry, i) =>
+              form.outingRule
+                ? entry.taskType === 'walk'
+                  ? null
+                  : renderEntry(entry, i, scheduleTypeOptions.filter((o) => o.value !== 'walk'))
+                : renderEntry(entry, i),
+            )}
             <button
               onClick={() =>
-                setSchedule((prev) => [...prev, { time: '08:00', taskType: 'walk', note: '' }])
+                setSchedule((prev) => [
+                  ...prev,
+                  { time: '08:00', taskType: form.outingRule ? 'meal' : 'walk', note: '' },
+                ])
               }
               className="w-full py-3 rounded-[12px] border-2 border-dashed border-border-light flex items-center justify-center gap-1.5 font-dm font-bold text-[14px] text-text-secondary active:bg-gray-50 transition-colors"
             >
@@ -1550,17 +1609,26 @@ export default function AddEditDogPage() {
           </div>
         </section>
 
+        </>)}
+
+
         {/* Save stays pinned to the bottom so it's reachable from any section */}
         <div className="sticky bottom-0 z-10 -mx-6 px-6 pt-3 pb-[calc(16px+env(safe-area-inset-bottom))] bg-cream">
-          <Button
-            fullWidth
-            size="lg"
-            onClick={handleSubmit}
-            // Editing: nothing to save until something changed.
-            disabled={!form.name.trim() || saving || (isEdit && !hasUnsavedChanges)}
-          >
-            {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Dog'}
-          </Button>
+          {isEdit ? (
+            <Button
+              fullWidth
+              size="lg"
+              onClick={handleSubmit}
+              // Editing: nothing to save until something changed.
+              disabled={!form.name.trim() || saving || !hasUnsavedChanges}
+            >
+              {saving ? 'Saving…' : 'Save Changes'}
+            </Button>
+          ) : (
+            <Button fullWidth size="lg" onClick={() => namesValid() && goTo('meals')} disabled={!form.name.trim()}>
+              {form.name.trim() ? `Set up ${addDogName}’s day` : 'Set up their day'}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -1686,5 +1754,6 @@ export default function AddEditDogPage() {
         </div>
       )}
     </div>
+    </>
   )
 }

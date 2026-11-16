@@ -108,9 +108,13 @@ alter table dogs add column if not exists dog_park_notes text not null default '
 -- Up to 2 more dogs sharing this profile's owner/care instructions/schedule
 -- (e.g. two dogs from the same owner with identical care) — {name, breed, size} each.
 alter table dogs add column if not exists additional_dogs jsonb not null default '[]'::jsonb;
--- "Every X hours" schedule — {everyHours, overnightStart, overnightEnd}.
--- Null = the dog only has set-time tasks.
+-- "Going out" rule — {everyHours, bedtime, askWhenItHappened, longWalks,
+-- dayPartWalks}. Null = the dog only has set-time tasks.
 alter table dogs add column if not exists outing_rule jsonb;
+-- A long walk planned for a part of the day ('morning', 'midday',
+-- 'afternoon', 'evening') rather than a set time; scheduled_time is the
+-- window's start. Null = an ordinary set-time task.
+alter table tasks add column if not exists day_part text;
 
 -- Which dogs on the profile a stay covers ("primary" or an additional_dogs
 -- member id), for stays where some dogs stay home. Null = every dog.

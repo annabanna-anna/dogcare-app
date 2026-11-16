@@ -8,17 +8,32 @@ export interface CareScheduleEntry {
   time: string     // e.g. "08:00"
   taskType: TaskType
   note?: string
-  customTitle?: string   // required when taskType is 'other' — short task title, e.g. "Nail trim"
+  customTitle?: string   // short task title, e.g. "Nail trim" or a medicine's name; required when taskType is 'other'
   forDog?: string        // one dog's key (PRIMARY_DOG_KEY or a group member's id); unset = every dog on the profile
 }
 
-/** "Every X hours" schedule: any walk or potty break resets the clock, and
- *  the next outing is due everyHours later — except inside the overnight
- *  window, when no breaks are expected. Null on a dog = set times only. */
+/** Rough parts of the day a long walk can be planned for instead of a set time. */
+export type DayPart = 'morning' | 'midday' | 'afternoon' | 'evening'
+
+export interface DayPartWalk {
+  dayPart: DayPart
+  note?: string
+}
+
+/** How the long walks are planned: at set times (walk entries in the care
+ *  schedule), by rough time of day (dayPartWalks), or not yet known. */
+export type LongWalkTiming = 'set-times' | 'time-of-day' | 'unsure'
+
+/** "Going out": the dog needs to be out at least every everyHours. Long
+ *  walks and potty breaks both reset that clock; potty breaks fill the gaps
+ *  between long walks, plus one before bed. Null on a dog = no clock, set
+ *  times only. */
 export interface OutingRule {
   everyHours: number
-  overnightStart: string   // e.g. "22:00"
-  overnightEnd: string     // e.g. "06:00"
+  bedtime: string              // last time out before bed, e.g. "22:00"
+  askWhenItHappened: boolean   // logging a walk/potty break asks for the real time
+  longWalks: LongWalkTiming
+  dayPartWalks: DayPartWalk[]  // used when longWalks is 'time-of-day'
 }
 
 /** Key the profile's own (first) dog uses in CareScheduleEntry.forDog. */
@@ -94,6 +109,7 @@ export interface Task {
   note?: string
   status: TaskStatus
   completedAt?: string
+  dayPart?: DayPart       // a long walk planned for a part of the day, not a set time
   // What this task was last pushed to Google as — lets a re-push update the
   // same event/task instead of creating a duplicate.
   googleExtId?: string

@@ -4,6 +4,7 @@ import { TASK_TYPE_STYLE } from './taskTypeStyle'
 import PawPrintFilled from './icons/PawPrintFilled'
 import type { Task } from '../types'
 import { formatTime } from '../utils/dateUtils'
+import { atTime, dayPartInfo } from '../utils/outingClock'
 
 interface Props {
   task: Task
@@ -34,10 +35,16 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, den
   // rather than read off task.status. Suppressed in dense mode (the
   // marketing site's hero mockup), where the demo schedule drifting past
   // "now" shouldn't start flagging tasks as overdue.
-  const isOverdue = !dense && task.status === 'pending' && new Date(task.scheduledTime) < new Date()
-  const displayTime = dense
-    ? formatTime(task.scheduledTime).replace(':00 ', ' ')
-    : formatTime(task.scheduledTime)
+  // A long walk planned for a part of the day shows the window ("Evening")
+  // and only counts as overdue once that window has ended.
+  const dayPart = task.dayPart ? dayPartInfo(task.dayPart) : undefined
+  const dueBy = dayPart ? atTime(new Date(task.scheduledTime), dayPart.end) : new Date(task.scheduledTime)
+  const isOverdue = !dense && task.status === 'pending' && dueBy < new Date()
+  const displayTime = dayPart
+    ? dayPart.label
+    : dense
+      ? formatTime(task.scheduledTime).replace(':00 ', ' ')
+      : formatTime(task.scheduledTime)
 
   // Swipe-to-complete is the only way to mark a task: dragging the whole
   // row left marks a pending task Done, dragging it right on a Done task
