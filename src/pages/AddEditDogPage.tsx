@@ -1262,17 +1262,6 @@ export default function AddEditDogPage() {
 
       <div className="px-6 mt-4 flex flex-col gap-5">
 
-        {/* Owner Info — shared by every dog, so it comes first */}
-        <section>
-          <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-3">
-            Owner
-          </p>
-          <div>
-            <FieldLabel>Owner Name</FieldLabel>
-            <Input value={form.ownerName} onChange={set('ownerName')} placeholder="e.g. Sarah or Sarah K." />
-          </div>
-        </section>
-
         {/* Dogs — one collapsible card per dog */}
         <section>
           <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-3">
@@ -1376,6 +1365,17 @@ export default function AddEditDogPage() {
                 Add another dog from the same owner
               </button>
             )}
+          </div>
+        </section>
+
+        {/* Owner Info — shared by every dog, asked once the dogs are in */}
+        <section>
+          <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-3">
+            Owner
+          </p>
+          <div>
+            <FieldLabel>Owner Name</FieldLabel>
+            <Input value={form.ownerName} onChange={set('ownerName')} placeholder="e.g. Sarah or Sarah K." />
           </div>
         </section>
 
