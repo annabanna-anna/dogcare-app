@@ -97,12 +97,43 @@ function DogPickerSheet({
     if (sheetRef.current) setLockedHeight(sheetRef.current.offsetHeight)
   }, [])
 
+  // iOS doesn't resize the layout viewport for the keyboard — it scrolls the
+  // page instead, which shoves a bottom sheet off-screen. Pin the overlay to
+  // the *visual* viewport so the sheet always sits right above the keyboard.
+  const [viewport, setViewport] = useState<{ top: number; height: number } | null>(null)
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+    const update = () => setViewport({ top: vv.offsetTop, height: vv.height })
+    update()
+    vv.addEventListener('resize', update)
+    vv.addEventListener('scroll', update)
+    const prevOverflow = document.documentElement.style.overflow
+    document.documentElement.style.overflow = 'hidden'
+    return () => {
+      vv.removeEventListener('resize', update)
+      vv.removeEventListener('scroll', update)
+      document.documentElement.style.overflow = prevOverflow
+    }
+  }, [])
+
   return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center">
+    <div
+      className="fixed inset-x-0 top-0 h-svh z-[60] flex items-end justify-center"
+      style={viewport ? { top: viewport.top, height: viewport.height } : undefined}
+    >
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div
         ref={sheetRef}
-        style={lockedHeight ? { height: lockedHeight } : undefined}
+        style={
+          lockedHeight
+            ? {
+                height: lockedHeight,
+                // With the keyboard up, shrink only as much as needed to fit.
+                maxHeight: viewport ? viewport.height - 24 : undefined,
+              }
+            : undefined
+        }
         className="relative w-full max-w-[430px] bg-cream rounded-t-[22px] pt-5 pb-8 max-h-[75svh] flex flex-col"
       >
         <div className="px-6 flex items-start justify-between mb-3">
