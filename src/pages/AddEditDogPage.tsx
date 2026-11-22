@@ -1685,7 +1685,7 @@ export default function AddEditDogPage() {
               onClick={() =>
                 setSchedule((prev) => [
                   ...prev,
-                  { time: '08:00', taskType: form.outingRule ? 'meal' : 'walk', note: '' },
+                  { time: '08:00', taskType: 'walk', note: '' },
                 ])
               }
               className="w-full py-3 rounded-[12px] border-2 border-dashed border-border-light flex items-center justify-center gap-1.5 font-dm font-bold text-[14px] text-text-secondary active:bg-gray-50 transition-colors"
