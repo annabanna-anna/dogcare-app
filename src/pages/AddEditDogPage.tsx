@@ -14,7 +14,8 @@ import DogSetupWizard, {
   type SetupAnswers,
   type SetupStep,
 } from '../components/DogSetupWizard'
-import { LongWalkChoice, OutingSettingsCard, hrsLabel } from '../components/GoingOutFields'
+import { OutingSettingsCard, hrsLabel } from '../components/GoingOutFields'
+import { TASK_TYPE_STYLE } from '../components/taskTypeStyle'
 import { getDog, createDog, updateDog, uploadDogPhoto } from '../lib/dogs'
 import { regenerateFutureTasksForDog } from '../lib/stayTaskSync'
 import { TimePickerButton } from '../components/TimePicker'
@@ -30,7 +31,7 @@ import {
   type YesNoUnsure,
 } from '../types'
 import { dogDisplayName, pickCareNotes } from '../utils/dogDisplay'
-import { DEFAULT_OUTING_RULE } from '../utils/outingClock'
+import { DEFAULT_OUTING_RULE, dayPartInfo } from '../utils/outingClock'
 import { formatTime } from '../utils/dateUtils'
 
 const MAX_DOGS_IN_GROUP = 3
@@ -933,6 +934,26 @@ export default function AddEditDogPage() {
   function patchOutingRule(patch: Partial<OutingRule>) {
     setForm((prev) => (prev.outingRule ? { ...prev, outingRule: { ...prev.outingRule, ...patch } } : prev))
   }
+  // Editing a saved dog: walks live in the schedule list, not the "When are
+  // the walks?" chooser. A walk added there makes the walks set-time ones;
+  // any rough time-of-day walks become set walks at their window's start.
+  useEffect(() => {
+    if (!isEdit || !hasWalkEntry) return
+    const rule = form.outingRule
+    if (!rule || rule.longWalks === 'set-times') return
+    if (rule.longWalks === 'time-of-day' && rule.dayPartWalks.length > 0) {
+      setSchedule((prev) => [
+        ...prev,
+        ...rule.dayPartWalks.map((w) => ({
+          time: dayPartInfo(w.dayPart).start,
+          taskType: 'walk' as const,
+          note: w.note ?? '',
+        })),
+      ])
+    }
+    patchOutingRule({ longWalks: 'set-times', dayPartWalks: [] })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEdit, hasWalkEntry, form.outingRule?.longWalks])
   const hasMissingOtherTitle = schedule.some(
     (e) => e.taskType === 'other' && !e.customTitle?.trim(),
   )
@@ -1570,15 +1591,6 @@ export default function AddEditDogPage() {
               </p>
               <OutingSettingsCard rule={form.outingRule} onPatch={patchOutingRule} />
 
-              <p className="font-dm font-bold text-[14px] text-text-primary px-1 mt-2">
-                When are the walks?
-              </p>
-              <LongWalkChoice
-                rule={form.outingRule}
-                onPatch={patchOutingRule}
-                setTimeWalks={schedule.map((entry, i) => (entry.taskType === 'walk' ? renderEntry(entry, i) : null))}
-                onAddWalk={() => setSchedule((prev) => [...prev, { time: '08:00', taskType: 'walk', note: '' }])}
-              />
               <p className="font-dm text-[12px] text-text-secondary px-1">
                 Potty breaks fill the gaps — out at least every {hrsLabel(form.outingRule.everyHours)}, from{' '}
                 {formatTime(`2000-01-01T${form.outingRule.wakeTime}:00`)} to{' '}
@@ -1623,17 +1635,53 @@ export default function AddEditDogPage() {
           )}
           {form.outingRule && (
             <p className="font-dm font-bold text-[12px] text-text-secondary uppercase tracking-widest mb-3 px-1">
-              Meals, meds &amp; more
+              Walks, meals &amp; more
             </p>
           )}
           <div className="flex flex-col gap-2">
-            {schedule.map((entry, i) =>
-              form.outingRule
-                ? entry.taskType === 'walk'
-                  ? null
-                  : renderEntry(entry, i, scheduleTypeOptions.filter((o) => o.value !== 'walk'))
-                : renderEntry(entry, i),
-            )}
+            {/* Rough time-of-day walks have no clock time — listed as-is. */}
+            {form.outingRule?.longWalks === 'time-of-day' &&
+              form.outingRule.dayPartWalks.map((w) => {
+                const part = dayPartInfo(w.dayPart)
+                const WalkIcon = TASK_TYPE_STYLE.walk.icon
+                return (
+                  <div key={w.dayPart} className="bg-white border border-border-light rounded-[12px] p-3 flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className={`size-6 rounded-full flex items-center justify-center shrink-0 ${TASK_TYPE_STYLE.walk.bg}`}>
+                        <WalkIcon size={12} className="text-white" />
+                      </span>
+                      <p className="flex-1 min-w-0 font-dm font-bold text-[14px] text-text-primary">
+                        {part.label} walk <span className="font-normal text-[12px] text-text-secondary">· {part.range}</span>
+                      </p>
+                      <button
+                        onClick={() =>
+                          patchOutingRule({
+                            dayPartWalks: form.outingRule!.dayPartWalks.filter((d) => d.dayPart !== w.dayPart),
+                          })
+                        }
+                        className="size-8 rounded-full bg-[#f3f4f6] flex items-center justify-center text-text-secondary shrink-0 active:bg-[#e5e7eb] transition-colors"
+                        aria-label={`Remove ${part.label.toLowerCase()} walk`}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={w.note ?? ''}
+                      onChange={(e) =>
+                        patchOutingRule({
+                          dayPartWalks: form.outingRule!.dayPartWalks.map((d) =>
+                            d.dayPart === w.dayPart ? { ...d, note: e.target.value } : d,
+                          ),
+                        })
+                      }
+                      placeholder="Note (optional) — e.g. 45 min, first thing out"
+                      className="w-full bg-white border border-border-faint rounded-[10px] px-3 py-2 font-dm text-[13px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors"
+                    />
+                  </div>
+                )
+              })}
+            {schedule.map((entry, i) => renderEntry(entry, i))}
             <button
               onClick={() =>
                 setSchedule((prev) => [

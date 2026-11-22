@@ -609,6 +609,15 @@ export default function StartStayPage() {
           />
         </section>
 
+        {selectedDog && (
+          <p className="font-dm text-[13px] text-text-secondary text-center">
+            {isEditMode
+              ? 'Care tasks will be regenerated for the new dates.'
+              : `Tasks will be generated from ${stayName}'s care schedule.`}
+            {homeNames && ` Tasks just for ${homeNames} are skipped.`}
+          </p>
+        )}
+
         {/* CTA */}
         <Button
           fullWidth
@@ -619,17 +628,8 @@ export default function StartStayPage() {
           {isEditMode ? (saving ? 'Saving…' : 'Save Changes') : 'Generate Care Tasks'}
         </Button>
 
-        {selectedDog && (
-          <p className="font-dm text-[13px] text-text-secondary text-center">
-            {isEditMode
-              ? `Care tasks will be regenerated from ${stayName}'s care schedule for the new dates.`
-              : `Tasks will be generated from ${stayName}'s care schedule.`}
-            {homeNames && ` Tasks just for ${homeNames} are skipped.`}
-          </p>
-        )}
-
         {isEditMode && (
-          <Button fullWidth variant="danger" onClick={() => setShowDeleteConfirm(true)}>
+          <Button fullWidth variant="danger-ghost" onClick={() => setShowDeleteConfirm(true)}>
             <Trash2 size={18} />
             Delete Stay
           </Button>

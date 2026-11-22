@@ -402,7 +402,7 @@ export default function DogProfilePage() {
         {/* Delete */}
         <Button
           fullWidth
-          variant="danger"
+          variant="danger-ghost"
           onClick={() => {
             setDeleteTyped('')
             setShowDeleteConfirm(true)
