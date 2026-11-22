@@ -45,6 +45,14 @@ function AppRoutes() {
   const navigate = useNavigate()
   const isPublicRoute = PUBLIC_PATHS.includes(pathname)
 
+  // Every new page starts at the top. Without this the window kept its
+  // scroll offset across navigation — after deleting a stay (from the bottom
+  // of Edit Stay) the dog's profile opened scrolled to its own bottom, with
+  // the red Delete Dog button right where Delete Stay had been.
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
+
   const [splash, setSplash] = useState<'visible' | 'fading' | 'gone'>('visible')
   const [session, setSession] = useState<Session | null | 'loading'>('loading')
   const [passwordRecovery, setPasswordRecovery] = useState(false)

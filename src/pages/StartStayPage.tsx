@@ -449,7 +449,8 @@ export default function StartStayPage() {
       }
       await deleteTasksByStay(stayId)
       await deleteStay(stayId)
-      navigate(selectedDog ? `/dogs/${selectedDog.id}` : '/today')
+      // replace: Back shouldn't return to the edit page of a stay that's gone.
+      navigate(selectedDog ? `/dogs/${selectedDog.id}` : '/today', { replace: true })
     } catch (e) {
       setDeleteError(e instanceof Error ? e.message : 'Could not delete. Please try again.')
       setDeleting(false)

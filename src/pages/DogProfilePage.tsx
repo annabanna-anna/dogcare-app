@@ -86,6 +86,10 @@ export default function DogProfilePage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  // Deleting a dog wipes every stay and task with it, so it takes typing the
+  // dog's name — a reflex tap (e.g. right after deleting a stay, whose dialog
+  // looks the same) can't do it.
+  const [deleteTyped, setDeleteTyped] = useState('')
   const [activeDogKey, setActiveDogKey] = useState(PRIMARY_DOG_KEY)
 
   useEffect(() => {
@@ -394,7 +398,14 @@ export default function DogProfilePage() {
         {!isGroup && scheduleCard}
 
         {/* Delete */}
-        <Button fullWidth variant="danger" onClick={() => setShowDeleteConfirm(true)}>
+        <Button
+          fullWidth
+          variant="danger"
+          onClick={() => {
+            setDeleteTyped('')
+            setShowDeleteConfirm(true)
+          }}
+        >
           <Trash2 size={18} />
           Delete Dog
         </Button>
@@ -414,6 +425,21 @@ export default function DogProfilePage() {
               This removes {dogDisplayName(dog)}'s profile, care instructions, and every stay and task
               linked to them. This can't be undone.
             </p>
+            <label className="block mb-4">
+              <span className="block font-dm text-[13px] text-text-secondary mb-1.5">
+                Type <span className="font-bold text-text-primary">{dog.name.trim()}</span> to confirm
+              </span>
+              <input
+                type="text"
+                value={deleteTyped}
+                onChange={(e) => setDeleteTyped(e.target.value)}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                className="w-full rounded-[12px] border border-border bg-white px-4 py-3 font-dm text-[16px] text-text-primary outline-none focus:border-text-primary"
+              />
+            </label>
             {deleteError && (
               <div className="bg-[#fee2e2] rounded-[12px] px-4 py-3 mb-3">
                 <p className="font-dm text-[13px] text-[#b91c1c]">{deleteError}</p>
@@ -423,8 +449,9 @@ export default function DogProfilePage() {
               <Button
                 fullWidth
                 variant="danger"
-                disabled={deleting}
+                disabled={deleting || deleteTyped.trim().toLowerCase() !== dog.name.trim().toLowerCase()}
                 onClick={async () => {
+                  if (deleteTyped.trim().toLowerCase() !== dog.name.trim().toLowerCase()) return
                   setDeleting(true)
                   setDeleteError(null)
                   try {
