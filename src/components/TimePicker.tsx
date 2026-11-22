@@ -212,17 +212,25 @@ export function TimePickerButton({
   onChange,
   className = '',
   label,
+  ariaLabel,
 }: {
   value: string
   onChange: (v: string) => void
   className?: string
   /** Shown instead of the time, e.g. "Other time" before one is picked. */
   label?: string
+  /** What the time is for, for screen readers, e.g. "Last time out before bed". */
+  ariaLabel?: string
 }) {
   const [open, setOpen] = useState(false)
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className={`relative text-left ${className}`}>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label={ariaLabel ? `${ariaLabel}: ${formatTimeValue(value)}` : undefined}
+        className={`relative text-left ${className}`}
+      >
         {label ?? formatTimeValue(value)}
         <ChevronDown
           size={14}

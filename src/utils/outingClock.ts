@@ -5,6 +5,7 @@ export const OUTING_TYPES: TaskType[] = ['walk', 'potty']
 
 export const DEFAULT_OUTING_RULE: OutingRule = {
   everyHours: 4,
+  wakeTime: '07:00',
   bedtime: '22:00',
   askWhenItHappened: true,
   longWalks: 'set-times',
@@ -24,8 +25,16 @@ export function dayPartInfo(key: DayPart) {
   return DAY_PARTS.find((d) => d.key === key) ?? DAY_PARTS[0]
 }
 
-/** No potty breaks are expected between bedtime and the start of the morning. */
-const WAKE_TIME = DAY_PARTS[0].start
+/** A set walk this close to the start or end of the day stands in for the
+ *  morning / bedtime potty break. */
+export const BOOKEND_MINUTES = 30
+
+/** Whether one of the set walk times (HH:MM) falls within BOOKEND_MINUTES of
+ *  `hhmm` — then that walk is the first (or last) time out, not a potty break. */
+export function walkCoversTime(hhmm: string, walkTimes: string[]): boolean {
+  const at = minutesOfDay(hhmm)
+  return walkTimes.some((w) => Math.abs(minutesOfDay(w) - at) <= BOOKEND_MINUTES)
+}
 
 function minutesOfDay(hhmm: string): number {
   const [h, m] = hhmm.split(':').map(Number)
@@ -44,18 +53,18 @@ export function atTime(date: Date, hhmm: string): Date {
  *  past midnight, e.g. 22:00–06:00). */
 export function isOvernight(date: Date, rule: OutingRule): boolean {
   const start = minutesOfDay(rule.bedtime)
-  const end = minutesOfDay(WAKE_TIME)
+  const end = minutesOfDay(rule.wakeTime)
   if (start === end) return false
   const now = date.getHours() * 60 + date.getMinutes()
   return start < end ? now >= start && now < end : now >= start || now < end
 }
 
 /** When the dog next needs to go out: everyHours after the last time, pushed
- *  to the morning when that lands overnight. */
+ *  to the first time out in the morning when that lands overnight. */
 export function nextOutingDue(lastOut: Date, rule: OutingRule): Date {
   const due = new Date(lastOut.getTime() + rule.everyHours * 3_600_000)
   if (!isOvernight(due, rule)) return due
-  const morning = atTime(due, WAKE_TIME)
+  const morning = atTime(due, rule.wakeTime)
   if (morning < due) morning.setDate(morning.getDate() + 1)
   return morning
 }
@@ -109,7 +118,7 @@ interface PlanInput {
 export function planOutings({ lastOut, lastLabel, rule, pending, today, until }: PlanInput): PlannedOuting[] {
   const hrs = `${rule.everyHours} ${rule.everyHours === 1 ? 'hr' : 'hrs'}`
   const day = today
-  const wake = atTime(today, WAKE_TIME)
+  const wake = atTime(today, rule.wakeTime)
   const bedtime = atTime(day, rule.bedtime)
   const windows = pending
     .filter((t) => t.type === 'walk' && t.dayPart)

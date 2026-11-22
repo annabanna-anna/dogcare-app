@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent, type PointerEvent, type ReactNode } from 'react'
+import { Fragment, useEffect, useRef, useState, type MouseEvent, type PointerEvent, type ReactNode } from 'react'
 import { ArrowLeft, Check, Plus, X } from 'lucide-react'
 import Button from './Button'
 import DogTabs from './DogTabs'
@@ -303,7 +303,7 @@ export default function DogSetupWizard(props: Props) {
     meals: { eyebrow: `Meals · 1 of ${QUESTION_COUNT}`, title: `When does ${dogName} eat?` },
     'long-walks': {
       eyebrow: `Walks · 2 of ${QUESTION_COUNT}`,
-      title: `When are ${dogName}’s long walks?`,
+      title: `When are ${dogName}’s walks?`,
       sub: 'Potty breaks fill the gaps in between.',
     },
     'going-out': {
@@ -471,10 +471,17 @@ function MealsStep(props: Props) {
         <Label>Any food allergies?</Label>
         <Chips options={yesNoUnsure} value={care.hasAllergies} onChange={setCare('hasAllergies')} />
       </div>
-      {care.hasAllergies === 'yes' && (
+      {/* Notes for yes (which ones) and no (anything to watch); not needed when unsure. */}
+      {care.hasAllergies !== 'unsure' && (
         <div>
-          <Label>Which ones?</Label>
-          <TextField value={care.allergyNotes} onChange={setCare('allergyNotes')} placeholder="e.g. chicken, beef, grain" multiline rows={1} />
+          <Label>{care.hasAllergies === 'yes' ? 'Which ones?' : 'Anything to watch?'}</Label>
+          <TextField
+            value={care.allergyNotes}
+            onChange={setCare('allergyNotes')}
+            placeholder={care.hasAllergies === 'yes' ? 'e.g. chicken, beef, grain' : 'e.g. sensitive stomach, avoid rich treats'}
+            multiline
+            rows={1}
+          />
         </div>
       )}
     </>
@@ -521,6 +528,7 @@ function GoingOutStep({ rule, onRuleChange, schedule, answers, setAnswers }: Pro
             onRuleChange({
               ...rule,
               everyHours: DEFAULT_OUTING_RULE.everyHours,
+              wakeTime: DEFAULT_OUTING_RULE.wakeTime,
               bedtime: DEFAULT_OUTING_RULE.bedtime,
               askWhenItHappened: DEFAULT_OUTING_RULE.askWhenItHappened,
             })
@@ -727,6 +735,17 @@ function AnythingElseStep(props: Props) {
         : [...prev, { time: extra.time, taskType: extra.taskType, customTitle: extra.label, note: '' }],
     )
   }
+  /** Adds one more of a picked extra, right after the last one so the cards stay together. */
+  function addAnother(extra: (typeof EXTRAS)[number]) {
+    setSchedule((prev) => {
+      let last = -1
+      prev.forEach((e, j) => {
+        if (e.customTitle === extra.label) last = j
+      })
+      const entry: CareScheduleEntry = { time: extra.time, taskType: extra.taskType, customTitle: extra.label, note: '' }
+      return [...prev.slice(0, last + 1), entry, ...prev.slice(last + 1)]
+    })
+  }
   const picked = EXTRAS.filter((x) => schedule.some((e) => e.customTitle === x.label)).map((x) => x.label)
   return (
     <>
@@ -746,10 +765,26 @@ function AnythingElseStep(props: Props) {
       </div>
       {schedule.map((e, i) => {
         if (!isExtra(e)) return null
-        const preset = EXTRAS.some((x) => x.label === e.customTitle)
-        return preset
-          ? renderEntry(e, i, [{ value: e.taskType, label: e.customTitle! }], { hideTitle: true })
-          : renderEntry(e, i, [{ value: 'other', label: 'Other' }])
+        const extra = EXTRAS.find((x) => x.label === e.customTitle)
+        if (!extra) return renderEntry(e, i, [{ value: 'other', label: 'Other' }])
+        // The last card of a kind gets "+ Another …" so the same extra can repeat
+        // (e.g. two snack times); the chip itself stays a plain on/off.
+        const isLastOfKind = !schedule.some((x, j) => j > i && x.customTitle === extra.label)
+        return (
+          <Fragment key={i}>
+            {renderEntry(e, i, [{ value: e.taskType, label: extra.label }], { hideTitle: true })}
+            {isLastOfKind && (
+              <button
+                type="button"
+                onClick={() => addAnother(extra)}
+                className="self-start -mt-1 flex items-center gap-1.5 py-1 font-dm font-bold text-[13px] text-coral"
+              >
+                <Plus size={14} strokeWidth={2.5} />
+                Another {extra.label.toLowerCase()}
+              </button>
+            )}
+          </Fragment>
+        )
       })}
 
       <SectionLabel>Good to know (optional)</SectionLabel>

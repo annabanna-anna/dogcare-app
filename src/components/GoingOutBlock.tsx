@@ -1,20 +1,24 @@
 import { TASK_TYPE_STYLE } from './taskTypeStyle'
 import type { CareScheduleEntry, OutingRule } from '../types'
 import { formatTime } from '../utils/dateUtils'
-import { dayPartInfo } from '../utils/outingClock'
+import { dayPartInfo, walkCoversTime } from '../utils/outingClock'
 
 const clock = (hhmm: string) => formatTime(`2000-01-01T${hhmm}:00`)
 
 /** The going-out rule read back like the review step: one "out at least
- *  every N hrs" block, with long walks as anchors and potty breaks between. */
+ *  every N hrs" block, with walks as anchors and potty breaks between, from
+ *  the morning potty to the bedtime one. */
 export default function GoingOutBlock({ rule, careSchedule }: { rule: OutingRule; careSchedule: CareScheduleEntry[] }) {
   const hrs = `${rule.everyHours} ${rule.everyHours === 1 ? 'hr' : 'hrs'}`
+  const setWalks =
+    rule.longWalks === 'set-times'
+      ? careSchedule.filter((e) => e.taskType === 'walk').sort((a, b) => a.time.localeCompare(b.time))
+      : []
+  // A set walk at the start / end of the day stands in for that potty break.
+  const setWalkTimes = setWalks.map((e) => e.time)
   const walks =
     rule.longWalks === 'set-times'
-      ? careSchedule
-          .filter((e) => e.taskType === 'walk')
-          .sort((a, b) => a.time.localeCompare(b.time))
-          .map((e) => ({ when: clock(e.time), sub: e.note }))
+      ? setWalks.map((e) => ({ when: clock(e.time), sub: e.note }))
       : rule.longWalks === 'time-of-day'
         ? rule.dayPartWalks.map((w) => {
             const part = dayPartInfo(w.dayPart)
@@ -22,13 +26,18 @@ export default function GoingOutBlock({ rule, careSchedule }: { rule: OutingRule
           })
         : []
   const lines: { when: string; muted?: boolean; accent?: boolean; type: 'walk' | 'potty'; title: string; sub?: string }[] = [
-    ...walks.slice(0, 1).map((w) => ({ ...w, type: 'walk' as const, title: 'Long walk' })),
+    walkCoversTime(rule.wakeTime, setWalkTimes)
+      ? null
+      : { when: clock(rule.wakeTime), type: 'potty' as const, title: 'Morning potty' },
+    ...walks.slice(0, 1).map((w) => ({ ...w, type: 'walk' as const, title: 'Walk' })),
     walks.length === 0
-      ? { when: 'Not set', muted: true, type: 'walk' as const, title: 'Long walks', sub: 'Logged on Today as they happen' }
+      ? { when: 'Not set', muted: true, type: 'walk' as const, title: 'Walks', sub: 'Logged on Today as they happen' }
       : null,
     { when: 'In between', accent: true, type: 'potty' as const, title: 'Potty breaks', sub: `When it’s been ${hrs}` },
-    ...walks.slice(1).map((w) => ({ ...w, type: 'walk' as const, title: 'Long walk' })),
-    { when: clock(rule.bedtime), type: 'potty' as const, title: 'Before bed' },
+    ...walks.slice(1).map((w) => ({ ...w, type: 'walk' as const, title: 'Walk' })),
+    walkCoversTime(rule.bedtime, setWalkTimes)
+      ? null
+      : { when: clock(rule.bedtime), type: 'potty' as const, title: 'Before bed' },
   ].filter((l): l is NonNullable<typeof l> => l !== null)
 
   return (

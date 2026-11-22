@@ -30,6 +30,7 @@ export type LongWalkTiming = 'set-times' | 'time-of-day' | 'unsure'
  *  times only. */
 export interface OutingRule {
   everyHours: number
+  wakeTime: string             // first time out in the morning, e.g. "07:00" — a potty break unless a walk is set near it
   bedtime: string              // last time out before bed, e.g. "22:00"
   askWhenItHappened: boolean   // logging a walk/potty break asks for the real time
   longWalks: LongWalkTiming

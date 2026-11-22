@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ImagePlus, RefreshCw, Trash2, Plus, ChevronDown, Clock, X } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
+import CroppedImg, { type PhotoCrop } from '../components/CroppedImg'
 import DogTabs from '../components/DogTabs'
 import { autosize } from '../utils/autosize'
 import DogIcon from '../components/icons/DogIcon'
@@ -605,6 +606,7 @@ function DogCard({
   breed,
   size,
   photoUrl,
+  photoCrop,
   children,
 }: {
   open: boolean
@@ -613,6 +615,7 @@ function DogCard({
   breed: string
   size: DogSize
   photoUrl?: string
+  photoCrop?: PhotoCrop | null
   children: React.ReactNode
 }) {
   const sizeLabel = sizeOptions.find((o) => o.value === size)?.label ?? ''
@@ -625,9 +628,9 @@ function DogCard({
         aria-expanded={open}
         className="flex items-center gap-3 text-left"
       >
-        <span className="size-11 rounded-[10px] overflow-hidden bg-[#f3f4f6] shrink-0 flex items-center justify-center text-text-muted">
+        <span className="relative size-11 rounded-[10px] overflow-hidden bg-[#f3f4f6] shrink-0 flex items-center justify-center text-text-muted">
           {photoUrl ? (
-            <img src={photoUrl} alt="" className="size-full object-cover" />
+            <CroppedImg src={photoUrl} crop={photoCrop} />
           ) : (
             <DogIcon size={22} />
           )}
@@ -698,8 +701,14 @@ interface PhotoHandle {
 /** PhotoCropField that owns its own crop state, so each dog in a group can have one. */
 const DogPhotoField = forwardRef<
   PhotoHandle,
-  { initialSrc: string | null; onSrcChange?: (src: string | null) => void; onEdit?: () => void }
->(function DogPhotoField({ initialSrc, onSrcChange, onEdit }, ref) {
+  {
+    initialSrc: string | null
+    onSrcChange?: (src: string | null) => void
+    onEdit?: () => void
+    /** Live crop while dragging/pinching, so previews elsewhere can match it. */
+    onCropChange?: (crop: PhotoCrop | null) => void
+  }
+>(function DogPhotoField({ initialSrc, onSrcChange, onEdit, onCropChange }, ref) {
   const [src, setSrc] = useState(initialSrc)
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
@@ -715,6 +724,20 @@ const DogPhotoField = forwardRef<
     const r = boxRef.current?.getBoundingClientRect()
     if (r && r.width > 0) lastBox.current = { width: r.width, height: r.height }
   })
+
+  const cropChange = useRef(onCropChange)
+  cropChange.current = onCropChange
+  useEffect(() => {
+    const box = lastBox.current
+    if (!src || !natural || !box) {
+      cropChange.current?.(null)
+      return
+    }
+    const s = Math.max(box.width / natural.w, box.height / natural.h) * zoom
+    const dw = natural.w * s
+    const dh = natural.h * s
+    cropChange.current?.({ x: -pan.x / dw, y: -pan.y / dh, w: box.width / dw, h: box.height / dh })
+  }, [src, natural, pan, zoom])
 
   useImperativeHandle(ref, () => ({
     src: () => src,
@@ -825,6 +848,10 @@ export default function AddEditDogPage() {
   // Current photo per dog (PRIMARY_DOG_KEY or member id) — seeds each DogPhotoField
   // and shows in the care-notes dog tabs.
   const [photos, setPhotos] = useState<Record<string, string | null>>({})
+  // Live crop per dog, so the dog card's thumbnail matches the crop being adjusted.
+  const [photoCrops, setPhotoCrops] = useState<Record<string, PhotoCrop | null>>({})
+  const setPhotoCrop = (key: string) => (crop: PhotoCrop | null) =>
+    setPhotoCrops((prev) => ({ ...prev, [key]: crop }))
   const mainPhotoRef = useRef<PhotoHandle>(null)
   const memberPhotoRefs = useRef<Record<string, PhotoHandle | null>>({})
   const [careKey, setCareKey] = useState(PRIMARY_DOG_KEY)
@@ -964,8 +991,18 @@ export default function AddEditDogPage() {
         : setForm((prev) => ({ ...prev, [key]: value }))
   }
   const groupDogs = [
-    { key: PRIMARY_DOG_KEY, name: form.name.trim(), photoUrl: photos[PRIMARY_DOG_KEY] ?? undefined },
-    ...form.additionalDogs.map((m) => ({ key: m.id, name: m.name.trim(), photoUrl: photos[m.id] ?? undefined })),
+    {
+      key: PRIMARY_DOG_KEY,
+      name: form.name.trim(),
+      photoUrl: photos[PRIMARY_DOG_KEY] ?? undefined,
+      photoCrop: photoCrops[PRIMARY_DOG_KEY],
+    },
+    ...form.additionalDogs.map((m) => ({
+      key: m.id,
+      name: m.name.trim(),
+      photoUrl: photos[m.id] ?? undefined,
+      photoCrop: photoCrops[m.id],
+    })),
   ]
   const isGroup = groupDogs.length > 1
 
@@ -1273,12 +1310,14 @@ export default function AddEditDogPage() {
               breed={form.breed}
               size={form.size}
               photoUrl={photos[PRIMARY_DOG_KEY] ?? undefined}
+              photoCrop={photoCrops[PRIMARY_DOG_KEY]}
             >
               <DogPhotoField
                 ref={mainPhotoRef}
                 initialSrc={photos[PRIMARY_DOG_KEY] ?? null}
                 onSrcChange={(src) => setPhotos((prev) => ({ ...prev, [PRIMARY_DOG_KEY]: src }))}
                 onEdit={() => setPhotoEdited(true)}
+                onCropChange={setPhotoCrop(PRIMARY_DOG_KEY)}
               />
               <div>
                 <FieldLabel required>Dog's Name</FieldLabel>
@@ -1306,6 +1345,7 @@ export default function AddEditDogPage() {
                 breed={member.breed}
                 size={member.size}
                 photoUrl={photos[member.id] ?? undefined}
+                photoCrop={photoCrops[member.id]}
               >
                 <DogPhotoField
                   ref={(h) => {
@@ -1314,6 +1354,7 @@ export default function AddEditDogPage() {
                   initialSrc={photos[member.id] ?? null}
                   onSrcChange={(src) => setPhotos((prev) => ({ ...prev, [member.id]: src }))}
                   onEdit={() => setPhotoEdited(true)}
+                  onCropChange={setPhotoCrop(member.id)}
                 />
                 <div>
                   <FieldLabel required>Dog's Name</FieldLabel>
@@ -1530,7 +1571,7 @@ export default function AddEditDogPage() {
               <OutingSettingsCard rule={form.outingRule} onPatch={patchOutingRule} />
 
               <p className="font-dm font-bold text-[14px] text-text-primary px-1 mt-2">
-                When are the long walks?
+                When are the walks?
               </p>
               <LongWalkChoice
                 rule={form.outingRule}
@@ -1539,8 +1580,9 @@ export default function AddEditDogPage() {
                 onAddWalk={() => setSchedule((prev) => [...prev, { time: '08:00', taskType: 'walk', note: '' }])}
               />
               <p className="font-dm text-[12px] text-text-secondary px-1">
-                Potty breaks fill the gaps — out at least every {hrsLabel(form.outingRule.everyHours)}, plus{' '}
-                {formatTime(`2000-01-01T${form.outingRule.bedtime}:00`)} before bed.
+                Potty breaks fill the gaps — out at least every {hrsLabel(form.outingRule.everyHours)}, from{' '}
+                {formatTime(`2000-01-01T${form.outingRule.wakeTime}:00`)} to{' '}
+                {formatTime(`2000-01-01T${form.outingRule.bedtime}:00`)}.
               </p>
               <button
                 type="button"

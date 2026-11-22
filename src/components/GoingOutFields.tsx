@@ -3,7 +3,7 @@ import { Plus, Minus } from 'lucide-react'
 import { TimePickerButton } from './TimePicker'
 import { TASK_TYPE_STYLE } from './taskTypeStyle'
 import type { DayPart, LongWalkTiming, OutingRule } from '../types'
-import { DAY_PARTS } from '../utils/outingClock'
+import { BOOKEND_MINUTES, DAY_PARTS } from '../utils/outingClock'
 
 const MIN_OUTING_HOURS = 1
 const MAX_OUTING_HOURS = 12
@@ -58,7 +58,7 @@ export function RadioCard({
   )
 }
 
-/** How often, last time out before bed, and "ask when it happened". */
+/** How often, first out in the morning, last out before bed, and "ask when it happened". */
 export function OutingSettingsCard({
   rule,
   onPatch,
@@ -96,14 +96,30 @@ export function OutingSettingsCard({
         </button>
       </div>
       <div className="border-t border-border-light" />
+      {/* The day's bookends. Each is a potty break unless a set walk lands
+          within 30 min — then that walk is the first / last time out. */}
       <div className="flex items-center gap-3">
         <div className="flex-1 min-w-0">
-          <p className="font-dm font-bold text-[14px] text-text-primary">Last time out before bed</p>
-          <p className="font-dm text-[12px] text-text-secondary">Bedtime potty break · change any time</p>
+          <p className="font-dm font-bold text-[14px] text-text-primary">First out in the morning</p>
+          <p className="font-dm text-[12px] text-text-secondary">Potty break, or the walk if one’s set then</p>
+        </div>
+        <TimePickerButton
+          value={rule.wakeTime}
+          onChange={(v) => onPatch({ wakeTime: v })}
+          ariaLabel="First out in the morning"
+          className="w-[112px] shrink-0 bg-white border border-border-light rounded-[10px] pl-3 pr-7 py-2 font-dm font-bold text-[13px] text-text-primary"
+        />
+      </div>
+      <div className="border-t border-border-light" />
+      <div className="flex items-center gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="font-dm font-bold text-[14px] text-text-primary">Last out before bed</p>
+          <p className="font-dm text-[12px] text-text-secondary">Potty break, or the walk if one’s set then</p>
         </div>
         <TimePickerButton
           value={rule.bedtime}
           onChange={(v) => onPatch({ bedtime: v })}
+          ariaLabel="Last out before bed"
           className="w-[112px] shrink-0 bg-white border border-border-light rounded-[10px] pl-3 pr-7 py-2 font-dm font-bold text-[13px] text-text-primary"
         />
       </div>
@@ -162,7 +178,7 @@ export function LongWalkChoice({
   const WalkIcon = TASK_TYPE_STYLE.walk.icon
 
   return (
-    <div role="radiogroup" aria-label="When are the long walks?" className="flex flex-col gap-2">
+    <div role="radiogroup" aria-label="When are the walks?" className="flex flex-col gap-2">
       {longWalkOptions.map((opt) => (
         <RadioCard
           key={opt.value}
@@ -249,7 +265,6 @@ function shortClock(minutes: number): string {
   return m ? `${h12}:${String(m).padStart(2, '0')} ${suffix}` : `${h12} ${suffix}`
 }
 
-const DAY_START = 7 * 60
 
 /** A long walk on the typical day: a set time, or a rough part of the day
  *  (`label`, e.g. "Morning") sketched at that window's start. */
@@ -258,8 +273,8 @@ export interface TypicalWalk {
   label?: string
 }
 
-/** A sketch of one day under the rule: long walks where they're planned,
- *  potty breaks whenever it's been everyHours, and the bedtime one. */
+/** A sketch of one day under the rule: walks where they're planned, potty
+ *  breaks whenever it's been everyHours, and the morning and bedtime ones. */
 export function typicalDay(
   rule: OutingRule,
   walkTimes: TypicalWalk[],
@@ -268,22 +283,25 @@ export function typicalDay(
   const walks = [...labelAt.keys()].sort((a, b) => a - b)
   const bed = minutesOf(rule.bedtime) || 24 * 60
   const gap = rule.everyHours * 60
-  const first = walks.length && walks[0] < DAY_START ? walks[0] : DAY_START
+  // The day starts and ends with a potty break, unless a walk sits right there.
+  const near = (a: number, b: number) => Math.abs(a - b) <= BOOKEND_MINUTES
+  const wake = minutesOf(rule.wakeTime)
+  const first = walks.find((w) => near(w, wake)) ?? Math.min(wake, walks[0] ?? wake)
   const points: { at: number; kind: 'walk' | 'potty'; label?: string }[] = [
     walks.includes(first) ? { at: first, kind: 'walk', label: labelAt.get(first) } : { at: first, kind: 'potty' },
   ]
   let last = first
   for (;;) {
-    const walk = walks.find((w) => w > last && w <= last + gap && w < bed)
+    const walk = walks.find((w) => w > last && w <= last + gap && w <= bed + BOOKEND_MINUTES)
     if (walk !== undefined) {
       points.push({ at: walk, kind: 'walk', label: labelAt.get(walk) })
       last = walk
-    } else if (last + gap < bed - 30) {
+    } else if (last + gap < bed - BOOKEND_MINUTES) {
       last += gap
       points.push({ at: last, kind: 'potty' })
     } else break
   }
-  if (bed > last) points.push({ at: bed, kind: 'potty' })
+  if (bed > last && !near(last, bed)) points.push({ at: bed, kind: 'potty' })
   return points
 }
 
@@ -322,7 +340,7 @@ export function TypicalDay({ rule, walkTimes }: { rule: OutingRule; walkTimes: T
       <div className="flex gap-4 mt-3">
         <span className="flex items-center gap-1.5 font-dm text-[12px] text-text-secondary">
           <span className={`size-2.5 rounded-full ${TASK_TYPE_STYLE.walk.bg}`} />
-          Long walk
+          Walk
         </span>
         <span className="flex items-center gap-1.5 font-dm text-[12px] text-text-secondary">
           <span className={`size-2.5 rounded-full ${TASK_TYPE_STYLE.potty.bg}`} />

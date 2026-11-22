@@ -1,6 +1,6 @@
 import type { Dog, Stay, Task, TaskType } from '../types'
 import { scheduleEntryDogName, stayDisplayName, stayingDogs } from './dogDisplay'
-import { atTime, dayPartInfo } from './outingClock'
+import { atTime, dayPartInfo, walkCoversTime } from './outingClock'
 
 const TASK_TITLES: Record<TaskType, string> = {
   walk: 'Walk',
@@ -32,6 +32,7 @@ export function generateTasksForStay(dog: Dog, stay: Stay): Task[] {
       !(entry.taskType === 'walk' && rule && rule.longWalks !== 'set-times'),
   )
   const stayDogName = stayDisplayName(dog, stay.dogKeys)
+  const setWalkTimes = schedule.filter((e) => e.taskType === 'walk').map((e) => e.time)
 
   while (current <= end) {
     for (const entry of schedule) {
@@ -76,7 +77,14 @@ export function generateTasksForStay(dog: Dog, stay: Stay): Task[] {
               }
             })
           : []),
-        { type: 'potty' as const, title: 'Before bed', at: atTime(current, rule.bedtime), note: '', dayPart: undefined },
+        // The day's bookends are potty breaks, unless a set walk sits right
+        // there — then that walk is the first / last time out.
+        ...(walkCoversTime(rule.wakeTime, setWalkTimes)
+          ? []
+          : [{ type: 'potty' as const, title: 'Morning potty', at: atTime(current, rule.wakeTime), note: '', dayPart: undefined }]),
+        ...(walkCoversTime(rule.bedtime, setWalkTimes)
+          ? []
+          : [{ type: 'potty' as const, title: 'Before bed', at: atTime(current, rule.bedtime), note: '', dayPart: undefined }]),
       ]
       for (const o of outings) {
         if (o.at < start || o.at > end) continue

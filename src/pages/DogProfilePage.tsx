@@ -149,9 +149,9 @@ export default function DogProfilePage() {
 
   const scheduleCard = (
     <div className="bg-white border border-border-light rounded-[16px] p-4">
-      <div className="flex items-center gap-2 mb-4">
-        <Clock size={16} className="text-coral shrink-0" />
-        <h3 className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-wide">
+      <div className="flex items-start gap-2 mb-4">
+        <Clock size={16} className="text-coral shrink-0 mt-[3px]" />
+        <h3 className="font-dm font-bold text-[13px] leading-[22px] text-text-secondary uppercase tracking-wide whitespace-nowrap">
           Daily Schedule
         </h3>
         <div className="ml-auto flex flex-wrap justify-end gap-1">

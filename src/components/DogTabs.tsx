@@ -1,10 +1,13 @@
 import { useLayoutEffect, useRef, useState } from 'react'
+import CroppedImg, { type PhotoCrop } from './CroppedImg'
 import DogIcon from './icons/DogIcon'
 
 interface TabDog {
   key: string
   name: string
   photoUrl?: string
+  /** Live crop while the photo is being adjusted (Add/Edit Dog). */
+  photoCrop?: PhotoCrop | null
 }
 
 interface Props {
@@ -72,12 +75,12 @@ export default function DogTabs({ dogs, value, onChange }: Props) {
             className="relative z-10 flex-1 min-w-0 rounded-full py-1.5 px-2 flex items-center justify-center gap-2 border border-transparent"
           >
             <span
-              className={`size-8 rounded-full overflow-hidden shrink-0 flex items-center justify-center text-text-muted transition-[background-color,opacity] duration-300 ${
+              className={`relative size-8 rounded-full overflow-hidden shrink-0 flex items-center justify-center text-text-muted transition-[background-color,opacity] duration-300 ${
                 active ? 'bg-card' : 'bg-white opacity-60'
               }`}
             >
               {d.photoUrl ? (
-                <img src={d.photoUrl} alt="" className="size-full object-cover" />
+                <CroppedImg src={d.photoUrl} crop={d.photoCrop} />
               ) : (
                 <DogIcon size={18} />
               )}
