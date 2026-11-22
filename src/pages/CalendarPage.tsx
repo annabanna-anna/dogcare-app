@@ -17,15 +17,20 @@ import {
   getLastPullError,
   type GoogleCalendarEvent,
 } from '../lib/googleCalendar'
-import { formatShortDate, formatTime } from '../utils/dateUtils'
+import { formatShortDate, formatTime, toLocalDateKey } from '../utils/dateUtils'
 import type { Dog, Stay } from '../types'
 import { dogsAtHome, joinDogNames, stayDisplayName } from '../utils/dogDisplay'
 
 function formatEventRange(event: GoogleCalendarEvent): string {
   if (event.allDay) {
-    return event.start === event.end
+    // Google's all-day end date is exclusive (a Nov 21–22 booking ends
+    // "2026-11-23"), so show the day before it as the last day.
+    const last = new Date(`${event.end}T00:00:00`)
+    last.setDate(last.getDate() - 1)
+    const lastKey = toLocalDateKey(last)
+    return lastKey <= event.start
       ? formatShortDate(event.start)
-      : `${formatShortDate(event.start)} → ${formatShortDate(event.end)}`
+      : `${formatShortDate(event.start)} → ${formatShortDate(lastKey)}`
   }
   const sameDay = event.start.slice(0, 10) === event.end.slice(0, 10)
   return sameDay

@@ -9,7 +9,10 @@ export function formatDate(isoString: string): string {
 }
 
 export function formatShortDate(isoString: string): string {
-  const date = new Date(isoString)
+  // A bare "YYYY-MM-DD" (all-day calendar events) is a calendar day, not an
+  // instant — `new Date()` would read it as UTC midnight, which is the
+  // previous evening anywhere west of UTC (e.g. Nov 21 showing as Nov 20).
+  const date = new Date(isoString.length === 10 ? `${isoString}T00:00:00` : isoString)
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 

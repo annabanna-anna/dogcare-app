@@ -18,8 +18,8 @@ import {
   parseRoverStyleTitle,
   type GoogleCalendarEvent,
 } from '../lib/googleCalendar'
-import type { Dog, Stay, Task, TaskStatus, TaskType } from '../types'
-import { stayDisplayName, stayingDogs } from '../utils/dogDisplay'
+import { PRIMARY_DOG_KEY, type Dog, type Stay, type Task, type TaskStatus, type TaskType } from '../types'
+import { joinDogNames, stayDisplayName, stayingDogs } from '../utils/dogDisplay'
 import {
   addDays,
   formatDayHeading,
@@ -55,12 +55,14 @@ export default function TodayPage() {
   // "Morning walk moved to 8:30 AM" — with the times before, so Undo can put them back.
   const [moveToast, setMoveToast] = useState<{ message: string; previous: TaskTimeChange[] } | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  // One entry per calendar event. `candidates` normally holds a single dog;
-  // more than one means the event's name matched several dogs we couldn't tell
-  // apart, so the card asks the sitter to pick.
-  const [suggestions, setSuggestions] = useState<{ candidates: Dog[]; event: GoogleCalendarEvent }[]>(
-    [],
-  )
+  // One entry per dog profile named on a calendar event (a multi-dog booking
+  // can name dogs on different profiles). `candidates` normally holds a single
+  // profile; more than one means a name matched several dogs we couldn't tell
+  // apart, so the card asks the sitter to pick. `names` is who the event
+  // mentions; `dogKeys` is set when only some dogs on the profile are booked.
+  const [suggestions, setSuggestions] = useState<
+    { id: string; candidates: Dog[]; names: string[]; dogKeys?: string[]; event: GoogleCalendarEvent }[]
+  >([])
   const [newDogSuggestions, setNewDogSuggestions] = useState<
     { dogName: string; ownerName: string; event: GoogleCalendarEvent }[]
   >([])
@@ -177,29 +179,58 @@ export default function TodayPage() {
     listUpcomingGoogleEvents(20)
       .then((events) => {
         if (cancelled) return
-        const matches: { candidates: Dog[]; event: GoogleCalendarEvent }[] = []
+        const matches: typeof suggestions = []
         const unmatched: { dogName: string; ownerName: string; event: GoogleCalendarEvent }[] = []
+        const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase()
         for (const event of events) {
-          if (event.start.slice(0, 10) !== todayKey) continue
+          // Only bookings that start today — one already under way was either
+          // started in the app already or deliberately skipped.
+          const startKey = event.allDay ? event.start.slice(0, 10) : toLocalDateKey(new Date(event.start))
+          if (startKey !== todayKey) continue
           if (dismissedIds.includes(event.id)) continue
           const parsed = parseRoverStyleTitle(event.title)
           if (!parsed) continue
-          const byName = dogs.filter((d) => d.name.toLowerCase() === parsed.dogName.toLowerCase())
-          if (byName.length === 0) {
-            unmatched.push({ dogName: parsed.dogName, ownerName: parsed.ownerName, event })
-            continue
+
+          // Each named dog → the profiles it could be (as the main dog or a
+          // grouped member), then gather names that land on the same profile.
+          const byProfile = new Map<string, { dog: Dog; keys: string[]; names: string[] }>()
+          for (const name of parsed.dogNames) {
+            const byName = dogs.flatMap((d) => {
+              if (same(d.name, name)) return [{ dog: d, key: PRIMARY_DOG_KEY }]
+              const member = d.additionalDogs.find((m) => same(m.name, name))
+              return member ? [{ dog: d, key: member.id }] : []
+            })
+            if (byName.length === 0) {
+              unmatched.push({ dogName: name, ownerName: parsed.ownerName, event })
+              continue
+            }
+            // Two dogs can share a name — the owner on the event usually tells
+            // them apart. Only fall back to the full name-match set when the
+            // owner narrows it to nothing (or the title has no owner), so we
+            // never silently pick the wrong dog.
+            const byOwner = parsed.ownerName ? byName.filter((m) => same(m.dog.ownerName, parsed.ownerName)) : []
+            const options = (byOwner.length > 0 ? byOwner : byName).filter((m) => !activeDogIds.has(m.dog.id))
+            if (options.length === 0) continue
+            if (options.length > 1) {
+              matches.push({ id: `${event.id}:${name}`, candidates: options.map((m) => m.dog), names: [name], event })
+              continue
+            }
+            const [{ dog, key }] = options
+            const entry = byProfile.get(dog.id) ?? { dog, keys: [], names: [] }
+            entry.keys.push(key)
+            entry.names.push(name)
+            byProfile.set(dog.id, entry)
           }
-          // Two dogs can share a name — the owner on the event usually tells
-          // them apart. Only fall back to the full name-match set when the
-          // owner narrows it to nothing (e.g. the owner is spelled differently
-          // in the app), so we never silently pick the wrong dog.
-          const byOwner = byName.filter(
-            (d) => d.ownerName.trim().toLowerCase() === parsed.ownerName.trim().toLowerCase(),
-          )
-          const candidates = (byOwner.length > 0 ? byOwner : byName).filter(
-            (d) => !activeDogIds.has(d.id),
-          )
-          if (candidates.length > 0) matches.push({ candidates, event })
+          for (const { dog, keys, names } of byProfile.values()) {
+            const everyDog = keys.length >= dog.additionalDogs.length + 1
+            matches.push({
+              id: `${event.id}:${dog.id}`,
+              candidates: [dog],
+              names,
+              dogKeys: everyDog ? undefined : keys,
+              event,
+            })
+          }
         }
         setSuggestions(matches)
         setNewDogSuggestions(unmatched)
@@ -209,6 +240,13 @@ export default function TodayPage() {
       cancelled = true
     }
   }, [dogs, activeDogs, dismissedIds])
+
+  // Start Stay link for a calendar suggestion; `keys` limits it to the
+  // profile's dogs the event actually names.
+  function stayFromEventUrl(dogId: string, event: GoogleCalendarEvent, dogKeys?: string[]): string {
+    const keys = dogKeys ? `&keys=${encodeURIComponent(dogKeys.join(','))}` : ''
+    return `/stays/new?dog=${dogId}&start=${encodeURIComponent(event.start)}&end=${encodeURIComponent(event.end)}${keys}`
+  }
 
   function dismissSuggestion(eventId: string) {
     const next = [...dismissedIds, eventId]
@@ -739,12 +777,13 @@ export default function TodayPage() {
           {/* Suggested stays, from today's Google/Rover events */}
           {isTodaySelected && suggestions.length > 0 && (
             <div className="px-6 mb-6 flex flex-col gap-3">
-              {suggestions.map(({ candidates, event }) => {
+              {suggestions.map(({ id, candidates, names, dogKeys, event }) => {
                 const [dog] = candidates
                 const ambiguous = candidates.length > 1
+                const label = joinDogNames(names)
                 return (
                   <div
-                    key={event.id}
+                    key={id}
                     className="bg-[#eef1fd] border border-[#d3daf8] rounded-[26px] p-4"
                   >
                     <div className="flex items-center gap-3 mb-3">
@@ -757,14 +796,14 @@ export default function TodayPage() {
                       </div>
                       <p className="font-dm font-bold text-[15px] text-text-primary leading-snug">
                         {ambiguous
-                          ? `Which ${dog.name} are you taking care of today?`
-                          : `Are you taking care of ${dog.name} starting today?`}
+                          ? `Which ${label} are you taking care of today?`
+                          : `Are you taking care of ${label} starting today?`}
                       </p>
                     </div>
                     <p className="font-dm text-[12px] text-text-secondary mb-3">
                       {ambiguous
-                        ? `You have ${candidates.length} dogs named ${dog.name} — pick the right one to start their stay.`
-                        : `Found on your calendar — start a stay to generate ${dog.name}'s care tasks.`}
+                        ? `You have ${candidates.length} dogs named ${label} — pick the right one to start their stay.`
+                        : `Found on your calendar — start a stay to generate ${label}'s care tasks.`}
                     </p>
                     {ambiguous ? (
                       <>
@@ -773,11 +812,7 @@ export default function TodayPage() {
                             <button
                               key={c.id}
                               type="button"
-                              onClick={() =>
-                                navigate(
-                                  `/stays/new?dog=${c.id}&start=${encodeURIComponent(event.start)}&end=${encodeURIComponent(event.end)}`,
-                                )
-                              }
+                              onClick={() => navigate(stayFromEventUrl(c.id, event))}
                               className="flex items-center gap-3 bg-white rounded-[16px] px-3 py-2.5 text-left active:scale-[0.98] transition-transform"
                             >
                               <div className="size-9 rounded-[6px] overflow-hidden bg-[#f3f4f6] flex items-center justify-center shrink-0">
@@ -806,11 +841,7 @@ export default function TodayPage() {
                       <div className="flex gap-2">
                         <Button
                           size="sm"
-                          onClick={() =>
-                            navigate(
-                              `/stays/new?dog=${dog.id}&start=${encodeURIComponent(event.start)}&end=${encodeURIComponent(event.end)}`,
-                            )
-                          }
+                          onClick={() => navigate(stayFromEventUrl(dog.id, event, dogKeys))}
                         >
                           Start a Stay
                         </Button>
@@ -830,7 +861,7 @@ export default function TodayPage() {
             <div className="px-6 mb-6 flex flex-col gap-3">
               {newDogSuggestions.map(({ dogName, ownerName, event }) => (
                 <div
-                  key={event.id}
+                  key={`${event.id}:${dogName}`}
                   className="bg-[#eef1fd] border border-[#d3daf8] rounded-[26px] p-4"
                 >
                   <div className="flex items-center gap-3 mb-3">

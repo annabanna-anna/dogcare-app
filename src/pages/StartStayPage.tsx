@@ -318,7 +318,10 @@ export default function StartStayPage() {
   const [endDayEdited, setEndDayEdited] = useState(isEditMode)
   const [notes, setNotes] = useState('')
   // Which dogs on the profile are staying; null = every dog
-  const [dogKeys, setDogKeys] = useState<string[] | null>(null)
+  // A calendar suggestion for only some dogs on a profile passes ?keys=.
+  const [dogKeys, setDogKeys] = useState<string[] | null>(
+    () => params.get('keys')?.split(',').filter(Boolean) || null,
+  )
   // Loaded values in edit mode — Save stays disabled until something differs
   const [original, setOriginal] = useState<{
     startDate: string

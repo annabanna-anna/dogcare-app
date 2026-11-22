@@ -433,19 +433,47 @@ export async function listUpcomingGoogleEvents(maxResults = 10): Promise<GoogleC
   }
 }
 
-/** Parses Rover's "Boarding: Dog Name / Owner Name" event-title convention
- *  (also accepts an older assumed "[TAG] Dog Name / Owner Name" form, in
- *  case some events still carry it). Rover also puts the service as a
- *  suffix — "Dog / Jasmine Z.: Boarding", "…: Doggy Day Care" — which is
- *  stripped so it doesn't end up in the owner name. Returns null for titles
- *  that don't match — callers should just skip those. */
-export function parseRoverStyleTitle(title: string): { dogName: string; ownerName: string } | null {
-  const withoutTag = title
-    .replace(/^(\[[^\]]*\]|[^:/]+:)\s*/, '')
-    .replace(/\s*:[^:/]*$/, '')
-  const parts = withoutTag.split('/').map((p) => p.trim())
-  if (parts.length !== 2 || !parts[0] || !parts[1]) return null
-  return { dogName: parts[0], ownerName: parts[1] }
+const ROVER_SERVICE_RE = /^(boarding|(doggy )?day ?care|house sitting|drop-?in( visits?)?|dog walking|walking|sitting)$/i
+
+/** "George and Artemis" / "George & Artemis" / "A, B and C" → each name. */
+function splitDogNames(text: string): string[] {
+  return text
+    .split(/\s*,\s*|\s+(?:and|&)\s+|\s*&\s*/i)
+    .map((n) => n.trim())
+    .filter(Boolean)
+}
+
+/** Parses Rover's event titles. Seen in the wild:
+ *    "Boarding: Dog / Owner"        (service first, owner after a slash)
+ *    "Dog / Jasmine Z.: Boarding"   (service as a suffix)
+ *    "George and Artemis: Boarding" (no owner at all, several dogs)
+ *  plus an older assumed "[B] Dog / Owner" form. A multi-dog booking comes
+ *  back as several names; ownerName is '' when the title doesn't carry one.
+ *  Returns null for titles that don't match — callers should skip those. */
+export function parseRoverStyleTitle(title: string): { dogNames: string[]; ownerName: string } | null {
+  const t = title.trim().replace(/^\[[^\]]*\]\s*/, '')
+  let dogsPart: string
+  let ownerName = ''
+  if (t.includes('/')) {
+    const parts = t
+      .replace(/^[^:/]+:\s*/, '')
+      .replace(/\s*:[^:/]*$/, '')
+      .split('/')
+      .map((p) => p.trim())
+    if (parts.length !== 2 || !parts[0] || !parts[1]) return null
+    ;[dogsPart, ownerName] = parts
+  } else {
+    // "Dogs: Service" or "Service: Dogs" — one side must be a Rover service,
+    // so ordinary events like "Lunch: Bob" aren't mistaken for dogs.
+    const m = t.match(/^([^:]+):\s*([^:]+)$/)
+    if (!m) return null
+    const [left, right] = [m[1].trim(), m[2].trim()]
+    if (ROVER_SERVICE_RE.test(right)) dogsPart = left
+    else if (ROVER_SERVICE_RE.test(left)) dogsPart = right
+    else return null
+  }
+  const dogNames = splitDogNames(dogsPart)
+  return dogNames.length > 0 ? { dogNames, ownerName } : null
 }
 
 /** Finds (or creates, on first push) the dedicated "HeyPup" calendar that
