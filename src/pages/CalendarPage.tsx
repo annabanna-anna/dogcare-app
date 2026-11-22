@@ -236,9 +236,11 @@ export default function CalendarPage() {
           if (!dog) return null
           const isActive = new Date(stay.startDate) <= now && new Date(stay.endDate) >= now
           return (
-            <div
+            <button
+              type="button"
               key={stay.id}
-              className="bg-white border border-border-light rounded-[26px] p-4 flex gap-4 items-center"
+              onClick={() => navigate(`/stays/${stay.id}/edit`)}
+              className="w-full text-left bg-white border border-border-light rounded-[26px] p-4 flex gap-4 items-center active:scale-[0.98] transition-transform"
             >
               <div className="size-12 rounded-[10px] overflow-hidden bg-[#f3f4f6] shrink-0 flex items-center justify-center">
                 {dog.photoUrl ? (
@@ -269,7 +271,7 @@ export default function CalendarPage() {
                   </p>
                 )}
               </div>
-            </div>
+            </button>
           )
         })}
 
