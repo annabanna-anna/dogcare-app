@@ -224,7 +224,7 @@ export default function DogProfilePage() {
       <PageHeader
         back
         title={dogDisplayName(dog)}
-        subtitle={dog.additionalDogs.length > 0 ? dogDisplayBreed(dog) : `${dog.breed} · ${dog.size}`}
+        subtitle={dogDisplayBreed(dog)}
         right={
           <button
             onClick={() => navigate(`/dogs/${dog.id}/edit`)}
