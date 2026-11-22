@@ -270,11 +270,28 @@ export default function TodayPage() {
     [tasks, selectedKey],
   )
 
-  function groupByDog(list: Task[]) {
+  // Tasks group by stay, not by each task's dog name — a stay's dogs come
+  // together, so a task for just one of them (Artemis's pill) sits in the
+  // stay's list and is marked "Artemis only" instead of getting its own list.
+  const stayLabels = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const { dog, stay } of activeDogs) map.set(stay.id, stayDisplayName(dog, stay.dogKeys))
+    // A stay that's over: its widest task name ("George & Artemis") names it.
+    for (const t of tasks) {
+      if (activeDogs.some((a) => a.stay.id === t.stayId)) continue
+      const cur = map.get(t.stayId)
+      if (!cur || t.dogName.length > cur.length) map.set(t.stayId, t.dogName)
+    }
+    return map
+  }, [activeDogs, tasks])
+  const stayLabel = (stayId: string) => stayLabels.get(stayId) ?? ''
+  const onlyFor = (t: Task) => (t.dogName !== stayLabel(t.stayId) ? t.dogName : undefined)
+
+  function groupByStay(list: Task[]) {
     const map: Record<string, Task[]> = {}
     for (const t of list) {
-      if (!map[t.dogName]) map[t.dogName] = []
-      map[t.dogName].push(t)
+      if (!map[t.stayId]) map[t.stayId] = []
+      map[t.stayId].push(t)
     }
     return map
   }
@@ -283,8 +300,8 @@ export default function TodayPage() {
   // "Past tasks" section so they don't push what's next further down the page.
   const pendingTasks = useMemo(() => dayTasks.filter((t) => t.status !== 'done'), [dayTasks])
   const pastTasks = useMemo(() => dayTasks.filter((t) => t.status === 'done'), [dayTasks])
-  const pendingByDog = useMemo(() => groupByDog(pendingTasks), [pendingTasks])
-  const isMultiDog = useMemo(() => new Set(dayTasks.map((t) => t.dogName)).size > 1, [dayTasks])
+  const pendingByStay = useMemo(() => groupByStay(pendingTasks), [pendingTasks])
+  const isMultiDog = useMemo(() => new Set(dayTasks.map((t) => t.stayId)).size > 1, [dayTasks])
 
   useEffect(() => {
     setShowPastTasks(false)
@@ -561,16 +578,16 @@ export default function TodayPage() {
   const pastList = [...pastTasks, ...pendingTasks.filter((t) => passedIds.has(t.id))].sort(
     (a, b) => new Date(a.scheduledTime).getTime() - new Date(b.scheduledTime).getTime(),
   )
-  const pastListByDog = groupByDog(pastList)
+  const pastListByStay = groupByStay(pastList)
 
   type Item =
     | { kind: 'task'; time: Date; task: Task }
     | { kind: 'potty'; time: Date; potty: (typeof pottyPlans)[number] }
     | { kind: 'ask'; time: Date; clock: (typeof clocks)[number] }
   const pendingGroups = [
-    ...new Set([...Object.keys(pendingByDog), ...clocks.filter((c) => c.ask || c.plan.length).map((c) => c.dogName)]),
-  ].map((dogName) => {
-    const dogTasks = pendingByDog[dogName] ?? []
+    ...new Set([...Object.keys(pendingByStay), ...clocks.filter((c) => c.ask || c.plan.length).map((c) => c.stay.id)]),
+  ].map((stayId) => {
+    const dogTasks = pendingByStay[stayId] ?? []
     const items: Item[] = [
       ...dogTasks
         .filter((task) => !passedIds.has(task.id))
@@ -579,12 +596,13 @@ export default function TodayPage() {
           time: walkPlans.get(task.id)?.at ?? new Date(task.scheduledTime),
           task,
         })),
-      ...pottyPlans.filter((p) => p.clock.dogName === dogName).map((potty) => ({ kind: 'potty' as const, time: potty.at, potty })),
+      ...pottyPlans.filter((p) => p.clock.stay.id === stayId).map((potty) => ({ kind: 'potty' as const, time: potty.at, potty })),
     ].sort((a, b) => a.time.getTime() - b.time.getTime())
-    const clock = clocks.find((c) => c.dogName === dogName)
+    const clock = clocks.find((c) => c.stay.id === stayId)
     if (clock?.ask) items.unshift({ kind: 'ask', time: now, clock })
     return {
-      dogName,
+      stayId,
+      dogName: clock?.dogName ?? stayLabel(stayId),
       clock,
       items,
     }
@@ -958,8 +976,8 @@ export default function TodayPage() {
           )}
 
           {/* Tasks grouped by dog */}
-          {pendingGroups.map(({ dogName, clock, items }) => (
-            <section key={dogName} className="px-6 mb-4">
+          {pendingGroups.map(({ stayId, dogName, clock, items }) => (
+            <section key={stayId} className="px-6 mb-4">
               {isMultiDog && (
                 <p className="font-dm font-bold text-[12px] text-coral uppercase tracking-widest mb-3">
                   {dogName}
@@ -1011,7 +1029,7 @@ export default function TodayPage() {
                         }}
                         onDone={() => void logOuting(item.potty.clock.dog, item.potty.clock.stay, 'potty')}
                         onUndo={() => {}}
-                        showDogName={isMultiDog}
+                        showDogName={false}
                         plan={{ at: item.potty.at, reason: item.potty.reason, next: item.potty.next }}
                       />
                     </div>
@@ -1021,7 +1039,8 @@ export default function TodayPage() {
                         task={item.task}
                         onDone={() => completeTask(item.task)}
                         onUndo={undoTask}
-                        showDogName={isMultiDog}
+                        showDogName={false}
+                        onlyFor={onlyFor(item.task)}
                         plan={walkPlans.get(item.task.id)}
                         onEdit={hasSetTime(item.task) ? () => setEditTask(item.task) : undefined}
                       />
@@ -1058,13 +1077,13 @@ export default function TodayPage() {
                 {showPastTasks ? 'Hide' : 'Show'} past tasks ({pastList.length})
               </button>
               {showPastTasks &&
-                Object.entries(pastListByDog).map(([dogName, dogTasks]) => (
-                  <div key={dogName} className="mb-4 last:mb-0">
+                Object.entries(pastListByStay).map(([stayId, dogTasks]) => (
+                  <div key={stayId} className="mb-4 last:mb-0">
                     {/* Always labeled, even for a single dog — once a stay ends,
                         the Active Care card that named the dog is gone, so this
                         is the only thing left saying whose tasks these were. */}
                     <p className="font-dm font-bold text-[12px] text-coral uppercase tracking-widest mb-3">
-                      {dogName}
+                      {stayLabel(stayId)}
                     </p>
                     {dogTasks.map((task, i) => (
                       <div
@@ -1075,7 +1094,8 @@ export default function TodayPage() {
                           task={task}
                           onDone={(id) => updateStatus(id, 'done')}
                           onUndo={undoTask}
-                          showDogName={isMultiDog}
+                          showDogName={false}
+                          onlyFor={onlyFor(task)}
                           passed={passedIds.has(task.id)}
                         />
                       </div>

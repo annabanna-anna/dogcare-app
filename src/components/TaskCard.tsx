@@ -12,6 +12,8 @@ interface Props {
   onUndo: (id: string) => void
   /** Hide the small dog-name line when the list is already scoped to one dog. */
   showDogName?: boolean
+  /** Set when the task is for only some of the dogs in its stay — shown as "Artemis only". */
+  onlyFor?: string
   /** Tighter time↔icon gap, a smaller 1.5rem icon badge (vs the usual
    *  2rem), 12px time type, ":00" dropped from on-the-hour times, and
    *  smaller title/note type (14px/10px vs 16px/13px) — opt-in for
@@ -33,7 +35,7 @@ interface Props {
 const SWIPE_THRESHOLD = 84
 const SWIPE_MAX = 140
 
-export default function TaskCard({ task, onDone, onUndo, showDogName = true, dense = false, plan, passed, onEdit }: Props) {
+export default function TaskCard({ task, onDone, onUndo, showDogName = true, onlyFor, dense = false, plan, passed, onEdit }: Props) {
   const { icon: Icon, bg } = TASK_TYPE_STYLE[task.type] ?? TASK_TYPE_STYLE.other
   const isDone = task.status === 'done'
   const isSkipped = task.status === 'skipped'
@@ -311,10 +313,16 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, den
             isCompleted || passed ? 'opacity-50' : ''
           }`}
         >
-          {showDogName && (
-            <p className="font-dm text-[11px] text-text-muted leading-none mb-1">
-              {task.dogName}
+          {onlyFor ? (
+            <p className="font-dm font-bold text-[11px] text-text-secondary leading-none mb-1">
+              {onlyFor} only
             </p>
+          ) : (
+            showDogName && (
+              <p className="font-dm text-[11px] text-text-muted leading-none mb-1">
+                {task.dogName}
+              </p>
+            )
           )}
           <p className={`font-dm font-bold ${dense ? 'text-[14px] truncate' : 'text-[16px]'} leading-tight text-text-primary`}>
             {task.title}
