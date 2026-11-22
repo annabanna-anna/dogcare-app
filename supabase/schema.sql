@@ -115,6 +115,12 @@ alter table dogs add column if not exists outing_rule jsonb;
 -- 'afternoon', 'evening') rather than a set time; scheduled_time is the
 -- window's start. Null = an ordinary set-time task.
 alter table tasks add column if not exists day_part text;
+-- A walk/potty break logged on the spot from Today rather than generated
+-- from the schedule. Undoing one deletes it instead of leaving it pending.
+alter table tasks add column if not exists logged boolean not null default false;
+-- The time a task was scheduled for before it was moved on Today ("change
+-- time"), so the row can show it struck through. Null = never moved.
+alter table tasks add column if not exists original_time timestamptz;
 
 -- Which dogs on the profile a stay covers ("primary" or an additional_dogs
 -- member id), for stays where some dogs stay home. Null = every dog.

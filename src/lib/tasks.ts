@@ -17,6 +17,8 @@ function mapRow(row: TaskRow): Task {
     status: row.status,
     completedAt: row.completed_at ?? undefined,
     dayPart: row.day_part ?? undefined,
+    logged: row.logged ?? false,
+    originalTime: row.original_time ?? undefined,
     googleExtId: row.google_ext_id ?? undefined,
     googleExtKind: (row.google_ext_kind as 'event' | 'task' | null) ?? undefined,
   }
@@ -83,6 +85,7 @@ export async function createTasks(tasks: Task[]): Promise<Task[]> {
     // Only sent when set, so ordinary tasks still insert on a database that
     // predates the column.
     ...(t.dayPart ? { day_part: t.dayPart } : {}),
+    ...(t.logged ? { logged: true } : {}),
   }))
   const { data, error } = await supabase.from('tasks').insert(rows).select('*')
   if (error) throw error
@@ -107,6 +110,33 @@ export async function updateTaskStatus(id: string, status: TaskStatus, completed
     .update({ status, completed_at: status === 'done' ? (completedAt ?? new Date().toISOString()) : null })
     .eq('id', id)
   if (error) throw error
+}
+
+/** Moves tasks to new times — one task edited on Today, plus any later walks
+ *  and potty breaks the sitter chose to move along with it. */
+export interface TaskTimeChange {
+  id: string
+  scheduledTime: string
+  /** What it was scheduled for before any move; null once it's back there. */
+  originalTime: string | null
+}
+
+export async function updateTaskTimes(changes: TaskTimeChange[]): Promise<void> {
+  const run = (withOriginal: boolean) =>
+    Promise.all(
+      changes.map(({ id, scheduledTime, originalTime }) =>
+        supabase
+          .from('tasks')
+          .update({ scheduled_time: scheduledTime, ...(withOriginal ? { original_time: originalTime } : {}) })
+          .eq('id', id),
+      ),
+    )
+  let results = await run(true)
+  // A database that predates original_time (PGRST204: unknown column) still
+  // saves the new time — the row just can't show the old one yet.
+  if (results.some((r) => r.error?.code === 'PGRST204')) results = await run(false)
+  const failed = results.find((r) => r.error)
+  if (failed?.error) throw failed.error
 }
 
 /** Records what a task was last pushed to Google as, so a future push can

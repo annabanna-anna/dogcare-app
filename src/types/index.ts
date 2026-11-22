@@ -111,6 +111,11 @@ export interface Task {
   status: TaskStatus
   completedAt?: string
   dayPart?: DayPart       // a long walk planned for a part of the day, not a set time
+  /** Added by logging a walk/potty break on the spot, not from the schedule —
+   *  undoing it removes it rather than leaving a pending task behind. */
+  logged?: boolean
+  /** The scheduled time before it was moved on Today; unset = never moved. */
+  originalTime?: string
   // What this task was last pushed to Google as — lets a re-push update the
   // same event/task instead of creating a duplicate.
   googleExtId?: string

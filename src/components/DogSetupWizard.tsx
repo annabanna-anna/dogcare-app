@@ -3,7 +3,7 @@ import { ArrowLeft, Check, Plus, X } from 'lucide-react'
 import Button from './Button'
 import DogTabs from './DogTabs'
 import GoingOutBlock from './GoingOutBlock'
-import { LongWalkChoice, OutingSettingsCard, RadioCard, TypicalDay, hrsLabel } from './GoingOutFields'
+import { LongWalkChoice, OutingSettingsCard, RadioCard, TypicalDay, hrsLabel, type TypicalWalk } from './GoingOutFields'
 import { TimePickerButton, formatTimeValue } from './TimePicker'
 import { TASK_TYPE_STYLE } from './taskTypeStyle'
 import {
@@ -161,11 +161,14 @@ function TextField({
   onChange,
   placeholder,
   multiline,
+  rows = 2,
 }: {
   value: string
   onChange: (v: string) => void
   placeholder?: string
   multiline?: boolean
+  /** Starting height in lines for a multiline field — it grows from there. */
+  rows?: number
 }) {
   return multiline ? (
     <textarea
@@ -177,7 +180,7 @@ function TextField({
       ref={(el) => {
         if (el) autosize(el)
       }}
-      rows={2}
+      rows={rows}
       placeholder={placeholder}
       className={`${fieldClass} resize-none overscroll-contain`}
     />
@@ -471,17 +474,21 @@ function MealsStep(props: Props) {
       {care.hasAllergies === 'yes' && (
         <div>
           <Label>Which ones?</Label>
-          <TextField value={care.allergyNotes} onChange={setCare('allergyNotes')} placeholder="e.g. chicken, beef, grain" />
+          <TextField value={care.allergyNotes} onChange={setCare('allergyNotes')} placeholder="e.g. chicken, beef, grain" multiline rows={1} />
         </div>
       )}
     </>
   )
 }
 
-function plannedWalkTimes(rule: OutingRule, schedule: CareScheduleEntry[]): string[] {
-  if (rule.longWalks === 'set-times') return schedule.filter((e) => e.taskType === 'walk').map((e) => e.time)
+function plannedWalkTimes(rule: OutingRule, schedule: CareScheduleEntry[]): TypicalWalk[] {
+  if (rule.longWalks === 'set-times')
+    return schedule.filter((e) => e.taskType === 'walk').map((e) => ({ time: e.time }))
   if (rule.longWalks === 'time-of-day')
-    return rule.dayPartWalks.map((w) => DAY_PARTS.find((d) => d.key === w.dayPart)!.start)
+    return rule.dayPartWalks.map((w) => {
+      const part = DAY_PARTS.find((d) => d.key === w.dayPart)!
+      return { time: part.start, label: part.label }
+    })
   return []
 }
 
@@ -561,6 +568,8 @@ function LongWalksStep(props: Props) {
           value={care.dogParkNotes}
           onChange={setCare('dogParkNotes')}
           placeholder={care.goesToDogParks === 'yes' ? 'Any conditions? e.g. fenced parks only' : 'Anything to know? e.g. reactive with big dogs'}
+          multiline
+          rows={1}
         />
       )}
     </>

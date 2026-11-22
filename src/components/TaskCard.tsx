@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { CheckCircle2, RotateCcw } from 'lucide-react'
+import { CheckCircle2, Pencil, RotateCcw } from 'lucide-react'
 import { TASK_TYPE_STYLE } from './taskTypeStyle'
 import PawPrintFilled from './icons/PawPrintFilled'
 import type { Task } from '../types'
@@ -24,6 +24,8 @@ interface Props {
   /** A long walk whose window closed before the going-out clock started —
    *  listed with past tasks, muted and never overdue. */
   passed?: boolean
+  /** Makes the time tappable to change it — set-time tasks on Today. */
+  onEdit?: () => void
 }
 
 // Distance (px) a swipe must travel before it commits to Done/Undo, and the
@@ -31,11 +33,17 @@ interface Props {
 const SWIPE_THRESHOLD = 84
 const SWIPE_MAX = 140
 
-export default function TaskCard({ task, onDone, onUndo, showDogName = true, dense = false, plan, passed }: Props) {
+export default function TaskCard({ task, onDone, onUndo, showDogName = true, dense = false, plan, passed, onEdit }: Props) {
   const { icon: Icon, bg } = TASK_TYPE_STYLE[task.type] ?? TASK_TYPE_STYLE.other
   const isDone = task.status === 'done'
   const isSkipped = task.status === 'skipped'
   const isCompleted = isDone || isSkipped
+  const editable = !!onEdit && !isCompleted && !dense
+  // The time it had before being moved on Today, shown struck through.
+  const movedFrom =
+    task.originalTime && !plan && !task.dayPart && new Date(task.originalTime).getTime() !== new Date(task.scheduledTime).getTime()
+      ? formatTime(task.originalTime)
+      : null
   // Overdue isn't a status a task gets stuck in — it's just a pending task
   // whose time has already passed, so it's computed live off the clock
   // rather than read off task.status. Suppressed in dense mode (the
@@ -239,12 +247,40 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, den
       >
         <div className="relative flex gap-3">
         {/* Time column — narrower in dense mode: compact times ("8 AM", "12
-            PM") never need the full 68px the app's longest label ("11:30
+            PM") never need the full 82px the app's longest label ("11:30
             AM") does. */}
-        <div className={`${dense ? 'w-12 pl-6' : 'w-[68px] pl-2'} shrink-0 pt-1 flex flex-col items-start ${isCompleted || passed ? 'opacity-50' : ''}`}>
-          <span className={`font-dm font-bold whitespace-nowrap ${dense ? 'text-[12px]' : 'text-[13px]'} ${plan ? 'text-text-secondary' : 'text-text-primary'}`}>
-            {displayTime}
-          </span>
+        <div className={`${dense ? 'w-12 pl-6' : 'w-[82px] pl-2'} shrink-0 pt-1 flex flex-col items-start ${isCompleted || passed ? 'opacity-50' : ''}`}>
+          {editable ? (
+            // The time is the "change time" control — on the left, away from
+            // the swipe-to-done edge. Stopping the pointer here keeps a tap
+            // from starting a swipe.
+            <button
+              type="button"
+              aria-label={`Change the time of ${task.title} (${displayTime})`}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={onEdit}
+              // Padding with a matching negative margin: a bigger tap area
+              // without moving the time out of line with other rows.
+              className="-m-2 p-2 rounded-[10px] flex flex-col items-start gap-0.5 active:bg-card transition-colors"
+            >
+              <span className="flex items-center gap-1.5 font-dm font-bold text-[13px] leading-none py-0.5 text-text-primary whitespace-nowrap">
+                {displayTime}
+                <Pencil size={12} className="shrink-0 -translate-y-px" aria-hidden="true" />
+              </span>
+              {movedFrom && (
+                <span className="font-dm text-[11px] text-text-muted line-through whitespace-nowrap">{movedFrom}</span>
+              )}
+            </button>
+          ) : (
+            <>
+              <span className={`font-dm font-bold whitespace-nowrap ${dense ? 'text-[12px]' : 'text-[13px]'} ${plan ? 'text-text-secondary' : 'text-text-primary'}`}>
+                {displayTime}
+              </span>
+              {movedFrom && (
+                <span className="mt-0.5 font-dm text-[11px] text-text-muted line-through whitespace-nowrap">{movedFrom}</span>
+              )}
+            </>
+          )}
           {plan?.next && !isOverdue && task.status === 'pending' && (
             <span className="mt-1 inline-block px-1.5 py-0.5 rounded-full bg-coral-soft font-dm font-bold text-[11px] text-coral whitespace-nowrap">
               in {formatDuration(plan.at.getTime() - now.getTime())}

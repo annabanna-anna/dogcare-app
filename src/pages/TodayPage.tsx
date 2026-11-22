@@ -4,11 +4,12 @@ import DogIcon from '../components/icons/DogIcon'
 import { Link, useNavigate } from 'react-router-dom'
 import Button from '../components/Button'
 import TaskCard from '../components/TaskCard'
-import NextOutingCard from '../components/NextOutingCard'
 import LogTimeSheet from '../components/LogTimeSheet'
 import LastOutSheet from '../components/LastOutSheet'
 import LastOutPrompt from '../components/LastOutPrompt'
-import { createTasks, getLastOuting, listTasksBetween, updateTaskStatus } from '../lib/tasks'
+import EditTimeSheet from '../components/EditTimeSheet'
+import { createTasks, deleteTasksByIds, getLastOuting, listTasksBetween, updateTaskStatus, updateTaskTimes, type TaskTimeChange } from '../lib/tasks'
+import { pushTasksToGoogleCalendar } from '../lib/googleCalendar'
 import { listStays, setStayLastOut } from '../lib/stays'
 import { listDogs } from '../lib/dogs'
 import {
@@ -32,9 +33,6 @@ import { OUTING_TYPES, atTime, dayPartInfo, latestOuting, planOutings } from '..
 
 const DISMISSED_KEY = 'heypup-dismissed-stay-suggestions'
 const OUTING_TITLES: Partial<Record<TaskType, string>> = { walk: 'Walk', potty: 'Potty break' }
-// Logging a walk/potty break checks off a scheduled one when it's this close
-// ahead (or already overdue today), instead of adding a second entry.
-const LOG_MATCH_AHEAD_MS = 60 * 60_000
 const WEEKDAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
 export default function TodayPage() {
@@ -52,6 +50,11 @@ export default function TodayPage() {
   // "When was the dog last out?" — Pick a time, or Change on the clock strip.
   const [lastOutSheet, setLastOutSheet] = useState<{ dog: Dog; stay: Stay; initial: Date; task?: Task } | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // The set-time task whose time is being changed.
+  const [editTask, setEditTask] = useState<Task | null>(null)
+  // "Morning walk moved to 8:30 AM" — with the times before, so Undo can put them back.
+  const [moveToast, setMoveToast] = useState<{ message: string; previous: TaskTimeChange[] } | null>(null)
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   // One entry per calendar event. `candidates` normally holds a single dog;
   // more than one means the event's name matched several dogs we couldn't tell
   // apart, so the card asks the sitter to pick.
@@ -258,6 +261,22 @@ export default function TodayPage() {
     updateTaskStatus(id, status, doneAt).catch((e) => setError(e instanceof Error ? e.message : 'Could not save.'))
   }
 
+  /** Undoes a checked-off task. One logged on the spot was never scheduled, so
+   *  it's removed — the clock falls back to the time out before it — rather
+   *  than coming back as a pending (and instantly overdue) task. */
+  function undoTask(id: string) {
+    const task = tasks.find((t) => t.id === id)
+    if (!task?.logged) return updateStatus(id, 'pending')
+    setTasks((prev) => prev.filter((t) => t.id !== id))
+    // The fetched last outing may be this same task — drop it so the clock
+    // doesn't keep counting from it.
+    setLastOutings((prev) => (prev[task.stayId]?.id === id ? { ...prev, [task.stayId]: null } : prev))
+    deleteTasksByIds([id]).catch((e) => {
+      setTasks((prev) => [...prev, task])
+      setError(e instanceof Error ? e.message : 'Could not undo.')
+    })
+  }
+
   /** Checks a task off "just now", then — for a going-out dog that wants it —
    *  asks when it really happened. */
   function completeTask(task: Task) {
@@ -276,30 +295,11 @@ export default function TodayPage() {
     return latestOuting([...loaded, ...extra])
   }
 
-  /** Logs a walk/potty break just now: checks off the scheduled one nearest
-   *  now if there is one, otherwise adds a done task. */
+  /** Logs a planned walk/potty break as done just now — a new task, marked
+   *  `logged` so undoing it removes it again. */
   async function logOuting(dog: Dog, stay: Stay, type: TaskType) {
     const at = new Date()
     setNow(at)
-    const todayKey = toLocalDateKey(at)
-    const scheduled = tasks
-      .filter(
-        (t) =>
-          t.stayId === stay.id &&
-          t.type === type &&
-          t.status !== 'done' &&
-          toLocalDateKey(new Date(t.scheduledTime)) === todayKey &&
-          new Date(t.scheduledTime).getTime() <= at.getTime() + LOG_MATCH_AHEAD_MS,
-      )
-      .sort(
-        (a, b) =>
-          Math.abs(new Date(a.scheduledTime).getTime() - at.getTime()) -
-          Math.abs(new Date(b.scheduledTime).getTime() - at.getTime()),
-      )[0]
-    if (scheduled) {
-      completeTask(scheduled)
-      return
-    }
     try {
       const created = await createTasks([
         {
@@ -312,6 +312,7 @@ export default function TodayPage() {
           scheduledTime: at.toISOString(),
           status: 'done',
           completedAt: at.toISOString(),
+          logged: true,
         },
       ])
       setTasks((prev) => [...prev, ...created])
@@ -430,6 +431,92 @@ export default function TodayPage() {
           title: t.title,
         })),
     ].sort((a, b) => a.at.getTime() - b.at.getTime())
+  }
+
+  /** A task with a real set time: not a walk planned by time of day, and not
+   *  one the going-out clock places. */
+  const hasSetTime = (t: Task) => t.status === 'pending' && !t.dayPart && !walkPlans.has(t.id)
+
+  /** Same-day walks and potty breaks after `task` that can move along with it. */
+  function followersOf(task: Task): Task[] {
+    if (!OUTING_TYPES.includes(task.type)) return []
+    const from = new Date(task.scheduledTime)
+    const day = toLocalDateKey(from)
+    return tasks
+      .filter(
+        (t) =>
+          t.id !== task.id &&
+          t.stayId === task.stayId &&
+          OUTING_TYPES.includes(t.type) &&
+          hasSetTime(t) &&
+          toLocalDateKey(new Date(t.scheduledTime)) === day &&
+          new Date(t.scheduledTime) > from,
+      )
+      .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime))
+  }
+
+  /** Applies new times locally, saves them, and re-pushes to Google if it's on. */
+  async function applyTimes(changes: TaskTimeChange[]) {
+    applyLocalOnly(changes)
+    await updateTaskTimes(changes)
+    const byId = new Map(changes.map((c) => [c.id, c]))
+    const moved = tasks.filter((t) => byId.has(t.id)).map((t) => withTime(t, byId.get(t.id)!))
+    pushTasksToGoogleCalendar(moved).catch(() => {}) // best-effort, like stay creation
+  }
+
+  const withTime = (t: Task, c: TaskTimeChange): Task => ({
+    ...t,
+    scheduledTime: c.scheduledTime,
+    originalTime: c.originalTime ?? undefined,
+  })
+
+  async function saveEditedTime(task: Task, at: Date, moveRest: boolean) {
+    setEditTask(null)
+    const shift = at.getTime() - new Date(task.scheduledTime).getTime()
+    const followers = moveRest ? followersOf(task) : []
+    const moving = [task, ...followers]
+    const previous = moving.map((t) => ({ id: t.id, scheduledTime: t.scheduledTime, originalTime: t.originalTime ?? null }))
+    const changes = moving.map((t) => {
+      const scheduledTime = new Date(new Date(t.scheduledTime).getTime() + shift).toISOString()
+      // Keep the first time it had; moving it back there clears it.
+      const original = t.originalTime ?? t.scheduledTime
+      return {
+        id: t.id,
+        scheduledTime,
+        originalTime: new Date(original).getTime() === new Date(scheduledTime).getTime() ? null : original,
+      }
+    })
+    const time = formatTime(at.toISOString())
+    const message =
+      followers.length > 0
+        ? `${task.title} moved to ${time} — ${followers.length === 1 ? 'the one' : followers.length} after it moved too`
+        : `${task.title} moved to ${time}`
+    try {
+      await applyTimes(changes)
+      if (toastTimer.current) clearTimeout(toastTimer.current)
+      setMoveToast({ message, previous })
+      toastTimer.current = setTimeout(() => setMoveToast(null), 6000)
+    } catch (e) {
+      applyLocalOnly(previous)
+      setError((e as { message?: string } | null)?.message ?? 'Could not save the new time.')
+    }
+  }
+
+  function applyLocalOnly(changes: TaskTimeChange[]) {
+    const byId = new Map(changes.map((c) => [c.id, c]))
+    setTasks((prev) => prev.map((t) => (byId.has(t.id) ? withTime(t, byId.get(t.id)!) : t)))
+  }
+
+  async function undoMove() {
+    if (!moveToast) return
+    const { previous } = moveToast
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    setMoveToast(null)
+    try {
+      await applyTimes(previous)
+    } catch (e) {
+      setError((e as { message?: string } | null)?.message ?? 'Could not undo.')
+    }
   }
 
   // Past tasks: done ones, plus first-day walks whose window had already passed.
@@ -877,23 +964,35 @@ export default function TodayPage() {
                     />
                   ) : item.kind === 'potty' ? (
 <div key={`potty-${item.potty.clock.stay.id}-${item.time.getTime()}`} className={i === items.length - 1 ? '[&_.connector]:opacity-0' : ''}>
-                                        <NextOutingCard
-                      due={item.potty.at}
-                      now={now}
-                      reason={item.potty.reason}
-                      next={item.potty.next}
-                      dogName={isMultiDog ? item.potty.clock.dogName : undefined}
-                      onLog={() => void logOuting(item.potty.clock.dog, item.potty.clock.stay, 'potty')}
-                    />
+                      {/* A planned potty break isn't stored until it's logged,
+                          but it swipes like any other task: done → logged now
+                          (then "when did it happen?" if the dog asks for it). */}
+                      <TaskCard
+                        task={{
+                          id: `planned-${item.potty.clock.stay.id}-${item.time.getTime()}`,
+                          stayId: item.potty.clock.stay.id,
+                          dogId: item.potty.clock.dog.id,
+                          dogName: item.potty.clock.dogName,
+                          type: 'potty',
+                          title: 'Potty break',
+                          scheduledTime: item.potty.at.toISOString(),
+                          status: 'pending',
+                        }}
+                        onDone={() => void logOuting(item.potty.clock.dog, item.potty.clock.stay, 'potty')}
+                        onUndo={() => {}}
+                        showDogName={isMultiDog}
+                        plan={{ at: item.potty.at, reason: item.potty.reason, next: item.potty.next }}
+                      />
                     </div>
                   ) : (
                     <div key={item.task.id} className={i === items.length - 1 ? '[&_.connector]:opacity-0' : ''}>
                       <TaskCard
                         task={item.task}
                         onDone={() => completeTask(item.task)}
-                        onUndo={(id) => updateStatus(id, 'pending')}
+                        onUndo={undoTask}
                         showDogName={isMultiDog}
                         plan={walkPlans.get(item.task.id)}
+                        onEdit={hasSetTime(item.task) ? () => setEditTask(item.task) : undefined}
                       />
                     </div>
                   ),
@@ -944,7 +1043,7 @@ export default function TodayPage() {
                         <TaskCard
                           task={task}
                           onDone={(id) => updateStatus(id, 'done')}
-                          onUndo={(id) => updateStatus(id, 'pending')}
+                          onUndo={undoTask}
                           showDogName={isMultiDog}
                           passed={passedIds.has(task.id)}
                         />
@@ -991,6 +1090,29 @@ export default function TodayPage() {
           }}
           onClose={() => setLogPrompt(null)}
         />
+      )}
+      {editTask && (
+        <EditTimeSheet
+          task={editTask}
+          followers={followersOf(editTask)}
+          onSave={(at, moveRest) => void saveEditedTime(editTask, at, moveRest)}
+          onClose={() => setEditTask(null)}
+        />
+      )}
+      {moveToast && (
+        // Sits just above the bottom nav.
+        <div className="fixed inset-x-0 bottom-28 z-40 flex justify-center px-6 pointer-events-none">
+          <div className="rise-in pointer-events-auto w-full max-w-[432px] bg-text-primary rounded-[14px] pl-4 pr-2 py-2 flex items-center gap-3" role="status">
+            <p className="flex-1 min-w-0 font-dm font-medium text-[13px] text-white leading-snug py-1.5">{moveToast.message}</p>
+            <button
+              type="button"
+              onClick={() => void undoMove()}
+              className="shrink-0 px-3 py-2 rounded-full font-dm font-bold text-[13px] text-white underline underline-offset-2 active:bg-white/10"
+            >
+              Undo
+            </button>
+          </div>
+        </div>
       )}
       {lastOutSheet && (
         <LastOutSheet

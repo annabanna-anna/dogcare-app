@@ -105,6 +105,8 @@ export interface Database {
           status: TaskStatus
           completed_at: string | null
           day_part: DayPart | null
+          logged: boolean
+          original_time: string | null
           google_ext_id: string | null
           google_ext_kind: string | null
           reminder_sent_at: string | null
@@ -122,6 +124,8 @@ export interface Database {
           status?: TaskStatus
           completed_at?: string | null
           day_part?: DayPart | null
+          logged?: boolean
+          original_time?: string | null
           google_ext_id?: string | null
           google_ext_kind?: string | null
           reminder_sent_at?: string | null

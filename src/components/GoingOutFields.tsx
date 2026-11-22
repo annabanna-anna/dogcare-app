@@ -251,21 +251,32 @@ function shortClock(minutes: number): string {
 
 const DAY_START = 7 * 60
 
+/** A long walk on the typical day: a set time, or a rough part of the day
+ *  (`label`, e.g. "Morning") sketched at that window's start. */
+export interface TypicalWalk {
+  time: string
+  label?: string
+}
+
 /** A sketch of one day under the rule: long walks where they're planned,
  *  potty breaks whenever it's been everyHours, and the bedtime one. */
-export function typicalDay(rule: OutingRule, walkTimes: string[]): { at: number; kind: 'walk' | 'potty' }[] {
-  const walks = [...new Set(walkTimes.map(minutesOf))].sort((a, b) => a - b)
+export function typicalDay(
+  rule: OutingRule,
+  walkTimes: TypicalWalk[],
+): { at: number; kind: 'walk' | 'potty'; label?: string }[] {
+  const labelAt = new Map(walkTimes.map((w) => [minutesOf(w.time), w.label]))
+  const walks = [...labelAt.keys()].sort((a, b) => a - b)
   const bed = minutesOf(rule.bedtime) || 24 * 60
   const gap = rule.everyHours * 60
   const first = walks.length && walks[0] < DAY_START ? walks[0] : DAY_START
-  const points: { at: number; kind: 'walk' | 'potty' }[] = [
-    { at: first, kind: walks.includes(first) ? 'walk' : 'potty' },
+  const points: { at: number; kind: 'walk' | 'potty'; label?: string }[] = [
+    walks.includes(first) ? { at: first, kind: 'walk', label: labelAt.get(first) } : { at: first, kind: 'potty' },
   ]
   let last = first
   for (;;) {
     const walk = walks.find((w) => w > last && w <= last + gap && w < bed)
     if (walk !== undefined) {
-      points.push({ at: walk, kind: 'walk' })
+      points.push({ at: walk, kind: 'walk', label: labelAt.get(walk) })
       last = walk
     } else if (last + gap < bed - 30) {
       last += gap
@@ -277,7 +288,7 @@ export function typicalDay(rule: OutingRule, walkTimes: string[]): { at: number;
 }
 
 /** The "A typical day" strip on the how-often question. */
-export function TypicalDay({ rule, walkTimes }: { rule: OutingRule; walkTimes: string[] }) {
+export function TypicalDay({ rule, walkTimes }: { rule: OutingRule; walkTimes: TypicalWalk[] }) {
   const points = typicalDay(rule, walkTimes)
   // Short gaps make too many labels to fit; keep the walks and the ends.
   const crowded = points.length > 7
@@ -301,7 +312,8 @@ export function TypicalDay({ rule, walkTimes }: { rule: OutingRule; walkTimes: s
               <span
                 className={`font-dm text-[11px] text-text-secondary whitespace-nowrap ${showLabel ? '' : 'invisible'}`}
               >
-                {shortClock(p.at)}
+                {/* A rough-time walk has no clock time yet — name its part of the day. */}
+                {p.label ?? shortClock(p.at)}
               </span>
             </div>
           )
