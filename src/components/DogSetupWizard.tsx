@@ -293,7 +293,14 @@ export default function DogSetupWizard(props: Props) {
     anything: 'review',
   }
 
+  // A question with nothing picked yet can't move on with Next — Skip is
+  // the way past it. (The other questions always start with an answer.)
+  const unanswered =
+    (step === 'meals' && props.answers.meals === null) ||
+    (step === 'medicine' && props.answers.medicine === null)
+
   function handleNext() {
+    if (unanswered) return
     if (step === 'review') return props.onSave()
     if (step === 'anything' && props.missingOtherTitle) return props.onOtherTitleTouched()
     goTo(nextStep[step])
@@ -416,7 +423,7 @@ export default function DogSetupWizard(props: Props) {
             <p className="font-dm text-[13px] text-[#b91c1c]">{error}</p>
           </div>
         )}
-        <Button fullWidth size="lg" {...deliberate(handleNext)} disabled={saving}>
+        <Button fullWidth size="lg" {...deliberate(handleNext)} disabled={saving || unanswered}>
           {step === 'review' ? (saving ? 'Saving…' : `Save ${dogName}`) : step === 'anything' ? 'Review' : 'Next'}
         </Button>
       </div>
@@ -437,11 +444,7 @@ function MealsStep(props: Props) {
   function pick(meals: 'known' | 'unsure') {
     setAnswers((a) => ({ ...a, meals }))
     if (meals === 'known' && !schedule.some(isPlainMeal)) {
-      setSchedule((prev) => [
-        ...prev,
-        { time: '08:00', taskType: 'meal', note: '' },
-        { time: '17:00', taskType: 'meal', note: '' },
-      ])
+      setSchedule((prev) => [...prev, { time: '08:00', taskType: 'meal', note: '' }])
     }
   }
   return (
@@ -542,6 +545,15 @@ function GoingOutStep({ rule, onRuleChange, schedule, answers, setAnswers }: Pro
 function LongWalksStep(props: Props) {
   const { rule, onRuleChange, schedule, setSchedule, care, setCare, renderEntry } = props
   const walkType = [{ value: 'walk' as const, label: 'Walk' }]
+  // "Set times" is the default answer, so it starts with one walk to fill in
+  // (once, on arriving at the step — removing it afterwards sticks).
+  useEffect(() => {
+    if (rule.longWalks !== 'set-times') return
+    setSchedule((prev) =>
+      prev.some((e) => e.taskType === 'walk') ? prev : [...prev, { time: '07:00', taskType: 'walk', note: '' }],
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   return (
     <>
       <LongWalkChoice

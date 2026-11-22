@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react'
+import { Children, type ReactNode } from 'react'
 import { Plus, Minus } from 'lucide-react'
 import { TimePickerButton } from './TimePicker'
 import { TASK_TYPE_STYLE } from './taskTypeStyle'
@@ -185,7 +185,15 @@ export function LongWalkChoice({
           selected={rule.longWalks === opt.value}
           label={opt.label}
           hint={opt.hint}
-          onSelect={() => onPatch({ longWalks: opt.value })}
+          onSelect={() => {
+            // Each answer starts with one entry: a set-time walk, or a morning walk.
+            if (opt.value === 'time-of-day' && rule.dayPartWalks.length === 0) {
+              onPatch({ longWalks: opt.value, dayPartWalks: [{ dayPart: 'morning', note: '' }] })
+              return
+            }
+            onPatch({ longWalks: opt.value })
+            if (opt.value === 'set-times' && Children.toArray(setTimeWalks).length === 0) onAddWalk()
+          }}
         >
           {opt.value === 'set-times' && (
             <>
