@@ -1,4 +1,5 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react'
+import { normalizeScheduleEntry } from '../utils/scheduleEntry'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ImagePlus, RefreshCw, Trash2, Plus, ChevronDown, Clock, X } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
@@ -51,15 +52,13 @@ const scheduleTypeOptions: { value: TaskType; label: string }[] = [
 const scheduleNotePlaceholder: Record<TaskType, string> = {
   walk: 'Note (optional) — e.g. avoid dog park',
   meal: 'Note (optional) — e.g. 1 cup of dried kibble',
-  medication: 'Note (optional) — e.g. 1 pill with food',
+  medication: 'Note (optional) — e.g. 1 Apoquel tablet with food',
   potty: 'Note (optional) — e.g. backyard only',
   other: 'Note (optional)',
 }
 
 const titlePlaceholder: Partial<Record<TaskType, string>> = {
   other: 'Task title — e.g. Nail trim',
-  medication: 'Medicine name — e.g. Apoquel',
-  meal: 'Title — e.g. Snack time',
 }
 
 interface FormState {
@@ -895,7 +894,7 @@ export default function AddEditDogPage() {
           walkTimeFlexible: d.walkTimeFlexible,
           outingRule: d.outingRule,
         }
-        const loadedSchedule = d.careSchedule.map((e) => ({ ...e }))
+        const loadedSchedule = d.careSchedule.map(normalizeScheduleEntry)
         setForm(loaded)
         setSchedule(loadedSchedule)
         baselineRef.current = snapshotOf(loaded, loadedSchedule, emptySetupAnswers)
@@ -1228,7 +1227,7 @@ export default function AddEditDogPage() {
                     </div>
                   </div>
                 )}
-                {(entry.taskType === 'other' || entry.customTitle !== undefined) && !opts.hideTitle && (
+                {entry.taskType === 'other' && !opts.hideTitle && (
                   <div>
                     <input
                       type="text"

@@ -1,3 +1,4 @@
+import { normalizeScheduleEntry } from '../utils/scheduleEntry'
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
@@ -174,7 +175,7 @@ export default function DogProfilePage() {
       </div>
       <div className="flex flex-col gap-3">
         {dog.outingRule && <GoingOutBlock rule={dog.outingRule} careSchedule={dog.careSchedule} />}
-        {dog.careSchedule.map((entry, i) => {
+        {dog.careSchedule.map(normalizeScheduleEntry).map((entry, i) => {
           // With a going-out rule, walks are listed in the block above.
           if (dog.outingRule && entry.taskType === 'walk') return null
           const { icon: Icon, bg } = TASK_TYPE_STYLE[entry.taskType] ?? TASK_TYPE_STYLE.other

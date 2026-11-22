@@ -1,4 +1,5 @@
 import { Children, type ReactNode } from 'react'
+import RadioDot from './RadioDot'
 import { Plus, Minus, Sun, Moon, ArrowRight, type LucideIcon } from 'lucide-react'
 import { TimePickerButton, formatTimeValue } from './TimePicker'
 import { TASK_TYPE_STYLE } from './taskTypeStyle'
@@ -43,11 +44,7 @@ export function RadioCard({
         onClick={onSelect}
         className="flex items-center gap-3 text-left"
       >
-        <span
-          className={`size-[22px] rounded-full bg-white shrink-0 ${
-            selected ? 'border-[7px] border-coral' : 'border-[1.5px] border-border-light'
-          }`}
-        />
+        <RadioDot selected={selected} />
         <span className="min-w-0">
           <span className="block font-dm font-bold text-[15px] text-text-primary">{label}</span>
           {hint && <span className="block font-dm text-[12px] text-text-secondary">{hint}</span>}

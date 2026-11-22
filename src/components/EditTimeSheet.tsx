@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import RadioDot from './RadioDot'
 import Button from './Button'
 import { TimeWheel } from './TimePicker'
 import { TASK_TYPE_STYLE } from './taskTypeStyle'
@@ -130,11 +131,7 @@ export default function EditTimeSheet({ task, followers, onSave, onClose }: Prop
                       selected ? 'border-2 border-text-primary' : 'border-border-light'
                     }`}
                   >
-                    <span
-                      className={`size-[18px] rounded-full shrink-0 ${
-                        selected ? 'border-[6px] border-text-primary' : 'border-[1.5px] border-border-light'
-                      }`}
-                    />
+                    <RadioDot selected={selected} size="sm" tone="ink" />
                     <span className={`font-dm text-[14px] text-text-primary ${selected ? 'font-bold' : ''}`}>{o.label}</span>
                   </button>
                 )

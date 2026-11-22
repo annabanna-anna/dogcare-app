@@ -1,3 +1,4 @@
+import { normalizeScheduleEntry } from './scheduleEntry'
 import type { Dog, Stay, Task, TaskType } from '../types'
 import { scheduleEntryDogName, stayDisplayName, stayingDogs } from './dogDisplay'
 import { atTime, dayPartInfo, walkCoversTime } from './outingClock'
@@ -26,7 +27,7 @@ export function generateTasksForStay(dog: Dog, stay: Stay): Task[] {
   // With a going-out rule, set-time walk entries only count when the long
   // walks are planned at set times.
   const rule = dog.outingRule
-  const schedule = dog.careSchedule.filter(
+  const schedule = dog.careSchedule.map(normalizeScheduleEntry).filter(
     (entry) =>
       (!entry.forDog || staying.has(entry.forDog)) &&
       !(entry.taskType === 'walk' && rule && rule.longWalks !== 'set-times'),

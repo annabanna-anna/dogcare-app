@@ -1,10 +1,12 @@
+import { normalizeScheduleEntry } from '../utils/scheduleEntry'
+import RadioDot from './RadioDot'
 import { Fragment, useEffect, useRef, useState, type MouseEvent, type PointerEvent, type ReactNode } from 'react'
-import { ArrowLeft, Check, Plus, RotateCcw, X } from 'lucide-react'
+import { ArrowLeft, ChevronDown, Plus, RotateCcw, X } from 'lucide-react'
 import Button from './Button'
 import DogTabs from './DogTabs'
 import GoingOutBlock from './GoingOutBlock'
 import { LongWalkChoice, OutingSettingsCard, RadioCard, TypicalDay, type TypicalWalk } from './GoingOutFields'
-import { TimePickerButton, formatTimeValue } from './TimePicker'
+import { TimeWheelSheet, formatTimeValue } from './TimePicker'
 import { TASK_TYPE_STYLE } from './taskTypeStyle'
 import {
   PRIMARY_DOG_KEY,
@@ -35,13 +37,12 @@ const QUESTION_OF: Record<SetupStep, number> = {
 }
 const QUESTION_COUNT = 5
 
+/** One medicine time. A medicine given twice a day is two drafts, like any
+ *  other schedule entry. */
 export interface MedicineDraft {
   id: string
-  name: string
-  amount: string
-  when: 'meal' | 'time' | 'as-needed'
-  mealTimes: string[]   // the meal times it's given with, when 'meal'
-  time: string          // when 'time'
+  withMeal: boolean     // follows a meal: `time` is that meal's time
+  time: string
   note: string
   forDog?: string
 }
@@ -56,8 +57,11 @@ export interface SetupAnswers {
 
 export const emptySetupAnswers: SetupAnswers = { meals: null, medicine: null, medicines: [] }
 
-function newMedicine(): MedicineDraft {
-  return { id: crypto.randomUUID(), name: '', amount: '', when: 'meal', mealTimes: [], time: '08:00', note: '' }
+/** A new medicine card goes with the first meal no other card is using yet. */
+function newMedicine(mealTimes: string[], taken: MedicineDraft[] = []): MedicineDraft {
+  const used = new Set(taken.filter((m) => m.withMeal).map((m) => m.time))
+  const meal = mealTimes.find((t) => !used.has(t)) ?? mealTimes[0]
+  return { id: crypto.randomUUID(), withMeal: !!meal, time: meal ?? '08:00', note: '' }
 }
 
 /** A meal from the meals question — snacks and the like carry a title. */
@@ -68,7 +72,7 @@ const isExtra = (e: CareScheduleEntry) => e.taskType !== 'walk' && !isPlainMeal(
 
 const EXTRAS: { label: string; taskType: TaskType; time: string }[] = [
   { label: 'Brushing', taskType: 'other', time: '20:00' },
-  { label: 'Snack time', taskType: 'meal', time: '15:00' },
+  { label: 'Snack time', taskType: 'other', time: '15:00' },
   { label: 'Play time', taskType: 'other', time: '16:00' },
   { label: 'Nail trim', taskType: 'other', time: '10:00' },
   { label: 'Eye / ear drops', taskType: 'medication', time: '08:00' },
@@ -76,17 +80,23 @@ const EXTRAS: { label: string; taskType: TaskType; time: string }[] = [
 
 const joinNotes = (...parts: string[]) => parts.map((p) => p.trim()).filter(Boolean).join(' · ')
 
-/** A medicine with no time to schedule — kept in the medication notes. */
+/** The time a with-a-meal medicine is given — its meal, or the first meal if
+ *  that meal's time has since changed. Undefined when there are no meals. */
+function medicineTime(m: MedicineDraft, mealTimes: string[]): string | undefined {
+  if (!m.withMeal) return m.time
+  return mealTimes.includes(m.time) ? m.time : mealTimes[0]
+}
+
+/** A with-a-meal medicine when no meal times are set yet — kept in the medication notes. */
 export interface AsNeededMedicine {
   forDog?: string
-  name: string
-  detail: string
+  note: string
 }
 
 type SetupForm = DogCareNotes & { additionalDogs: DogGroupMember[]; outingRule: OutingRule | null }
 
 /** Turns the answers into what's saved: medicines become schedule entries (or
- *  medication notes when given as needed), and "not sure" meals are dropped. */
+ *  medication notes when there's no meal time to give them with), and "not sure" meals are dropped. */
 export function applySetupAnswers<F extends SetupForm>(
   form: F,
   schedule: CareScheduleEntry[],
@@ -97,27 +107,21 @@ export function applySetupAnswers<F extends SetupForm>(
       !(isPlainMeal(e) && answers.meals !== 'known') &&
       !(e.taskType === 'other' && !e.customTitle?.trim()),
   )
-  const mealTimes = new Set(next.filter(isPlainMeal).map((e) => e.time))
+  const mealTimes = [...new Set(next.filter(isPlainMeal).map((e) => e.time))].sort()
   const asNeeded: AsNeededMedicine[] = []
   if (answers.medicine === 'yes') {
     for (const m of answers.medicines) {
-      const name = m.name.trim()
-      if (!name) continue
-      const times =
-        m.when === 'meal' ? m.mealTimes.filter((t) => mealTimes.has(t)) : m.when === 'time' ? [m.time] : []
-      if (times.length === 0) {
-        asNeeded.push({ forDog: m.forDog, name, detail: joinNotes(m.amount, m.note) })
+      const time = medicineTime(m, mealTimes)
+      if (!time) {
+        if (m.note.trim()) asNeeded.push({ forDog: m.forDog, note: m.note })
         continue
       }
-      for (const time of times) {
-        next.push({
-          time,
-          taskType: 'medication',
-          customTitle: name,
-          note: joinNotes(m.amount, m.when === 'meal' ? 'with a meal' : '', m.note),
-          forDog: m.forDog,
-        })
-      }
+      next.push({
+        time,
+        taskType: 'medication',
+        note: joinNotes(m.withMeal ? 'with a meal' : '', m.note),
+        forDog: m.forDog,
+      })
     }
   }
   const notesFor = (key: string, existing: string) =>
@@ -125,7 +129,7 @@ export function applySetupAnswers<F extends SetupForm>(
       existing.trim(),
       ...asNeeded
         .filter((a) => (a.forDog ?? PRIMARY_DOG_KEY) === key)
-        .map((a) => joinNotes(a.name, 'as needed', a.detail)),
+        .map((a) => joinNotes('with a meal', a.note)),
     ]
       .filter(Boolean)
       .join('\n')
@@ -135,7 +139,8 @@ export function applySetupAnswers<F extends SetupForm>(
       medicationNotes: notesFor(PRIMARY_DOG_KEY, form.medicationNotes),
       additionalDogs: form.additionalDogs.map((m) => ({ ...m, medicationNotes: notesFor(m.id, m.medicationNotes) })),
     },
-    schedule: next.sort((a, b) => a.time.localeCompare(b.time)),
+    // Extras like eye drops are titled while picking; only Other keeps a title once saved.
+    schedule: next.map(normalizeScheduleEntry).sort((a, b) => a.time.localeCompare(b.time)),
     asNeeded,
   }
 }
@@ -589,22 +594,21 @@ function LongWalksStep(props: Props) {
 }
 
 function MedicineStep({ answers, setAnswers, schedule, groupDogs }: Props) {
-  const meals = schedule.filter(isPlainMeal).sort((a, b) => a.time.localeCompare(b.time))
-  const mealsKnown = answers.meals === 'known' && meals.length > 0
+  const meals = answers.meals === 'known' ? schedule.filter(isPlainMeal).sort((a, b) => a.time.localeCompare(b.time)) : []
+  const mealTimes = [...new Set(meals.map((e) => e.time))]
   function setMedicine(medicine: YesNoUnsure) {
     setAnswers((a) => ({
       ...a,
       medicine,
-      medicines: medicine === 'yes' && a.medicines.length === 0 ? [newMedicine()] : a.medicines,
+      medicines: medicine === 'yes' && a.medicines.length === 0 ? [newMedicine(mealTimes)] : a.medicines,
     }))
   }
   function patch(id: string, p: Partial<MedicineDraft>) {
     setAnswers((a) => ({ ...a, medicines: a.medicines.map((m) => (m.id === id ? { ...m, ...p } : m)) }))
   }
-  const PillIcon = TASK_TYPE_STYLE.medication.icon
   const forOptions = [
-    { value: undefined, label: groupDogs.length === 2 ? 'Both' : 'All dogs' },
-    ...groupDogs.map((d) => ({ value: d.key as string | undefined, label: d.name || 'Unnamed' })),
+    { key: undefined, name: groupDogs.length === 2 ? 'Both' : 'All dogs' },
+    ...groupDogs.map((d) => ({ key: d.key as string | undefined, name: d.name || 'Unnamed' })),
   ]
 
   return (
@@ -620,113 +624,182 @@ function MedicineStep({ answers, setAnswers, schedule, groupDogs }: Props) {
       />
       {answers.medicine === 'yes' && (
         <>
+          {/* Same card as the meals: [time] [Medication] [×], For, note. */}
           {answers.medicines.map((m) => (
-            <div key={m.id} className="bg-white border border-border-light rounded-[16px] p-4 flex flex-col gap-3">
-              <div className="flex items-center gap-3">
-                <span className={`size-8 rounded-full flex items-center justify-center shrink-0 ${TASK_TYPE_STYLE.medication.bg}`}>
-                  <PillIcon size={16} className="text-white" />
-                </span>
-                <input
-                  type="text"
-                  value={m.name}
-                  onChange={(e) => patch(m.id, { name: e.target.value })}
-                  placeholder="Medicine name"
-                  aria-label="Medicine name"
-                  className="flex-1 min-w-0 bg-transparent font-dm font-bold text-[16px] text-text-primary placeholder:text-[#c4c4c4] placeholder:font-medium focus:outline-none"
+            <div key={m.id} className="bg-white border border-border-light rounded-[12px] p-3 flex flex-col gap-2">
+              <div className="flex gap-2 items-center">
+                <MedicineTimeButton
+                  medicine={m}
+                  mealTimes={mealTimes}
+                  onChange={(withMeal, time) => patch(m.id, { withMeal, time })}
                 />
-                {answers.medicines.length > 1 && (
-                  <button
-                    type="button"
-                    aria-label="Remove medicine"
-                    onClick={() => setAnswers((a) => ({ ...a, medicines: a.medicines.filter((x) => x.id !== m.id) }))}
-                    className="size-8 rounded-full bg-[#f3f4f6] flex items-center justify-center text-text-secondary shrink-0"
+                {/* Same select as the meal cards; Medication is the only type on this step. */}
+                <div className="relative flex-1 min-w-0">
+                  <select
+                    value="medication"
+                    onChange={() => {}}
+                    aria-label="Type"
+                    className="w-full bg-white border border-border-light rounded-[10px] pl-3 pr-7 py-2 font-dm font-bold text-[13px] text-text-primary focus:outline-none focus:border-coral transition-colors appearance-none"
                   >
-                    <X size={14} />
-                  </button>
-                )}
+                    <option value="medication">Medication</option>
+                  </select>
+                  <ChevronDown
+                    size={14}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
+                  />
+                </div>
+                <button
+                  type="button"
+                  aria-label="Remove medicine"
+                  onClick={() =>
+                    setAnswers((a) => {
+                      const medicines = a.medicines.filter((x) => x.id !== m.id)
+                      // Removing the last card means no medicine after all.
+                      return { ...a, medicines, medicine: medicines.length === 0 ? 'no' : a.medicine }
+                    })
+                  }
+                  className="size-8 rounded-full bg-[#f3f4f6] flex items-center justify-center text-text-secondary shrink-0 active:bg-[#e5e7eb] transition-colors"
+                >
+                  <X size={14} />
+                </button>
               </div>
               {groupDogs.length > 1 && (
-                <div>
-                  <Label>For</Label>
-                  <Chips options={forOptions} value={m.forDog} onChange={(forDog) => patch(m.id, { forDog })} />
+                <div className="flex items-center gap-2">
+                  <span className="font-dm text-[12px] text-text-secondary shrink-0">For</span>
+                  <div className="flex flex-wrap gap-1">
+                    {forOptions.map((d) => (
+                      <button
+                        key={d.key ?? 'all'}
+                        type="button"
+                        onClick={() => patch(m.id, { forDog: d.key })}
+                        className={`px-3 py-1 rounded-full border font-dm font-bold text-[12px] transition-colors ${
+                          m.forDog === d.key
+                            ? 'bg-coral border-coral text-white'
+                            : 'bg-white border-border-light text-text-secondary'
+                        }`}
+                      >
+                        {d.name}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
-              <div>
-                <Label>How much</Label>
-                <TextField value={m.amount} onChange={(amount) => patch(m.id, { amount })} placeholder="e.g. 1 tablet (18 mg)" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label>When</Label>
-                <Chips
-                  options={[
-                    { value: 'meal' as const, label: 'With a meal' },
-                    { value: 'time' as const, label: 'Set time' },
-                    { value: 'as-needed' as const, label: 'As needed' },
-                  ]}
-                  value={m.when}
-                  onChange={(when) => patch(m.id, { when })}
-                />
-                {m.when === 'meal' &&
-                  (mealsKnown ? (
-                    // A follow-up to "With a meal", so it's checkboxes in a panel
-                    // rather than more pills that read as extra options.
-                    <div className="bg-card rounded-[12px] px-3 py-2.5 flex flex-col gap-1">
-                      <p className="font-dm text-[12px] text-text-secondary">Which meals?</p>
-                      {meals.map((e) => {
-                        const on = m.mealTimes.includes(e.time)
-                        return (
-                          <button
-                            key={e.time}
-                            type="button"
-                            role="checkbox"
-                            aria-checked={on}
-                            onClick={() =>
-                              patch(m.id, {
-                                mealTimes: on ? m.mealTimes.filter((x) => x !== e.time) : [...m.mealTimes, e.time],
-                              })
-                            }
-                            className="flex items-center gap-2.5 py-1.5 text-left"
-                          >
-                            <span
-                              className={`size-5 rounded-[6px] flex items-center justify-center shrink-0 ${
-                                on ? 'bg-coral' : 'bg-white border-[1.5px] border-border-light'
-                              }`}
-                            >
-                              {on && <Check size={13} strokeWidth={3} className="text-white" />}
-                            </span>
-                            <span className="font-dm font-bold text-[14px] text-text-primary">
-                              {e.customTitle?.trim() || 'Meal'}
-                            </span>
-                            <span className="font-dm text-[14px] text-text-secondary">{formatTimeValue(e.time)}</span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  ) : (
-                    <p className="font-dm text-[12px] text-text-secondary">
-                      No meal times yet — pick a set time, or add meals in question 1.
-                    </p>
-                  ))}
-                {m.when === 'time' && (
-                  <TimePickerButton
-                    value={m.time}
-                    onChange={(time) => patch(m.id, { time })}
-                    className="w-[118px] bg-white border border-border-light rounded-[10px] pl-3 pr-7 py-2 font-dm font-bold text-[13px] text-text-primary"
-                  />
-                )}
-              </div>
-              <div>
-                <Label>Notes</Label>
-                <TextField value={m.note} onChange={(note) => patch(m.id, { note })} placeholder="Wrap in a pill pocket treat" />
-              </div>
+              <textarea
+                value={m.note}
+                onChange={(e) => {
+                  patch(m.id, { note: e.target.value })
+                  autosize(e.target)
+                }}
+                ref={(el) => {
+                  if (el) autosize(el)
+                }}
+                rows={1}
+                placeholder="e.g. 1 Apoquel tablet in a pill pocket"
+                className="w-full bg-white border border-border-faint rounded-[10px] px-3 py-2 font-dm text-[13px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors resize-none overflow-hidden"
+              />
             </div>
           ))}
-          <AddButton onClick={() => setAnswers((a) => ({ ...a, medicines: [...a.medicines, newMedicine()] }))}>
-            Add another medicine
+          <AddButton onClick={() => setAnswers((a) => ({ ...a, medicines: [...a.medicines, newMedicine(mealTimes, a.medicines)] }))}>
+            Add a medicine
           </AddButton>
         </>
       )}
     </>
+  )
+}
+
+/** A medicine's time button. With meals set, it opens a menu: the meals first
+ *  ("Meal · 8:00 AM"), then "Set a time…" for the usual wheel. */
+function MedicineTimeButton({
+  medicine,
+  mealTimes,
+  onChange,
+}: {
+  medicine: MedicineDraft
+  mealTimes: string[]
+  onChange: (withMeal: boolean, time: string) => void
+}) {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [wheelOpen, setWheelOpen] = useState(false)
+  const time = medicineTime(medicine, mealTimes)
+  const withMeal = medicine.withMeal && time !== undefined
+  return (
+    <div className="relative w-[150px] shrink-0">
+      <button
+        type="button"
+        onClick={() => (mealTimes.length > 0 ? setMenuOpen((o) => !o) : setWheelOpen(true))}
+        aria-haspopup={mealTimes.length > 0 ? 'menu' : 'dialog'}
+        aria-expanded={menuOpen}
+        className="relative w-full text-left bg-white border border-border-light rounded-[10px] pl-3 pr-7 py-2 font-dm font-bold text-[13px] text-text-primary whitespace-nowrap"
+      >
+        {withMeal && <span className="font-normal text-text-secondary">Meal · </span>}
+        {formatTimeValue(time ?? medicine.time)}
+        <ChevronDown
+          size={14}
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
+        />
+      </button>
+      {menuOpen && (
+        <>
+          <div className="fixed inset-0 z-20" onClick={() => setMenuOpen(false)} />
+          <div
+            role="menu"
+            className="absolute left-0 top-full mt-1 z-30 w-[230px] bg-white border border-border-light rounded-[14px] p-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.12)]"
+          >
+            <p className="px-2.5 pt-1.5 pb-1 font-dm font-bold text-[11px] tracking-wide text-text-secondary">
+              WITH A MEAL
+            </p>
+            {mealTimes.map((t) => (
+              <MenuRadio
+                key={t}
+                on={withMeal && time === t}
+                onClick={() => {
+                  onChange(true, t)
+                  setMenuOpen(false)
+                }}
+                label="Meal"
+                detail={formatTimeValue(t)}
+              />
+            ))}
+            <div className="h-px bg-border-faint my-1" />
+            <MenuRadio
+              on={!withMeal}
+              onClick={() => {
+                setMenuOpen(false)
+                setWheelOpen(true)
+              }}
+              label={withMeal ? 'Set a time…' : `Set time · ${formatTimeValue(medicine.time)}`}
+            />
+          </div>
+        </>
+      )}
+      {wheelOpen && (
+        <TimeWheelSheet
+          value={time ?? medicine.time}
+          onConfirm={(t) => {
+            onChange(false, t)
+            setWheelOpen(false)
+          }}
+          onClose={() => setWheelOpen(false)}
+        />
+      )}
+    </div>
+  )
+}
+
+function MenuRadio({ on, onClick, label, detail }: { on: boolean; onClick: () => void; label: string; detail?: string }) {
+  return (
+    <button
+      type="button"
+      role="menuitemradio"
+      aria-checked={on}
+      onClick={onClick}
+      className="w-full flex items-center gap-2.5 px-2.5 py-2.5 rounded-[8px] text-left active:bg-card"
+    >
+      <RadioDot selected={on} size="sm" />
+      <span className="flex-1 font-dm font-bold text-[14px] text-text-primary">{label}</span>
+      {detail && <span className="font-dm text-[14px] text-text-secondary">{detail}</span>}
+    </button>
   )
 }
 
@@ -864,7 +937,7 @@ function ReviewStep({ rule, answers, result, goTo, groupDogs }: Props) {
   return (
     <>
       <div className="bg-white border border-border-light rounded-[22px] p-4 flex flex-col gap-4">
-        <ReviewSection label="Meals & snacks" onEdit={() => goTo('meals')}>
+        <ReviewSection label="Meals" onEdit={() => goTo('meals')}>
           {meals.length > 0 ? (
             meals.map((e, i) => (
               <ReviewLine key={i} when={formatTimeValue(e.time)} type="meal" title={e.customTitle?.trim() || 'Meal'} sub={sub(e)} />
@@ -885,10 +958,10 @@ function ReviewStep({ rule, answers, result, goTo, groupDogs }: Props) {
           {result.asNeeded.map((a, i) => (
             <ReviewLine
               key={`n${i}`}
-              when="As needed"
+              when="With a meal"
               type="medication"
-              title={a.name}
-              sub={[onlyFor(a.forDog), a.detail].filter(Boolean).join(' · ') || undefined}
+              title="Medication"
+              sub={[onlyFor(a.forDog), a.note.trim()].filter(Boolean).join(' · ') || undefined}
             />
           ))}
           {meds.length === 0 && result.asNeeded.length === 0 && (

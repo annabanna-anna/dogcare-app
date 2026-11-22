@@ -33,7 +33,7 @@ export default function GoingOutBlock({ rule, careSchedule }: { rule: OutingRule
     walks.length === 0
       ? { when: 'Not set', muted: true, type: 'walk' as const, title: 'Walks', sub: 'Logged on Today as they happen' }
       : null,
-    { when: 'In between', accent: true, type: 'potty' as const, title: 'Potty breaks', sub: `When it’s been ${hrs}` },
+    { when: 'Between', accent: true, type: 'potty' as const, title: 'Potty breaks', sub: `When it’s been ${hrs}` },
     ...walks.slice(1).map((w) => ({ ...w, type: 'walk' as const, title: 'Walk' })),
     walkCoversTime(rule.bedtime, setWalkTimes)
       ? null
