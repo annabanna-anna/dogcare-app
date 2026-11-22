@@ -220,6 +220,7 @@ export default function DogProfilePage() {
 
   return (
     <div className="min-h-svh bg-cream pb-28">
+      <div className="sticky top-0 z-30 bg-cream">
       <PageHeader
         back
         title={dogDisplayName(dog)}
@@ -233,6 +234,7 @@ export default function DogProfilePage() {
           </button>
         }
       />
+      </div>
 
       <div className="px-6 mt-2 flex flex-col gap-4">
         {/* Photo + owner card — one per dog on a group profile */}

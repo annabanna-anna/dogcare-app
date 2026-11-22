@@ -473,20 +473,19 @@ function MealsStep(props: Props) {
       <div>
         <Label>Any food allergies?</Label>
         <Chips options={yesNoUnsure} value={care.hasAllergies} onChange={setCare('hasAllergies')} />
+        {/* Notes for yes (which ones) and no (anything to watch); not needed when unsure. */}
+        {care.hasAllergies !== 'unsure' && (
+          <div className="mt-2">
+            <TextField
+              value={care.allergyNotes}
+              onChange={setCare('allergyNotes')}
+              placeholder={care.hasAllergies === 'yes' ? 'e.g. chicken, beef, grain' : 'e.g. sensitive stomach, avoid rich treats'}
+              multiline
+              rows={1}
+            />
+          </div>
+        )}
       </div>
-      {/* Notes for yes (which ones) and no (anything to watch); not needed when unsure. */}
-      {care.hasAllergies !== 'unsure' && (
-        <div>
-          <Label>{care.hasAllergies === 'yes' ? 'Which ones?' : 'Anything to watch?'}</Label>
-          <TextField
-            value={care.allergyNotes}
-            onChange={setCare('allergyNotes')}
-            placeholder={care.hasAllergies === 'yes' ? 'e.g. chicken, beef, grain' : 'e.g. sensitive stomach, avoid rich treats'}
-            multiline
-            rows={1}
-          />
-        </div>
-      )}
     </>
   )
 }
