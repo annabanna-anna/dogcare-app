@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { ChevronDown } from 'lucide-react'
 import Button from './Button'
 
@@ -213,6 +213,7 @@ export function TimePickerButton({
   className = '',
   label,
   ariaLabel,
+  children,
 }: {
   value: string
   onChange: (v: string) => void
@@ -221,6 +222,8 @@ export function TimePickerButton({
   label?: string
   /** What the time is for, for screen readers, e.g. "Last time out before bed". */
   ariaLabel?: string
+  /** Custom button content (e.g. a tile). Replaces the time + chevron. */
+  children?: ReactNode
 }) {
   const [open, setOpen] = useState(false)
   return (
@@ -231,11 +234,15 @@ export function TimePickerButton({
         aria-label={ariaLabel ? `${ariaLabel}: ${formatTimeValue(value)}` : undefined}
         className={`relative text-left ${className}`}
       >
-        {label ?? formatTimeValue(value)}
-        <ChevronDown
-          size={14}
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
-        />
+        {children ?? (
+          <>
+            {label ?? formatTimeValue(value)}
+            <ChevronDown
+              size={14}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
+            />
+          </>
+        )}
       </button>
       {open && (
         <TimeWheelSheet

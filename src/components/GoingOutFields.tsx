@@ -1,6 +1,6 @@
 import { Children, type ReactNode } from 'react'
-import { Plus, Minus } from 'lucide-react'
-import { TimePickerButton } from './TimePicker'
+import { Plus, Minus, Sun, Moon, ArrowRight, type LucideIcon } from 'lucide-react'
+import { TimePickerButton, formatTimeValue } from './TimePicker'
 import { TASK_TYPE_STYLE } from './taskTypeStyle'
 import type { DayPart, LongWalkTiming, OutingRule } from '../types'
 import { BOOKEND_MINUTES, DAY_PARTS } from '../utils/outingClock'
@@ -58,7 +58,37 @@ export function RadioCard({
   )
 }
 
-/** How often, first out in the morning, last out before bed, and "ask when it happened". */
+/** A tappable time tile — icon + small label over the time — that opens the time wheel. */
+function DayTile({
+  icon: Icon,
+  label,
+  value,
+  onChange,
+  ariaLabel,
+}: {
+  icon: LucideIcon
+  label: string
+  value: string
+  onChange: (v: string) => void
+  ariaLabel: string
+}) {
+  return (
+    <TimePickerButton
+      value={value}
+      onChange={onChange}
+      ariaLabel={ariaLabel}
+      className="flex-1 min-w-0 bg-white border border-border-light rounded-[14px] px-3 py-2.5 flex flex-col gap-1 active:scale-[0.98] transition-transform"
+    >
+      <span className="flex items-center gap-1.5 font-dm font-medium text-[12px] text-text-secondary">
+        <Icon size={14} aria-hidden />
+        {label}
+      </span>
+      <span className="font-dm font-bold text-[18px] text-text-primary">{formatTimeValue(value)}</span>
+    </TimePickerButton>
+  )
+}
+
+/** How often, their day (first out → last out), and "ask the real time". */
 export function OutingSettingsCard({
   rule,
   onPatch,
@@ -98,44 +128,37 @@ export function OutingSettingsCard({
       <div className="border-t border-border-light" />
       {/* The day's bookends. Each is a potty break unless a set walk lands
           within 30 min — then that walk is the first / last time out. */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1 min-w-0">
-          <p className="font-dm font-bold text-[14px] text-text-primary">First out in the morning</p>
-          <p className="font-dm text-[12px] text-text-secondary">Potty break, or the walk if one’s set then</p>
+      <div className="flex flex-col gap-1">
+        <p className="font-dm font-bold text-[14px] text-text-primary">Their day</p>
+        <div className="flex items-center gap-2">
+          <DayTile
+            icon={Sun}
+            label="First out"
+            value={rule.wakeTime}
+            onChange={(v) => onPatch({ wakeTime: v })}
+            ariaLabel="First out in the morning"
+          />
+          <ArrowRight size={16} className="text-text-muted shrink-0" aria-hidden />
+          <DayTile
+            icon={Moon}
+            label="Last out"
+            value={rule.bedtime}
+            onChange={(v) => onPatch({ bedtime: v })}
+            ariaLabel="Last out before bed"
+          />
         </div>
-        <TimePickerButton
-          value={rule.wakeTime}
-          onChange={(v) => onPatch({ wakeTime: v })}
-          ariaLabel="First out in the morning"
-          className="w-[112px] shrink-0 bg-white border border-border-light rounded-[10px] pl-3 pr-7 py-2 font-dm font-bold text-[13px] text-text-primary"
-        />
       </div>
       <div className="border-t border-border-light" />
       <div className="flex items-center gap-3">
         <div className="flex-1 min-w-0">
-          <p className="font-dm font-bold text-[14px] text-text-primary">Last out before bed</p>
-          <p className="font-dm text-[12px] text-text-secondary">Potty break, or the walk if one’s set then</p>
-        </div>
-        <TimePickerButton
-          value={rule.bedtime}
-          onChange={(v) => onPatch({ bedtime: v })}
-          ariaLabel="Last out before bed"
-          className="w-[112px] shrink-0 bg-white border border-border-light rounded-[10px] pl-3 pr-7 py-2 font-dm font-bold text-[13px] text-text-primary"
-        />
-      </div>
-      <div className="border-t border-border-light" />
-      <div className="flex items-center gap-3">
-        <div className="flex-1 min-w-0">
-          <p className="font-dm font-bold text-[14px] text-text-primary">Ask when it happened</p>
-          <p className="font-dm text-[12px] text-text-secondary">
-            When you log late, pick the real time so the clock stays right.
-          </p>
+          <p className="font-dm font-bold text-[14px] text-text-primary">Ask the real time</p>
+          <p className="font-dm text-[12px] text-text-secondary">on late logs</p>
         </div>
         <button
           type="button"
           role="switch"
           aria-checked={rule.askWhenItHappened}
-          aria-label="Ask when it happened"
+          aria-label="Ask the real time on late logs"
           onClick={() => onPatch({ askWhenItHappened: !rule.askWhenItHappened })}
           className={`relative w-[46px] h-[26px] rounded-full shrink-0 transition-colors ${
             rule.askWhenItHappened ? 'bg-coral' : 'bg-[#d1d1d1]'

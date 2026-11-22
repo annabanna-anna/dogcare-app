@@ -316,7 +316,7 @@ export default function DogSetupWizard(props: Props) {
     'going-out': {
       eyebrow: `Going out · 3 of ${QUESTION_COUNT}`,
       title: `How often does ${dogName} need to go out?`,
-      sub: 'Walks and potty breaks both count — any time out resets the clock.',
+      sub: 'Any walk or potty break resets the clock.',
     },
     medicine: { eyebrow: `Medicine · 4 of ${QUESTION_COUNT}`, title: `Does ${dogName} take any medicine?` },
     anything: {
