@@ -1,9 +1,9 @@
 import { Fragment, useEffect, useRef, useState, type MouseEvent, type PointerEvent, type ReactNode } from 'react'
-import { ArrowLeft, Check, Plus, X } from 'lucide-react'
+import { ArrowLeft, Check, Plus, RotateCcw, X } from 'lucide-react'
 import Button from './Button'
 import DogTabs from './DogTabs'
 import GoingOutBlock from './GoingOutBlock'
-import { LongWalkChoice, OutingSettingsCard, RadioCard, TypicalDay, hrsLabel, type TypicalWalk } from './GoingOutFields'
+import { LongWalkChoice, OutingSettingsCard, RadioCard, TypicalDay, type TypicalWalk } from './GoingOutFields'
 import { TimePickerButton, formatTimeValue } from './TimePicker'
 import { TASK_TYPE_STYLE } from './taskTypeStyle'
 import {
@@ -50,12 +50,11 @@ export interface MedicineDraft {
  *  answered "not sure", and the medicines before they become schedule entries. */
 export interface SetupAnswers {
   meals: 'known' | 'unsure' | null
-  outing: 'known' | 'unsure'
   medicine: YesNoUnsure | null
   medicines: MedicineDraft[]
 }
 
-export const emptySetupAnswers: SetupAnswers = { meals: null, outing: 'known', medicine: null, medicines: [] }
+export const emptySetupAnswers: SetupAnswers = { meals: null, medicine: null, medicines: [] }
 
 function newMedicine(): MedicineDraft {
   return { id: crypto.randomUUID(), name: '', amount: '', when: 'meal', mealTimes: [], time: '08:00', note: '' }
@@ -316,7 +315,7 @@ export default function DogSetupWizard(props: Props) {
     'going-out': {
       eyebrow: `Going out · 3 of ${QUESTION_COUNT}`,
       title: `How often does ${dogName} need to go out?`,
-      sub: 'Any walk or potty break resets the clock.',
+      sub: 'Any walk or potty break resets the clock. Not sure? These defaults suit most dogs.',
     },
     medicine: { eyebrow: `Medicine · 4 of ${QUESTION_COUNT}`, title: `Does ${dogName} take any medicine?` },
     anything: {
@@ -501,42 +500,36 @@ function plannedWalkTimes(rule: OutingRule, schedule: CareScheduleEntry[]): Typi
   return []
 }
 
-function GoingOutStep({ rule, onRuleChange, schedule, answers, setAnswers }: Props) {
-  const unsure = answers.outing === 'unsure'
+/** The going-out settings a "Reset to defaults" puts back. Long-walk choices
+ *  belong to the walks step, so they're left alone. */
+const OUTING_DEFAULT_KEYS = ['everyHours', 'wakeTime', 'bedtime', 'askWhenItHappened'] as const
+
+function GoingOutStep({ rule, onRuleChange, schedule }: Props) {
+  // No "not sure" answer here: the defaults are the not-sure answer. Once
+  // something's changed, a reset link takes it back.
+  const edited = OUTING_DEFAULT_KEYS.some((k) => rule[k] !== DEFAULT_OUTING_RULE[k])
+  function reset() {
+    const defaults: Partial<OutingRule> = {}
+    for (const k of OUTING_DEFAULT_KEYS) Object.assign(defaults, { [k]: DEFAULT_OUTING_RULE[k] })
+    onRuleChange({ ...rule, ...defaults })
+  }
   return (
     <>
-      <div className={unsure ? 'opacity-50' : ''}>
-        <OutingSettingsCard
-          rule={rule}
-          onPatch={(patch) => {
-            setAnswers((a) => ({ ...a, outing: 'known' }))
-            onRuleChange({ ...rule, ...patch })
-          }}
-        />
+      <div className="flex flex-col gap-2">
+        <OutingSettingsCard rule={rule} onPatch={(patch) => onRuleChange({ ...rule, ...patch })} />
+        {edited && (
+          <button
+            type="button"
+            onClick={reset}
+            className="self-end flex items-center gap-1.5 py-1 font-dm font-bold text-[14px] text-coral active:opacity-60 transition-opacity"
+          >
+            <RotateCcw size={14} />
+            Reset to defaults
+          </button>
+        )}
       </div>
       <SectionLabel>A typical day</SectionLabel>
       <TypicalDay rule={rule} walkTimes={plannedWalkTimes(rule, schedule)} />
-      <div role="radiogroup" aria-label="Not sure yet">
-        <RadioCard
-          selected={unsure}
-          label="Not sure yet"
-          hint={`Start with every ${hrsLabel(DEFAULT_OUTING_RULE.everyHours)} — you can change it any time.`}
-          onSelect={() => {
-            if (unsure) {
-              setAnswers((a) => ({ ...a, outing: 'known' }))
-              return
-            }
-            setAnswers((a) => ({ ...a, outing: 'unsure' }))
-            onRuleChange({
-              ...rule,
-              everyHours: DEFAULT_OUTING_RULE.everyHours,
-              wakeTime: DEFAULT_OUTING_RULE.wakeTime,
-              bedtime: DEFAULT_OUTING_RULE.bedtime,
-              askWhenItHappened: DEFAULT_OUTING_RULE.askWhenItHappened,
-            })
-          }}
-        />
-      </div>
     </>
   )
 }
