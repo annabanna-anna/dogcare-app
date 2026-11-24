@@ -322,8 +322,8 @@ export default function DogProfilePage() {
           </Button>
         )}
 
-        {/* Shared schedule sits above the per-dog notes on a group profile */}
-        {isGroup && scheduleCard}
+        {/* Schedule sits above the care notes (shared by every dog on a group profile) */}
+        {scheduleCard}
 
         {isGroup && (
           <div className="flex flex-col gap-2.5">
@@ -397,8 +397,6 @@ export default function DogProfilePage() {
           content={care.otherNotes}
           emptyText="No other notes."
         />
-
-        {!isGroup && scheduleCard}
 
         {/* Delete */}
         <Button
