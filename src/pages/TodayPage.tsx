@@ -48,7 +48,7 @@ export default function TodayPage() {
   // The walk/potty break just logged, while the "when did it happen?" sheet is open.
   const [logPrompt, setLogPrompt] = useState<{ task: Task; dog: Dog } | null>(null)
   // "When was the dog last out?" — Pick a time, or Change on the clock strip.
-  const [lastOutSheet, setLastOutSheet] = useState<{ dog: Dog; stay: Stay; initial: Date; task?: Task } | null>(null)
+  const [lastOutSheet, setLastOutSheet] = useState<{ dog: Dog; stay: Stay; initial: Date; task?: Task; isChange?: boolean } | null>(null)
   const [error, setError] = useState<string | null>(null)
   // The set-time task whose time is being changed.
   const [editTask, setEditTask] = useState<Task | null>(null)
@@ -994,7 +994,7 @@ export default function TodayPage() {
                   <button
                     type="button"
                     onClick={() =>
-                      setLastOutSheet({ dog: clock.dog, stay: clock.stay, initial: clock.last!.at, task: clock.last!.task })
+                      setLastOutSheet({ dog: clock.dog, stay: clock.stay, initial: clock.last!.at, task: clock.last!.task, isChange: true })
                     }
                     className="shrink-0 px-3 py-2 rounded-full font-dm font-bold text-[13px] text-coral active:bg-coral-soft"
                   >
@@ -1169,6 +1169,7 @@ export default function TodayPage() {
         <LastOutSheet
           dogName={stayDisplayName(lastOutSheet.dog, lastOutSheet.stay.dogKeys)}
           initial={lastOutSheet.initial}
+          requireChange={lastOutSheet.isChange}
           previewFor={(at) => previewFor(lastOutSheet.stay, lastOutSheet.dog.outingRule!, at)}
           onSave={(at) => {
             const { stay, task } = lastOutSheet
