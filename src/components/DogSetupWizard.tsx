@@ -160,7 +160,7 @@ function SectionLabel({ children }: { children: ReactNode }) {
   )
 }
 
-function TextField({
+export function TextField({
   value,
   onChange,
   placeholder,
@@ -193,7 +193,7 @@ function TextField({
   )
 }
 
-function Chips<T extends string | undefined>({
+export function Chips<T extends string | undefined>({
   options,
   value,
   onChange,
@@ -222,7 +222,7 @@ function Chips<T extends string | undefined>({
   )
 }
 
-function AddButton({ onClick, children }: { onClick: () => void; children: ReactNode }) {
+export function AddButton({ onClick, children }: { onClick: () => void; children: ReactNode }) {
   return (
     <button
       type="button"
