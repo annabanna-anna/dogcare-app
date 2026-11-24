@@ -35,6 +35,14 @@ interface Props {
 const SWIPE_THRESHOLD = 84
 const SWIPE_MAX = 140
 
+/** `note` without a leading "Around {range}" part (and its " · "). */
+function stripWindow(note: string | undefined, range: string): string | undefined {
+  if (!note) return note
+  const prefix = `Around ${range}`
+  if (!note.startsWith(prefix)) return note
+  return note.slice(prefix.length).replace(/^\s*·\s*/, '') || undefined
+}
+
 export default function TaskCard({ task, onDone, onUndo, showDogName = true, onlyFor, dense = false, plan, passed, onEdit }: Props) {
   const { icon: Icon, bg } = TASK_TYPE_STYLE[task.type] ?? TASK_TYPE_STYLE.other
   const isDone = task.status === 'done'
@@ -57,6 +65,11 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, onl
   const dueBy = dayPart ? atTime(new Date(task.scheduledTime), dayPart.end) : new Date(task.scheduledTime)
   const now = new Date()
   const isOverdue = !dense && !passed && task.status === 'pending' && (plan ? plan.at : dueBy) < now
+  // A walk planned by time of day carries "Around 2–5 PM" at the start of its
+  // note. When the clock's reason line is showing it already names the window
+  // ("… · inside 2–5 PM"), so the note drops it rather than say it twice.
+  const showReason = !!plan && task.status === 'pending'
+  const note = showReason && dayPart ? stripWindow(task.note, dayPart.range) : task.note
   const displayTime = plan
     ? `~${formatTime(plan.at.toISOString())}`
     : dayPart
@@ -335,15 +348,15 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, onl
           {/* Rendered even without a note — an invisible placeholder line —
               so every row reserves the same one-line-of-description height
               instead of shrinking when a task happens to have no note. */}
-          {plan && task.status === 'pending' && (
+          {showReason && (
             <p className="font-dm text-[13px] text-text-secondary mt-1 leading-snug">{plan.reason}</p>
           )}
           <p
             className={`font-dm ${dense ? 'text-[10px] truncate' : 'text-[13px]'} text-text-secondary mt-1 leading-snug ${
-              task.note ? '' : 'invisible'
-            } ${plan && !task.note ? 'hidden' : ''}`}
+              note ? '' : 'invisible'
+            } ${plan && !note ? 'hidden' : ''}`}
           >
-            {task.note || 'placeholder'}
+            {note || 'placeholder'}
           </p>
 
           {isSkipped && (

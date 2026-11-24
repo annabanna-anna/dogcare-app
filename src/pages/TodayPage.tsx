@@ -52,8 +52,16 @@ export default function TodayPage() {
   const [error, setError] = useState<string | null>(null)
   // The set-time task whose time is being changed.
   const [editTask, setEditTask] = useState<Task | null>(null)
-  // "Morning walk moved to 8:30 AM" — with the times before, so Undo can put them back.
-  const [moveToast, setMoveToast] = useState<{ message: string; previous: TaskTimeChange[] } | null>(null)
+  // A planned ("~") walk or potty break being given a time of its own — e.g.
+  // the clock says ~4:24 but the sitter wants to go at 3:30. `task` carries
+  // the planned time; `stored` is the walk as saved (none for a potty break,
+  // which isn't saved until now).
+  const [planEdit, setPlanEdit] = useState<
+    { task: Task; reason: string; stored?: Task; potty?: { dog: Dog; stay: Stay } } | null
+  >(null)
+  // "Morning walk moved to 8:30 AM" — with the times before, so Undo can put
+  // them back (or the potty break it saved, so Undo can remove it).
+  const [moveToast, setMoveToast] = useState<{ message: string; previous: TaskTimeChange[]; createdId?: string } | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   // One entry per dog profile named on a calendar event (a multi-dog booking
   // can name dogs on different profiles). `candidates` normally holds a single
@@ -523,7 +531,52 @@ export default function TodayPage() {
     ...t,
     scheduledTime: c.scheduledTime,
     originalTime: c.originalTime ?? undefined,
+    ...(c.dayPart !== undefined ? { dayPart: c.dayPart ?? undefined } : {}),
   })
+
+  function showMoveToast(toast: NonNullable<typeof moveToast>) {
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    setMoveToast(toast)
+    toastTimer.current = setTimeout(() => setMoveToast(null), 6000)
+  }
+
+  /** Gives a planned walk or potty break a time of its own. It's saved as a
+   *  set time for today, so the clock re-plans around it and the usual
+   *  reminder fires; the planned time is kept to show struck through. */
+  async function saveAimedTime(edit: NonNullable<typeof planEdit>, at: Date) {
+    setPlanEdit(null)
+    const message = `${edit.task.title} set for ${formatTime(at.toISOString())}`
+    try {
+      if (edit.potty) {
+        const { dog, stay } = edit.potty
+        const [created] = await createTasks([
+          {
+            id: '',
+            stayId: stay.id,
+            dogId: dog.id,
+            dogName: stayDisplayName(dog, stay.dogKeys),
+            type: 'potty',
+            title: OUTING_TITLES.potty ?? 'Potty break',
+            scheduledTime: at.toISOString(),
+            status: 'pending',
+          },
+        ])
+        if (!created) return
+        setTasks((prev) => [...prev, created])
+        pushTasksToGoogleCalendar([created]).catch(() => {})
+        showMoveToast({ message, previous: [], createdId: created.id })
+        return
+      }
+      const stored = edit.stored!
+      const previous = [
+        { id: stored.id, scheduledTime: stored.scheduledTime, originalTime: stored.originalTime ?? null, dayPart: stored.dayPart ?? null },
+      ]
+      await applyTimes([{ id: stored.id, scheduledTime: at.toISOString(), originalTime: edit.task.scheduledTime, dayPart: null }])
+      showMoveToast({ message, previous })
+    } catch (e) {
+      setError((e as { message?: string } | null)?.message ?? 'Could not save the new time.')
+    }
+  }
 
   async function saveEditedTime(task: Task, at: Date, moveRest: boolean) {
     setEditTask(null)
@@ -564,11 +617,15 @@ export default function TodayPage() {
 
   async function undoMove() {
     if (!moveToast) return
-    const { previous } = moveToast
+    const { previous, createdId } = moveToast
     if (toastTimer.current) clearTimeout(toastTimer.current)
     setMoveToast(null)
     try {
-      await applyTimes(previous)
+      if (createdId) {
+        await deleteTasksByIds([createdId])
+        setTasks((prev) => prev.filter((t) => t.id !== createdId))
+      }
+      if (previous.length) await applyTimes(previous)
     } catch (e) {
       setError((e as { message?: string } | null)?.message ?? 'Could not undo.')
     }
@@ -1031,6 +1088,22 @@ export default function TodayPage() {
                         onUndo={() => {}}
                         showDogName={false}
                         plan={{ at: item.potty.at, reason: item.potty.reason, next: item.potty.next }}
+                        onEdit={() =>
+                          setPlanEdit({
+                            task: {
+                              id: `planned-${item.potty.clock.stay.id}-${item.time.getTime()}`,
+                              stayId: item.potty.clock.stay.id,
+                              dogId: item.potty.clock.dog.id,
+                              dogName: item.potty.clock.dogName,
+                              type: 'potty',
+                              title: 'Potty break',
+                              scheduledTime: item.potty.at.toISOString(),
+                              status: 'pending',
+                            },
+                            reason: item.potty.reason,
+                            potty: { dog: item.potty.clock.dog, stay: item.potty.clock.stay },
+                          })
+                        }
                       />
                     </div>
                   ) : (
@@ -1042,7 +1115,17 @@ export default function TodayPage() {
                         showDogName={false}
                         onlyFor={onlyFor(item.task)}
                         plan={walkPlans.get(item.task.id)}
-                        onEdit={hasSetTime(item.task) ? () => setEditTask(item.task) : undefined}
+                        onEdit={(() => {
+                          if (hasSetTime(item.task)) return () => setEditTask(item.task)
+                          const planned = walkPlans.get(item.task.id)
+                          if (!planned) return undefined
+                          return () =>
+                            setPlanEdit({
+                              task: { ...item.task, scheduledTime: planned.at.toISOString(), dayPart: undefined },
+                              reason: planned.reason,
+                              stored: item.task,
+                            })
+                        })()}
                       />
                     </div>
                   ),
@@ -1148,6 +1231,15 @@ export default function TodayPage() {
           followers={followersOf(editTask)}
           onSave={(at, moveRest) => void saveEditedTime(editTask, at, moveRest)}
           onClose={() => setEditTask(null)}
+        />
+      )}
+      {planEdit && (
+        <EditTimeSheet
+          task={planEdit.task}
+          followers={[]}
+          planned={planEdit.reason}
+          onSave={(at) => void saveAimedTime(planEdit, at)}
+          onClose={() => setPlanEdit(null)}
         />
       )}
       {moveToast && (

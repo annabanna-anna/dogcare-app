@@ -12,6 +12,10 @@ interface Props {
   followers: Task[]
   onSave: (at: Date, moveRest: boolean) => void
   onClose: () => void
+  /** Set when `task` is a time the going-out clock planned ("~4:24 PM"), with
+   *  the plan's reason. Then the time shows with "~" and there's no "move
+   *  the rest?" — everything after it is planned from when the dog goes out. */
+  planned?: string
 }
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -29,8 +33,9 @@ const shortTime = (d: Date) => formatTime(d.toISOString()).replace(/ (AM|PM)$/, 
 
 /** Change one task's time for today. Once the time actually moves and there
  *  are walks/potty breaks after it, offers to move those by the same amount. */
-export default function EditTimeSheet({ task, followers, onSave, onClose }: Props) {
+export default function EditTimeSheet({ task, followers, onSave, onClose, planned }: Props) {
   const original = new Date(task.scheduledTime)
+  const originalLabel = `${planned ? '~' : ''}${formatTime(original.toISOString())}`
   const [at, setAt] = useState(original)
   const [moveRest, setMoveRest] = useState(true)
   const { icon: Icon, bg } = TASK_TYPE_STYLE[task.type] ?? TASK_TYPE_STYLE.other
@@ -59,7 +64,9 @@ export default function EditTimeSheet({ task, followers, onSave, onClose }: Prop
           </span>
           <div className="min-w-0">
             <p className="font-outfit font-bold text-[22px] text-text-primary leading-tight truncate">{task.title}</p>
-            <p className="font-dm text-[13px] text-text-secondary">Today only · the usual schedule stays the same</p>
+            <p className="font-dm text-[13px] text-text-secondary">
+              {planned ? `Planned ${originalLabel} · ${planned}` : 'Today only · the usual schedule stays the same'}
+            </p>
           </div>
         </div>
 
@@ -68,7 +75,7 @@ export default function EditTimeSheet({ task, followers, onSave, onClose }: Prop
         <div className="flex items-center gap-2 mt-3 min-h-8">
           {changed ? (
             <>
-              <span className="font-dm text-[15px] text-text-muted line-through">{formatTime(original.toISOString())}</span>
+              <span className="font-dm text-[15px] text-text-muted line-through">{originalLabel}</span>
               <span className="font-dm text-[15px] text-text-muted">→</span>
               <span className="font-dm font-bold text-[20px] text-text-primary">{formatTime(at.toISOString())}</span>
               <span className="px-2 py-0.5 rounded-full bg-coral-soft font-dm font-bold text-[12px] text-coral">
@@ -77,10 +84,17 @@ export default function EditTimeSheet({ task, followers, onSave, onClose }: Prop
             </>
           ) : (
             <span className="font-dm text-[14px] text-text-secondary">
-              Now {formatTime(original.toISOString())} — scroll to change
+              Now {originalLabel} — scroll to change
             </span>
           )}
         </div>
+
+        {planned && changed && (
+          <p className="font-dm text-[13px] text-text-secondary mt-2 leading-snug">
+            Saved as today’s time, so the reminder goes off as usual. After it, the plan follows from when{' '}
+            {task.dogName || 'the dog'} actually goes out.
+          </p>
+        )}
 
         {suggest && (
           <div className="bg-card rounded-[16px] px-4 py-3.5 mt-3">

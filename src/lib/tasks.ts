@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Task, TaskStatus } from '../types'
+import type { DayPart, Task, TaskStatus } from '../types'
 import type { Database } from './database.types'
 
 type TaskRow = Database['public']['Tables']['tasks']['Row']
@@ -119,15 +119,22 @@ export interface TaskTimeChange {
   scheduledTime: string
   /** What it was scheduled for before any move; null once it's back there. */
   originalTime: string | null
+  /** Set only when it changes: null turns a walk planned by time of day into a
+   *  set time (a planned walk given a time of its own); a value puts it back. */
+  dayPart?: DayPart | null
 }
 
 export async function updateTaskTimes(changes: TaskTimeChange[]): Promise<void> {
   const run = (withOriginal: boolean) =>
     Promise.all(
-      changes.map(({ id, scheduledTime, originalTime }) =>
+      changes.map(({ id, scheduledTime, originalTime, dayPart }) =>
         supabase
           .from('tasks')
-          .update({ scheduled_time: scheduledTime, ...(withOriginal ? { original_time: originalTime } : {}) })
+          .update({
+            scheduled_time: scheduledTime,
+            ...(withOriginal ? { original_time: originalTime } : {}),
+            ...(dayPart !== undefined ? { day_part: dayPart } : {}),
+          })
           .eq('id', id),
       ),
     )
