@@ -1,5 +1,6 @@
 import { Children, type ReactNode } from 'react'
 import RadioDot from './RadioDot'
+import Switch from './Switch'
 import { Plus, Minus, Sun, Moon, ArrowRight, type LucideIcon } from 'lucide-react'
 import { TimePickerButton, formatTimeValue } from './TimePicker'
 import { TASK_TYPE_STYLE } from './taskTypeStyle'
@@ -151,22 +152,11 @@ export function OutingSettingsCard({
           <p className="font-dm font-bold text-[14px] text-text-primary">Ask the real time</p>
           <p className="font-dm text-[12px] text-text-secondary">on late logs</p>
         </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={rule.askWhenItHappened}
-          aria-label="Ask the real time on late logs"
-          onClick={() => onPatch({ askWhenItHappened: !rule.askWhenItHappened })}
-          className={`relative w-[46px] h-[26px] rounded-full shrink-0 transition-colors ${
-            rule.askWhenItHappened ? 'bg-coral' : 'bg-[#d1d1d1]'
-          }`}
-        >
-          <span
-            className={`absolute top-[3px] size-5 rounded-full bg-white transition-[left] ${
-              rule.askWhenItHappened ? 'left-[23px]' : 'left-[3px]'
-            }`}
-          />
-        </button>
+        <Switch
+          label="Ask the real time on late logs"
+          checked={rule.askWhenItHappened}
+          onChange={(on) => onPatch({ askWhenItHappened: on })}
+        />
       </div>
     </div>
   )

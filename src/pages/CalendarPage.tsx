@@ -239,7 +239,7 @@ export default function CalendarPage() {
             <button
               type="button"
               key={stay.id}
-              onClick={() => navigate(`/stays/${stay.id}/edit`)}
+              onClick={() => navigate(`/dogs/${dog.id}`)}
               className="w-full text-left bg-white border border-border-light rounded-[26px] p-4 flex gap-4 items-center active:scale-[0.98] transition-transform"
             >
               <div className="size-12 rounded-[10px] overflow-hidden bg-[#f3f4f6] shrink-0 flex items-center justify-center">

@@ -1440,6 +1440,127 @@ export default function AddEditDogPage() {
 
         {/* A new dog's care notes and schedule come from the setup questions. */}
         {isEdit && (<>
+        {/* Daily Schedule */}
+        <section ref={scheduleSectionRef} className="scroll-mt-4">
+          <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-1">
+            Daily Schedule
+          </p>
+          <p className="font-dm text-[13px] text-text-secondary mb-3">
+            Care tasks are generated from this schedule for every day of a stay.
+          </p>
+          {form.outingRule ? (
+            <div className="flex flex-col gap-3 mb-6">
+              <p className="font-dm font-bold text-[12px] text-text-secondary uppercase tracking-widest px-1">
+                Going out
+              </p>
+              <OutingSettingsCard rule={form.outingRule} onPatch={patchOutingRule} />
+
+              <p className="font-dm text-[12px] text-text-secondary px-1">
+                Potty breaks fill the gaps — out at least every {hrsLabel(form.outingRule.everyHours)}, from{' '}
+                {formatTime(`2000-01-01T${form.outingRule.wakeTime}:00`)} to{' '}
+                {formatTime(`2000-01-01T${form.outingRule.bedtime}:00`)}.
+              </p>
+              <button
+                type="button"
+                onClick={() => setScheduleMode(false)}
+                className="self-start px-1 font-dm font-bold text-[12px] text-text-muted underline underline-offset-2"
+              >
+                Turn off going out
+              </button>
+            </div>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => setScheduleMode(true)}
+                className="w-full text-left bg-card rounded-[16px] p-4 mb-3 flex items-center gap-3 active:scale-[0.99] transition-transform"
+              >
+                <Clock size={18} className="text-text-secondary shrink-0" />
+                <span className="flex-1 min-w-0">
+                  <span className="block font-dm font-bold text-[14px] text-text-primary">Going out every few hours</span>
+                  <span className="block font-dm text-[12px] text-text-secondary">
+                    Walks and potty breaks both count — potty breaks fill the gaps.
+                  </span>
+                </span>
+                <span className="font-dm font-bold text-[13px] text-coral shrink-0">Set up</span>
+              </button>
+              <label className="flex items-center gap-2 px-1 mb-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.walkTimeFlexible}
+                  onChange={(e) => set('walkTimeFlexible')(e.target.checked)}
+                  className="accent-coral size-4 shrink-0"
+                />
+                <span className="font-dm text-[13px] text-text-secondary">
+                  Walk time is flexible
+                </span>
+              </label>
+            </>
+          )}
+          {form.outingRule && (
+            <p className="font-dm font-bold text-[12px] text-text-secondary uppercase tracking-widest mb-3 px-1">
+              Walks, meals &amp; more
+            </p>
+          )}
+          <div className="flex flex-col gap-2">
+            {/* Rough time-of-day walks have no clock time — listed as-is. */}
+            {form.outingRule?.longWalks === 'time-of-day' &&
+              form.outingRule.dayPartWalks.map((w) => {
+                const part = dayPartInfo(w.dayPart)
+                const WalkIcon = TASK_TYPE_STYLE.walk.icon
+                return (
+                  <div key={w.dayPart} className="bg-white border border-border-light rounded-[12px] p-3 flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className={`size-6 rounded-full flex items-center justify-center shrink-0 ${TASK_TYPE_STYLE.walk.bg}`}>
+                        <WalkIcon size={12} className="text-white" />
+                      </span>
+                      <p className="flex-1 min-w-0 font-dm font-bold text-[14px] text-text-primary">
+                        {part.label} walk <span className="font-normal text-[12px] text-text-secondary">· {part.range}</span>
+                      </p>
+                      <button
+                        onClick={() =>
+                          patchOutingRule({
+                            dayPartWalks: form.outingRule!.dayPartWalks.filter((d) => d.dayPart !== w.dayPart),
+                          })
+                        }
+                        className="size-8 rounded-full bg-[#f3f4f6] flex items-center justify-center text-text-secondary shrink-0 active:bg-[#e5e7eb] transition-colors"
+                        aria-label={`Remove ${part.label.toLowerCase()} walk`}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={w.note ?? ''}
+                      onChange={(e) =>
+                        patchOutingRule({
+                          dayPartWalks: form.outingRule!.dayPartWalks.map((d) =>
+                            d.dayPart === w.dayPart ? { ...d, note: e.target.value } : d,
+                          ),
+                        })
+                      }
+                      placeholder="Note (optional) — e.g. 45 min, first thing out"
+                      className="w-full bg-white border border-border-faint rounded-[10px] px-3 py-2 font-dm text-[13px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors"
+                    />
+                  </div>
+                )
+              })}
+            {schedule.map((entry, i) => renderEntry(entry, i))}
+            <button
+              onClick={() =>
+                setSchedule((prev) => [
+                  ...prev,
+                  { time: '08:00', taskType: 'walk', note: '' },
+                ])
+              }
+              className="w-full py-3 rounded-[12px] border-2 border-dashed border-border-light flex items-center justify-center gap-1.5 font-dm font-bold text-[14px] text-text-secondary active:bg-gray-50 transition-colors"
+            >
+              <Plus size={16} />
+              Add to schedule
+            </button>
+          </div>
+        </section>
+
         {/* Care Notes */}
         <section>
           <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-3">
@@ -1572,127 +1693,6 @@ export default function AddEditDogPage() {
                 placeholder="Anything else worth knowing..."
               />
             </div>
-          </div>
-        </section>
-
-        {/* Daily Schedule */}
-        <section ref={scheduleSectionRef} className="scroll-mt-4">
-          <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-1">
-            Daily Schedule
-          </p>
-          <p className="font-dm text-[13px] text-text-secondary mb-3">
-            Care tasks are generated from this schedule for every day of a stay.
-          </p>
-          {form.outingRule ? (
-            <div className="flex flex-col gap-3 mb-6">
-              <p className="font-dm font-bold text-[12px] text-text-secondary uppercase tracking-widest px-1">
-                Going out
-              </p>
-              <OutingSettingsCard rule={form.outingRule} onPatch={patchOutingRule} />
-
-              <p className="font-dm text-[12px] text-text-secondary px-1">
-                Potty breaks fill the gaps — out at least every {hrsLabel(form.outingRule.everyHours)}, from{' '}
-                {formatTime(`2000-01-01T${form.outingRule.wakeTime}:00`)} to{' '}
-                {formatTime(`2000-01-01T${form.outingRule.bedtime}:00`)}.
-              </p>
-              <button
-                type="button"
-                onClick={() => setScheduleMode(false)}
-                className="self-start px-1 font-dm font-bold text-[12px] text-text-muted underline underline-offset-2"
-              >
-                Turn off going out
-              </button>
-            </div>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => setScheduleMode(true)}
-                className="w-full text-left bg-card rounded-[16px] p-4 mb-3 flex items-center gap-3 active:scale-[0.99] transition-transform"
-              >
-                <Clock size={18} className="text-text-secondary shrink-0" />
-                <span className="flex-1 min-w-0">
-                  <span className="block font-dm font-bold text-[14px] text-text-primary">Going out every few hours</span>
-                  <span className="block font-dm text-[12px] text-text-secondary">
-                    Walks and potty breaks both count — potty breaks fill the gaps.
-                  </span>
-                </span>
-                <span className="font-dm font-bold text-[13px] text-coral shrink-0">Set up</span>
-              </button>
-              <label className="flex items-center gap-2 px-1 mb-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={form.walkTimeFlexible}
-                  onChange={(e) => set('walkTimeFlexible')(e.target.checked)}
-                  className="accent-coral size-4 shrink-0"
-                />
-                <span className="font-dm text-[13px] text-text-secondary">
-                  Walk time is flexible
-                </span>
-              </label>
-            </>
-          )}
-          {form.outingRule && (
-            <p className="font-dm font-bold text-[12px] text-text-secondary uppercase tracking-widest mb-3 px-1">
-              Walks, meals &amp; more
-            </p>
-          )}
-          <div className="flex flex-col gap-2">
-            {/* Rough time-of-day walks have no clock time — listed as-is. */}
-            {form.outingRule?.longWalks === 'time-of-day' &&
-              form.outingRule.dayPartWalks.map((w) => {
-                const part = dayPartInfo(w.dayPart)
-                const WalkIcon = TASK_TYPE_STYLE.walk.icon
-                return (
-                  <div key={w.dayPart} className="bg-white border border-border-light rounded-[12px] p-3 flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className={`size-6 rounded-full flex items-center justify-center shrink-0 ${TASK_TYPE_STYLE.walk.bg}`}>
-                        <WalkIcon size={12} className="text-white" />
-                      </span>
-                      <p className="flex-1 min-w-0 font-dm font-bold text-[14px] text-text-primary">
-                        {part.label} walk <span className="font-normal text-[12px] text-text-secondary">· {part.range}</span>
-                      </p>
-                      <button
-                        onClick={() =>
-                          patchOutingRule({
-                            dayPartWalks: form.outingRule!.dayPartWalks.filter((d) => d.dayPart !== w.dayPart),
-                          })
-                        }
-                        className="size-8 rounded-full bg-[#f3f4f6] flex items-center justify-center text-text-secondary shrink-0 active:bg-[#e5e7eb] transition-colors"
-                        aria-label={`Remove ${part.label.toLowerCase()} walk`}
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                    <input
-                      type="text"
-                      value={w.note ?? ''}
-                      onChange={(e) =>
-                        patchOutingRule({
-                          dayPartWalks: form.outingRule!.dayPartWalks.map((d) =>
-                            d.dayPart === w.dayPart ? { ...d, note: e.target.value } : d,
-                          ),
-                        })
-                      }
-                      placeholder="Note (optional) — e.g. 45 min, first thing out"
-                      className="w-full bg-white border border-border-faint rounded-[10px] px-3 py-2 font-dm text-[13px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors"
-                    />
-                  </div>
-                )
-              })}
-            {schedule.map((entry, i) => renderEntry(entry, i))}
-            <button
-              onClick={() =>
-                setSchedule((prev) => [
-                  ...prev,
-                  { time: '08:00', taskType: 'walk', note: '' },
-                ])
-              }
-              className="w-full py-3 rounded-[12px] border-2 border-dashed border-border-light flex items-center justify-center gap-1.5 font-dm font-bold text-[14px] text-text-secondary active:bg-gray-50 transition-colors"
-            >
-              <Plus size={16} />
-              Add to schedule
-            </button>
           </div>
         </section>
 

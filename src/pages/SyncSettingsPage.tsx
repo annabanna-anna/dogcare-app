@@ -19,6 +19,7 @@ import {
 import { MARKETING_URL } from '../lib/host'
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
+import Switch from '../components/Switch'
 import {
   connectGoogleCalendar,
   disconnectGoogleCalendar,
@@ -42,7 +43,7 @@ function PurposeRow({ done, label, soon }: { done: boolean; label: string; soon?
   return (
     <div className="flex items-center gap-2.5">
       {done ? (
-        <CheckCircle2 size={16} className="text-[#15803d] shrink-0" />
+        <CheckCircle2 size={16} className="text-coral shrink-0" />
       ) : (
         <Circle size={16} className="text-[#d1d5db] shrink-0" />
       )}
@@ -51,32 +52,6 @@ function PurposeRow({ done, label, soon }: { done: boolean; label: string; soon?
         {soon && <span className="text-text-muted"> (soon)</span>}
       </p>
     </div>
-  )
-}
-
-function Toggle({
-  value,
-  onChange,
-  disabled,
-}: {
-  value: boolean
-  onChange: (v: boolean) => void
-  disabled?: boolean
-}) {
-  return (
-    <button
-      onClick={() => !disabled && onChange(!value)}
-      disabled={disabled}
-      className={`relative w-12 h-6 rounded-full shrink-0 transition-colors duration-200 ${
-        disabled ? 'bg-[#e5e7eb] cursor-not-allowed' : value ? 'bg-green-vivid' : 'bg-[#d1d5db]'
-      }`}
-    >
-      <div
-        className={`absolute top-1 size-4 rounded-full bg-white shadow-[0_1px_2px_rgba(0,0,0,0.2)] transition-transform duration-200 ${
-          value ? 'translate-x-7' : 'translate-x-1'
-        }`}
-      />
-    </button>
   )
 }
 
@@ -386,8 +361,9 @@ export default function SyncSettingsPage() {
                 connecting ? 'Connecting…' : calendarConnected ? userEmail ?? 'Connected' : 'Not connected'
               }
               right={
-                <Toggle
-                  value={calendarConnected}
+                <Switch
+                  label="Google Calendar"
+                  checked={calendarConnected}
                   onChange={(on) => void handleCalendarToggle(on)}
                 />
               }
@@ -412,15 +388,15 @@ export default function SyncSettingsPage() {
               )}
               <div className="flex flex-col gap-1 pb-3 border-b border-border-light">
                 <PurposeRow done={calendarConnected} label="Shows your Rover bookings" />
-                <div className="flex items-start gap-2 pl-[26px]">
-                  <p className="flex-1 font-dm text-[12px] text-text-secondary leading-snug">
+                <div className="flex flex-col items-start gap-1 pl-[26px]">
+                  <p className="font-dm text-[12px] text-text-secondary leading-snug">
                     Works if Rover is already syncing to your Google Calendar. No Rover
                     ↔︎ Google connection means no data here either.
                   </p>
                   <button
                     type="button"
                     onClick={() => setShowCalendarInfo(true)}
-                    className="font-dm font-bold text-[12px] text-cobalt shrink-0"
+                    className="font-dm font-bold text-[12px] text-cobalt"
                   >
                     Learn more
                   </button>
@@ -429,7 +405,7 @@ export default function SyncSettingsPage() {
               <div className="flex items-center gap-3">
                 <div className="flex-1 min-w-0 flex items-center gap-2.5">
                   {calendarConnected && pushEnabled ? (
-                    <CheckCircle2 size={16} className="text-[#15803d] shrink-0" />
+                    <CheckCircle2 size={16} className="text-coral shrink-0" />
                   ) : (
                     <Circle size={16} className="text-[#d1d5db] shrink-0" />
                   )}
@@ -437,8 +413,9 @@ export default function SyncSettingsPage() {
                     Shows tasks on your Google calendar
                   </p>
                 </div>
-                <Toggle
-                  value={pushEnabled}
+                <Switch
+                  label="Show tasks on your Google calendar"
+                  checked={pushEnabled}
                   onChange={togglePush}
                   disabled={!calendarConnected}
                 />
@@ -468,8 +445,9 @@ export default function SyncSettingsPage() {
               label="Push Notifications"
               description={reminderBusy ? 'Updating…' : 'Get reminded before each task'}
               right={
-                <Toggle
-                  value={reminders}
+                <Switch
+                  label="Push notifications"
+                  checked={reminders}
                   onChange={(on) => void toggleReminders(on)}
                   disabled={reminderBusy}
                 />
