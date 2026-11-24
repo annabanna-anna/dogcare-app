@@ -18,7 +18,7 @@ export default function LastOutPrompt({ dogName, onJustNow, onPickTime }: Props)
         </span>
         <div className="flex-1 min-w-0">
           <p className="font-dm font-bold text-[16px] leading-tight text-text-primary">When was {dogName} last out?</p>
-          <p className="font-dm text-[13px] text-text-secondary mt-0.5 leading-snug">
+          <p className="font-dm text-[14px] text-text-secondary mt-0.5 leading-snug">
             Walk, potty break or drop-off — any time out counts.
           </p>
         </div>
@@ -27,14 +27,14 @@ export default function LastOutPrompt({ dogName, onJustNow, onPickTime }: Props)
         <button
           type="button"
           onClick={onJustNow}
-          className="flex-1 py-3 rounded-full bg-coral text-white font-dm font-bold text-[15px] active:bg-coral-deep transition-colors"
+          className="flex-1 py-3 rounded-full bg-coral text-white font-dm font-bold text-[16px] active:bg-coral-deep transition-colors"
         >
           Just now
         </button>
         <button
           type="button"
           onClick={onPickTime}
-          className="flex-1 py-3 rounded-full border-2 border-text-primary text-text-primary font-dm font-bold text-[15px] flex items-center justify-center gap-1.5 active:bg-gray-50 transition-colors"
+          className="flex-1 py-3 rounded-full border-2 border-text-primary text-text-primary font-dm font-bold text-[16px] flex items-center justify-center gap-1.5 active:bg-gray-50 transition-colors"
         >
           <Clock size={16} />
           Pick a time

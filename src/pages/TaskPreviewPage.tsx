@@ -81,7 +81,7 @@ export default function TaskPreviewPage() {
     return (
       <div className="min-h-svh bg-cream flex items-center justify-center px-6">
         <div className="text-center">
-          <p className="font-outfit font-bold text-[17px] text-text-primary mb-4">
+          <p className="font-outfit font-bold text-[18px] text-text-primary mb-4">
             No stay data found.
           </p>
           <Button onClick={() => navigate('/stays/new')} variant="secondary">
@@ -131,13 +131,13 @@ export default function TaskPreviewPage() {
       <div className="px-6 mt-4 flex flex-col gap-6">
         {error && (
           <div className="bg-[#fee2e2] rounded-[12px] px-4 py-3">
-            <p className="font-dm text-[13px] text-[#b91c1c]">{error}</p>
+            <p className="font-dm text-[14px] text-[#b91c1c]">{error}</p>
           </div>
         )}
 
         {tasks.length === 0 && (
           <div className="text-center py-12">
-            <p className="font-outfit font-bold text-[17px] text-text-primary mb-2">
+            <p className="font-outfit font-bold text-[18px] text-text-primary mb-2">
               No tasks generated
             </p>
             <p className="font-dm text-[14px] text-text-secondary">
@@ -148,7 +148,7 @@ export default function TaskPreviewPage() {
 
         {Array.from(grouped.entries()).map(([dateKey, dayTasks]) => (
           <section key={dateKey}>
-            <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
+            <p className="font-dm font-bold text-[14px] text-text-secondary uppercase tracking-widest mb-3">
               {formatDayHeading(`${dateKey}T12:00:00`)}
             </p>
             <div className="bg-white border border-border-light rounded-[16px] divide-y divide-border-faint overflow-hidden">
@@ -159,19 +159,19 @@ export default function TaskPreviewPage() {
                     <div
                       className={`size-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${bg}`}
                     >
-                      <Icon size={15} className="text-white" />
+                      <Icon size={16} className="text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-dm font-bold text-[15px] text-text-primary leading-none">
+                      <p className="font-dm font-bold text-[16px] text-text-primary leading-none">
                         {task.title}
                       </p>
                       {task.note && (
-                        <p className="font-dm text-[13px] text-text-secondary mt-1 leading-snug">
+                        <p className="font-dm text-[14px] text-text-secondary mt-1 leading-snug">
                           {task.note}
                         </p>
                       )}
                     </div>
-                    <span className="font-dm font-bold text-[13px] text-text-muted shrink-0 pt-0.5">
+                    <span className="font-dm font-bold text-[14px] text-text-muted shrink-0 pt-0.5">
                       {formatTime(task.scheduledTime)}
                     </span>
                   </div>

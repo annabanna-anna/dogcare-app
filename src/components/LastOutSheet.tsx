@@ -67,7 +67,7 @@ export default function LastOutSheet({ dogName, initial, previewFor, requireChan
         <div className="bg-card rounded-[16px] px-4 py-3 mt-4 mb-5">
           <p className="font-dm font-bold text-[12px] text-text-secondary uppercase tracking-widest mb-2">Then today</p>
           {preview.length === 0 ? (
-            <p className="font-dm text-[13px] text-text-secondary">Nothing more before bed.</p>
+            <p className="font-dm text-[14px] text-text-secondary">Nothing more before bed.</p>
           ) : (
             <ul className="flex flex-col gap-2">
               {preview.map((p, i) => {
@@ -75,12 +75,12 @@ export default function LastOutSheet({ dogName, initial, previewFor, requireChan
                 const { icon: Icon, bg } = TASK_TYPE_STYLE[type]
                 return (
                   <li key={i} className="flex items-center gap-3">
-                    <span className="w-[72px] shrink-0 font-dm font-bold text-[13px] text-text-secondary">
+                    <span className="w-[72px] shrink-0 font-dm font-bold text-[14px] text-text-secondary">
                       {p.type === 'fixed' ? '' : '~'}
                       {formatTime(p.at.toISOString())}
                     </span>
                     <span className={`size-6 rounded-full flex items-center justify-center shrink-0 ${bg}`}>
-                      <Icon size={13} className="text-white" />
+                      <Icon size={14} className="text-white" />
                     </span>
                     <span className="font-dm font-bold text-[14px] text-text-primary truncate">{p.title}</span>
                   </li>

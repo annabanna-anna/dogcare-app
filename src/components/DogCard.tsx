@@ -61,11 +61,11 @@ export default function DogCard({ dog, nextStay }: Props) {
         {(dog.ownerName || nextStay) && (
           <div className="flex items-center gap-2 min-w-0">
             {dog.ownerName && (
-              <p className="font-dm text-[13px] leading-tight text-text-primary truncate">{dog.ownerName}</p>
+              <p className="font-dm text-[14px] leading-tight text-text-primary truncate">{dog.ownerName}</p>
             )}
             {nextStay && (
               <span
-                className={`shrink-0 rounded-full px-[7px] h-4 inline-flex items-center text-[10px] leading-none font-dm font-bold uppercase tracking-wide ${
+                className={`shrink-0 rounded-full px-2 h-4 inline-flex items-center text-[10px] leading-none font-dm font-bold uppercase tracking-wide ${
                   stayActive ? 'bg-coral text-white' : 'border-[1.5px] border-coral text-coral'
                 }`}
               >

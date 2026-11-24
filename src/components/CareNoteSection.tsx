@@ -17,7 +17,7 @@ export default function CareNoteSection({
     <div className="bg-white border border-border-light rounded-[16px] p-4">
       <div className="flex items-center gap-2 mb-3">
         <span className="text-coral shrink-0 flex">{icon}</span>
-        <h3 className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-wide">
+        <h3 className="font-dm font-bold text-[14px] text-text-secondary uppercase tracking-wide">
           {title}
         </h3>
       </div>

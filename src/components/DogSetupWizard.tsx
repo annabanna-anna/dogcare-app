@@ -148,7 +148,7 @@ export function applySetupAnswers<F extends SetupForm>(
 // ─── Small pieces ────────────────────────────────────────────────────────────
 
 const fieldClass =
-  'w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-dm text-[15px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors'
+  'w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-dm text-[16px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors'
 
 function Label({ children }: { children: ReactNode }) {
   return <p className="font-dm font-bold text-[14px] text-text-primary mb-1.5">{children}</p>
@@ -211,7 +211,7 @@ export function Chips<T extends string | undefined>({
           type="button"
           aria-pressed={on(o.value)}
           onClick={() => onChange(o.value)}
-          className={`px-4 py-2 rounded-full font-dm font-bold text-[13px] transition-colors ${
+          className={`px-4 py-2 rounded-full font-dm font-bold text-[14px] transition-colors ${
             on(o.value) ? 'bg-coral text-white' : 'bg-white border border-border-light text-text-primary'
           }`}
         >
@@ -401,7 +401,7 @@ export default function DogSetupWizard(props: Props) {
             />
           ))}
         </div>
-        <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mt-4">
+        <p className="font-dm font-bold text-[14px] text-coral uppercase tracking-widest mt-4">
           {heading[step].eyebrow}
         </p>
         <h1 className="font-outfit font-bold text-[26px] leading-[1.15] text-text-primary mt-1.5">
@@ -424,7 +424,7 @@ export default function DogSetupWizard(props: Props) {
       <div className="sticky bottom-0 z-10 px-6 pt-3 pb-[calc(16px+env(safe-area-inset-bottom))] bg-cream">
         {error && (
           <div className="mb-2 bg-[#fee2e2] rounded-[12px] px-4 py-3">
-            <p className="font-dm text-[13px] text-[#b91c1c]">{error}</p>
+            <p className="font-dm text-[14px] text-[#b91c1c]">{error}</p>
           </div>
         )}
         <Button fullWidth size="lg" {...deliberate(handleNext)} disabled={saving || unanswered}>
@@ -639,7 +639,7 @@ function MedicineStep({ answers, setAnswers, schedule, groupDogs }: Props) {
                     value="medication"
                     onChange={() => {}}
                     aria-label="Type"
-                    className="w-full bg-white border border-border-light rounded-[10px] pl-3 pr-7 py-2 font-dm font-bold text-[13px] text-text-primary focus:outline-none focus:border-coral transition-colors appearance-none"
+                    className="w-full bg-white border border-border-light rounded-[10px] pl-3 pr-7 py-2 font-dm font-bold text-[14px] text-text-primary focus:outline-none focus:border-coral transition-colors appearance-none"
                   >
                     <option value="medication">Medication</option>
                   </select>
@@ -695,7 +695,7 @@ function MedicineStep({ answers, setAnswers, schedule, groupDogs }: Props) {
                 }}
                 rows={1}
                 placeholder="e.g. 1 Apoquel tablet in a pill pocket"
-                className="w-full bg-white border border-border-faint rounded-[10px] px-3 py-2 font-dm text-[13px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors resize-none overflow-hidden"
+                className="w-full bg-white border border-border-faint rounded-[10px] px-3 py-2 font-dm text-[14px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors resize-none overflow-hidden"
               />
             </div>
           ))}
@@ -730,7 +730,7 @@ function MedicineTimeButton({
         onClick={() => (mealTimes.length > 0 ? setMenuOpen((o) => !o) : setWheelOpen(true))}
         aria-haspopup={mealTimes.length > 0 ? 'menu' : 'dialog'}
         aria-expanded={menuOpen}
-        className="relative w-full text-left bg-white border border-border-light rounded-[10px] pl-3 pr-7 py-2 font-dm font-bold text-[13px] text-text-primary whitespace-nowrap"
+        className="relative w-full text-left bg-white border border-border-light rounded-[10px] pl-3 pr-7 py-2 font-dm font-bold text-[14px] text-text-primary whitespace-nowrap"
       >
         {withMeal && <span className="font-normal text-text-secondary">Meal · </span>}
         {formatTimeValue(time ?? medicine.time)}
@@ -746,7 +746,7 @@ function MedicineTimeButton({
             role="menu"
             className="absolute left-0 top-full mt-1 z-30 w-[230px] bg-white border border-border-light rounded-[14px] p-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.12)]"
           >
-            <p className="px-2.5 pt-1.5 pb-1 font-dm font-bold text-[11px] tracking-wide text-text-secondary">
+            <p className="px-2.5 pt-1.5 pb-1 font-dm font-bold text-[12px] tracking-wide text-text-secondary">
               WITH A MEAL
             </p>
             {mealTimes.map((t) => (
@@ -835,7 +835,7 @@ function AnythingElseStep(props: Props) {
         <button
           type="button"
           onClick={() => setSchedule((prev) => [...prev, { time: '12:00', taskType: 'other', customTitle: '', note: '' }])}
-          className="px-4 py-2 rounded-full bg-white border border-border-light font-dm font-bold text-[13px] text-text-primary"
+          className="px-4 py-2 rounded-full bg-white border border-border-light font-dm font-bold text-[14px] text-text-primary"
         >
           + Something else
         </button>
@@ -854,7 +854,7 @@ function AnythingElseStep(props: Props) {
               <button
                 type="button"
                 onClick={() => addAnother(extra)}
-                className="self-start -mt-1 flex items-center gap-1.5 py-1 font-dm font-bold text-[13px] text-coral"
+                className="self-start -mt-1 flex items-center gap-1.5 py-1 font-dm font-bold text-[14px] text-coral"
               >
                 <Plus size={14} strokeWidth={2.5} />
                 Another {extra.label.toLowerCase()}
@@ -899,7 +899,7 @@ function ReviewLine({
   return (
     <div className={`flex gap-3 ${sub ? 'items-start' : 'items-center'}`}>
       <span
-        className={`font-dm font-bold text-[13px] w-[68px] shrink-0 ${sub ? 'pt-0.5' : ''} ${
+        className={`font-dm font-bold text-[14px] w-[68px] shrink-0 ${sub ? 'pt-0.5' : ''} ${
           muted ? 'text-text-muted' : 'text-text-primary'
         }`}
       >

@@ -65,7 +65,7 @@ export default function PublicPageShell({ children }: Props) {
             >
               {CONTACT_EMAIL}
             </a>
-            <p className="font-dm text-[13px] text-[#a1a1a1] mt-2">
+            <p className="font-dm text-[14px] text-[#a1a1a1] mt-2">
               © {new Date().getFullYear()} HeyPup
             </p>
           </div>

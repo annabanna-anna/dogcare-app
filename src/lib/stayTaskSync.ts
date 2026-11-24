@@ -12,7 +12,7 @@ import type { Dog } from '../types'
  *  current and upcoming stays from the (possibly changed) care schedule, so
  *  edits show up on Today without restarting the stay.
  *
- *  Tasks the sitter already acted on (done/skipped) are kept as history —
+ *  Tasks the sitter already marked done are kept as history —
  *  everything else, including pending tasks whose time has passed, is
  *  rebuilt, so removing a schedule entry also clears its leftover pending
  *  tasks. Tasks that were pushed to Google are cleaned up there first, and
@@ -26,8 +26,8 @@ export async function regenerateFutureTasksForDog(dog: Dog): Promise<void> {
 
   for (const stay of stays) {
     const existing = await listTasksByStay(stay.id)
-    const kept = existing.filter((t) => t.status === 'done' || t.status === 'skipped')
-    const rebuilt = existing.filter((t) => t.status !== 'done' && t.status !== 'skipped')
+    const kept = existing.filter((t) => t.status === 'done')
+    const rebuilt = existing.filter((t) => t.status !== 'done')
 
     if (isGoogleCalendarConnected()) {
       await deletePushedTasksFromGoogle(rebuilt).catch(() => {})

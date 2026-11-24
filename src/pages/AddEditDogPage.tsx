@@ -143,7 +143,7 @@ function Input({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-dm text-[15px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors"
+      className="w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-dm text-[16px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors"
     />
   )
 }
@@ -186,7 +186,7 @@ function BreedAutocompleteInput({
         }}
         onFocus={() => setOpen(true)}
         placeholder={placeholder}
-        className="w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-dm text-[15px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors"
+        className="w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-dm text-[16px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors"
       />
       {open && matches.length > 0 && (
         <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-border-light rounded-[12px] overflow-hidden">
@@ -272,7 +272,7 @@ function BreedField({ value, onChange }: { value: string; onChange: (v: string) 
           <button
             type="button"
             onClick={addMixedBreedRow}
-            className="flex items-center gap-1 font-dm font-bold text-[13px] text-coral"
+            className="flex items-center gap-1 font-dm font-bold text-[14px] text-coral"
           >
             <Plus size={14} />
             Add another breed
@@ -283,7 +283,7 @@ function BreedField({ value, onChange }: { value: string; onChange: (v: string) 
               setMixed(false)
               onChange('')
             }}
-            className="font-dm font-medium text-[13px] text-text-secondary underline"
+            className="font-dm font-medium text-[14px] text-text-secondary underline"
           >
             Not mixed
           </button>
@@ -303,7 +303,7 @@ function BreedField({ value, onChange }: { value: string; onChange: (v: string) 
           setMixedBreeds(seeded)
           onChange(formatMixedBreed(seeded))
         }}
-        className="self-end font-dm font-medium text-[13px] text-coral underline"
+        className="self-end font-dm font-medium text-[14px] text-coral underline"
       >
         This dog is a mix of multiple breeds
       </button>
@@ -334,7 +334,7 @@ function Textarea({
       }}
       placeholder={placeholder}
       rows={rows}
-      className="w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-dm text-[15px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors resize-none overscroll-contain"
+      className="w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-dm text-[16px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors resize-none overscroll-contain"
     />
   )
 }
@@ -578,14 +578,14 @@ function PhotoCropField({
           <div className="flex gap-2 mt-2">
             <button
               onClick={() => fileRef.current?.click()}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white border border-border-light font-dm font-bold text-[13px] text-text-secondary active:bg-gray-50 transition-colors"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white border border-border-light font-dm font-bold text-[14px] text-text-secondary active:bg-gray-50 transition-colors"
             >
               <RefreshCw size={14} />
               Replace photo
             </button>
             <button
               onClick={onRemove}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-[#fee2e2] font-dm font-bold text-[13px] text-[#b91c1c] active:bg-[#fecaca] transition-colors"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-[#fee2e2] font-dm font-bold text-[14px] text-[#b91c1c] active:bg-[#fecaca] transition-colors"
             >
               <Trash2 size={14} />
               Remove photo
@@ -643,7 +643,7 @@ function DogCard({
           >
             {hasName ? name : 'New dog'}
           </span>
-          <span className="block font-dm text-[13px] text-text-muted truncate">
+          <span className="block font-dm text-[14px] text-text-muted truncate">
             {hasName
               ? [breed.trim(), sizeLabel].filter(Boolean).join(' · ')
               : 'Add a photo, name, breed and size'}
@@ -675,7 +675,7 @@ function DogSizePicker({ value, onChange }: { value: DogSize; onChange: (v: DogS
         >
           <span className="font-dm font-bold text-[14px] block leading-tight">{label}</span>
           <span
-            className={`font-dm text-[11px] block leading-tight ${
+            className={`font-dm text-[12px] block leading-tight ${
               value === v ? 'text-white/80' : 'text-text-muted'
             }`}
           >
@@ -1142,7 +1142,7 @@ export default function AddEditDogPage() {
     return (
       <div className="min-h-svh bg-cream flex items-center justify-center px-6">
         <div className="text-center">
-          <p className="font-outfit font-bold text-[17px] text-text-primary mb-2">Dog not found</p>
+          <p className="font-outfit font-bold text-[18px] text-text-primary mb-2">Dog not found</p>
           <Button onClick={() => navigate('/dogs')} variant="secondary">
             Back to Dogs
           </Button>
@@ -1166,7 +1166,7 @@ export default function AddEditDogPage() {
                         prev.map((en, j) => (j === i ? { ...en, time: v } : en)),
                       )
                     }
-                    className="w-[118px] shrink-0 bg-white border border-border-light rounded-[10px] pl-3 pr-7 py-2 font-dm font-bold text-[13px] text-text-primary"
+                    className="w-[118px] shrink-0 bg-white border border-border-light rounded-[10px] pl-3 pr-7 py-2 font-dm font-bold text-[14px] text-text-primary"
                   />
                   <div className="relative flex-1 min-w-0">
                     <select
@@ -1178,7 +1178,7 @@ export default function AddEditDogPage() {
                           ),
                         )
                       }
-                      className="w-full bg-white border border-border-light rounded-[10px] pl-3 pr-7 py-2 font-dm font-bold text-[13px] text-text-primary focus:outline-none focus:border-coral transition-colors appearance-none"
+                      className="w-full bg-white border border-border-light rounded-[10px] pl-3 pr-7 py-2 font-dm font-bold text-[14px] text-text-primary focus:outline-none focus:border-coral transition-colors appearance-none"
                     >
                       {typeOptions.map((o) => (
                         <option key={o.value} value={o.value}>
@@ -1240,7 +1240,7 @@ export default function AddEditDogPage() {
                       }}
                       maxLength={30}
                       placeholder={titlePlaceholder[entry.taskType] ?? 'Title'}
-                      className={`w-full bg-white border rounded-[10px] px-3 py-2 font-dm font-bold text-[13px] text-text-primary placeholder:text-[#c4c4c4] placeholder:font-normal focus:outline-none focus:border-coral transition-colors ${
+                      className={`w-full bg-white border rounded-[10px] px-3 py-2 font-dm font-bold text-[14px] text-text-primary placeholder:text-[#c4c4c4] placeholder:font-normal focus:outline-none focus:border-coral transition-colors ${
                         entry.taskType === 'other' && otherTitleTouched && !entry.customTitle?.trim()
                           ? 'border-red-400'
                           : 'border-border-light'
@@ -1269,7 +1269,7 @@ export default function AddEditDogPage() {
                   }}
                   rows={1}
                   placeholder={scheduleNotePlaceholder[entry.taskType]}
-                  className="w-full bg-white border border-border-faint rounded-[10px] px-3 py-2 font-dm text-[13px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors resize-none overflow-hidden"
+                  className="w-full bg-white border border-border-faint rounded-[10px] px-3 py-2 font-dm text-[14px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors resize-none overflow-hidden"
                 />
               </div>
   )
@@ -1310,7 +1310,7 @@ export default function AddEditDogPage() {
         <PageHeader back onBack={handleBack} title={isEdit ? `Edit ${existingName}` : 'Add Dog'} />
         {error && (
           <div className="mx-6 mb-2 bg-[#fee2e2] rounded-[12px] px-4 py-3">
-            <p className="font-dm text-[13px] text-[#b91c1c]">{error}</p>
+            <p className="font-dm text-[14px] text-[#b91c1c]">{error}</p>
           </div>
         )}
       </div>
@@ -1319,7 +1319,7 @@ export default function AddEditDogPage() {
 
         {/* Dogs — one collapsible card per dog */}
         <section>
-          <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-3">
+          <p className="font-dm font-bold text-[14px] text-coral uppercase tracking-widest mb-3">
             Dogs
           </p>
           <div className="flex flex-col gap-3">
@@ -1407,7 +1407,7 @@ export default function AddEditDogPage() {
                 <button
                   type="button"
                   onClick={() => setConfirmRemoveIndex(i)}
-                  className="w-full py-3 rounded-full flex items-center justify-center gap-2 font-dm font-bold text-[15px] text-[#b91c1c] active:bg-[#fee2e2] transition-colors"
+                  className="w-full py-3 rounded-full flex items-center justify-center gap-2 font-dm font-bold text-[16px] text-[#b91c1c] active:bg-[#fee2e2] transition-colors"
                 >
                   <Trash2 size={16} />
                   Remove {member.name.trim() || 'this dog'}
@@ -1429,7 +1429,7 @@ export default function AddEditDogPage() {
 
         {/* Owner Info — shared by every dog, asked once the dogs are in */}
         <section>
-          <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-3">
+          <p className="font-dm font-bold text-[14px] text-coral uppercase tracking-widest mb-3">
             Owner
           </p>
           <div>
@@ -1442,10 +1442,10 @@ export default function AddEditDogPage() {
         {isEdit && (<>
         {/* Daily Schedule */}
         <section ref={scheduleSectionRef} className="scroll-mt-4">
-          <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-1">
+          <p className="font-dm font-bold text-[14px] text-coral uppercase tracking-widest mb-1">
             Daily Schedule
           </p>
-          <p className="font-dm text-[13px] text-text-secondary mb-3">
+          <p className="font-dm text-[14px] text-text-secondary mb-3">
             Care tasks are generated from this schedule for every day of a stay.
           </p>
           {form.outingRule ? (
@@ -1482,7 +1482,7 @@ export default function AddEditDogPage() {
                     Walks and potty breaks both count — potty breaks fill the gaps.
                   </span>
                 </span>
-                <span className="font-dm font-bold text-[13px] text-coral shrink-0">Set up</span>
+                <span className="font-dm font-bold text-[14px] text-coral shrink-0">Set up</span>
               </button>
               <label className="flex items-center gap-2 px-1 mb-3 cursor-pointer">
                 <input
@@ -1491,7 +1491,7 @@ export default function AddEditDogPage() {
                   onChange={(e) => set('walkTimeFlexible')(e.target.checked)}
                   className="accent-coral size-4 shrink-0"
                 />
-                <span className="font-dm text-[13px] text-text-secondary">
+                <span className="font-dm text-[14px] text-text-secondary">
                   Walk time is flexible
                 </span>
               </label>
@@ -1540,7 +1540,7 @@ export default function AddEditDogPage() {
                         })
                       }
                       placeholder="Note (optional) — e.g. 45 min, first thing out"
-                      className="w-full bg-white border border-border-faint rounded-[10px] px-3 py-2 font-dm text-[13px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors"
+                      className="w-full bg-white border border-border-faint rounded-[10px] px-3 py-2 font-dm text-[14px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors"
                     />
                   </div>
                 )
@@ -1563,7 +1563,7 @@ export default function AddEditDogPage() {
 
         {/* Care Notes */}
         <section>
-          <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-3">
+          <p className="font-dm font-bold text-[14px] text-coral uppercase tracking-widest mb-3">
             Care Instructions
           </p>
           {/* Sticky within this section, so the tabs ride along until Care Instructions ends */}

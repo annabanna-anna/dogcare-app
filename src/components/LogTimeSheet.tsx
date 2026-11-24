@@ -47,7 +47,7 @@ export default function LogTimeSheet({ type, title, dogName, rule, onConfirm, on
   }
 
   const chipClass = (selected: boolean) =>
-    `px-4 py-2 rounded-full font-dm font-bold text-[13px] transition-colors ${
+    `px-4 py-2 rounded-full font-dm font-bold text-[14px] transition-colors ${
       selected ? 'bg-coral text-white' : 'bg-white border border-border-light text-text-primary'
     }`
 
@@ -63,7 +63,7 @@ export default function LogTimeSheet({ type, title, dogName, rule, onConfirm, on
           </span>
           <div className="min-w-0">
             <p className="font-outfit font-bold text-[22px] text-text-primary leading-tight">{title} done</p>
-            <p className="font-dm text-[13px] text-text-secondary">{dogName} · when did it happen?</p>
+            <p className="font-dm text-[14px] text-text-secondary">{dogName} · when did it happen?</p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2 mb-5">

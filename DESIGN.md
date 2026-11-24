@@ -158,11 +158,13 @@ Icons are white on the colored circle. An "other" task shows its own title (e.g.
 ### Hierarchy
 - **Display** (Outfit bold 700, 56px, leading-none, -0.02em, **Cobalt**): "Today" heading — one per app, the single biggest moment on the primary screen.
 - **Headline** (Outfit bold 700, 40px, leading-none, **Cobalt**): Page Header title on all secondary screens (Dogs, Dog Profile, Calendar, etc.) — always paired with an Ember eyebrow above it.
-- **Title** (Outfit bold 700, 17–22px, leading-tight): Dog Card name, card and empty-state titles.
+- **Title** (Outfit bold 700, 18–22px, leading-tight): Dog Card name, card and empty-state titles.
 - **Body** (DM Sans regular 400, 14px, leading-relaxed): Task notes, care-note content, descriptive copy. Kept short — this app is scanned, not read.
-- **Label** (DM Sans bold 700, 11–13px, uppercase, tracking-wide): Section eyebrows ("Active Care", "Reminders"), status chips, badges. Always uppercase, always bold — never regular-weight caps.
+- **Label** (DM Sans bold 700, 12–14px, uppercase, tracking-wide): Section eyebrows ("Active Care", "Reminders"), status chips, badges. Always uppercase, always bold — never regular-weight caps.
 
 ### Named Rules
+**The Even Sizes Rule.** Every font size, padding, margin, gap and icon size is a multiple of 2 (prefer 4): 12, 14, 16, 18… never 11, 13, 15 or 17. When a value lands between steps, round text and icons up. Border and stroke widths (1px hairlines) are exempt. The design system's "Sizes actually in use" chart flags any odd value that slips in.
+
 **The Numbers Rule.** Standalone numerals — task times, progress counts, dates in list rows — are always DM Sans, never Outfit. The one exception: a number inside a heading (e.g. a Title that includes a time) inherits the heading's Outfit.
 
 ### Named Rules
@@ -192,8 +194,8 @@ Tactile and confident: big touch targets, full pill rounding wherever a finger l
 - **Edit screens:** The Save button stays disabled until the form differs from what was loaded. Compare against a snapshot taken on load, so changing a value and changing it back disables Save again. Destructive actions (Delete) stay enabled regardless.
 
 ### Chips (Status / Badges)
-- **Style:** Full pill, bold uppercase DM Sans at 11px, tracked wide.
-- **State colors:** Pending (gray #f3f4f6/#6b7280), Done (green #dcfce7/#15803d), Skipped (yellow #fef9c3/#a16207), Overdue (red #fee2e2/#b91c1c) — each state owns a fixed background+text pair; never recolor a state ad hoc.
+- **Style:** Full pill, bold uppercase DM Sans at 12px, tracked wide.
+- **State colors:** Pending (gray #f3f4f6/#6b7280), Done (green #dcfce7/#15803d), Overdue (red #fee2e2/#b91c1c) — each state owns a fixed background+text pair; never recolor a state ad hoc.
 
 ### Cards / Containers
 - **Corner Style:** Large rounding (22px) for primary content cards (Dog Card); medium (16px) for secondary containers (Care Note).
@@ -203,7 +205,7 @@ Tactile and confident: big touch targets, full pill rounding wherever a finger l
 - **Press feedback:** `active:scale-[0.97–0.98]` on any card that navigates somewhere.
 
 ### Navigation
-- **Style:** A single flat Card-colored pill (#f4f4ef) spanning the app width, fixed to the bottom, containing 4 icon+label nav items in a strict 4-column grid. Active item gets a Cobalt pill-within-the-pill background and white icon/text — the one place the accent marks "where you are" (location, not action); inactive items use Nav Inactive (#78766e). Labels use DM Sans, 11px, medium/bold by active state.
+- **Style:** A single flat Card-colored pill (#f4f4ef) spanning the app width, fixed to the bottom, containing 4 icon+label nav items in a strict 4-column grid. Active item gets a Cobalt pill-within-the-pill background and white icon/text — the one place the accent marks "where you are" (location, not action); inactive items use Nav Inactive (#78766e). Labels use DM Sans, 12px, medium/bold by active state.
 - **Mobile treatment:** This is a mobile-only app frame (max-width 430px); the nav is always fixed-bottom, never a sidebar.
 
 ### Signature Component: Lottie Dog Mascot

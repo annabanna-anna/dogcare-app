@@ -156,7 +156,7 @@ function DogPickerSheet({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search dogs"
-              className="flex-1 min-w-0 bg-transparent font-dm text-[15px] text-text-primary placeholder:text-text-muted focus:outline-none"
+              className="flex-1 min-w-0 bg-transparent font-dm text-[16px] text-text-primary placeholder:text-text-muted focus:outline-none"
             />
           </div>
         </div>
@@ -176,10 +176,10 @@ function DogPickerSheet({
               >
                 <ProfilePhoto dog={dog} ringClassName={isSelected ? 'ring-[#fff5f3]' : 'ring-white'} />
                 <div className="flex-1 min-w-0">
-                  <p className="font-dm font-semibold text-[15px] text-text-primary leading-none">
+                  <p className="font-dm font-semibold text-[16px] text-text-primary leading-none">
                     {dogDisplayName(dog)}
                   </p>
-                  <p className="font-dm text-[13px] text-text-secondary mt-0.5 truncate">
+                  <p className="font-dm text-[14px] text-text-secondary mt-0.5 truncate">
                     {dogDisplayBreed(dog)} · {dog.ownerName}
                   </p>
                 </div>
@@ -202,7 +202,7 @@ function DogPickerSheet({
             <div className="size-11 rounded-[10px] bg-[#fff5f3] shrink-0 flex items-center justify-center">
               <Plus size={20} className="text-coral" />
             </div>
-            <p className="font-dm font-semibold text-[15px] text-coral">Add New Dog</p>
+            <p className="font-dm font-semibold text-[16px] text-coral">Add New Dog</p>
           </button>
         </div>
       </div>
@@ -247,7 +247,7 @@ function DateTimeField({
               const input = e.currentTarget
               if (typeof input.showPicker === 'function') input.showPicker()
             }}
-            className={`w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-dm text-[15px] ${invalidText} focus:outline-none focus:border-coral transition-colors appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0`}
+            className={`w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-dm text-[16px] ${invalidText} focus:outline-none focus:border-coral transition-colors appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0`}
           />
           <CalendarDays
             size={18}
@@ -257,7 +257,7 @@ function DateTimeField({
         <TimePickerButton
           value={time}
           onChange={onTimeChange}
-          className={`w-[132px] shrink-0 bg-white border border-border-light rounded-[12px] pl-4 pr-8 py-3 font-dm text-[15px] ${invalidText}`}
+          className={`w-[132px] shrink-0 bg-white border border-border-light rounded-[12px] pl-4 pr-8 py-3 font-dm text-[16px] ${invalidText}`}
         />
       </div>
     </div>
@@ -487,13 +487,13 @@ export default function StartStayPage() {
       <div className="px-6 mt-4 flex flex-col gap-5">
         {error && (
           <div className="bg-[#fee2e2] rounded-[12px] px-4 py-3">
-            <p className="font-dm text-[13px] text-[#b91c1c]">{error}</p>
+            <p className="font-dm text-[14px] text-[#b91c1c]">{error}</p>
           </div>
         )}
 
         {/* Dog selector */}
         <section>
-          <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
+          <p className="font-dm font-bold text-[14px] text-text-secondary uppercase tracking-widest mb-3">
             Which dog?
           </p>
           <button
@@ -507,10 +507,10 @@ export default function StartStayPage() {
               <>
                 <ProfilePhoto dog={selectedDog} ringClassName="ring-white" />
                 <div className="flex-1 min-w-0">
-                  <p className="font-dm font-semibold text-[15px] text-text-primary leading-none">
+                  <p className="font-dm font-semibold text-[16px] text-text-primary leading-none">
                     {dogDisplayName(selectedDog)}
                   </p>
-                  <p className="font-dm text-[13px] text-text-secondary mt-0.5 truncate">
+                  <p className="font-dm text-[14px] text-text-secondary mt-0.5 truncate">
                     {dogDisplayBreed(selectedDog)} · {selectedDog.ownerName}
                   </p>
                 </div>
@@ -520,7 +520,7 @@ export default function StartStayPage() {
                 <div className="size-11 rounded-[10px] bg-[#f3f4f6] shrink-0 flex items-center justify-center">
                   <DogIcon size={20} className="text-text-muted" />
                 </div>
-                <p className="flex-1 font-dm text-[15px] text-text-secondary">
+                <p className="flex-1 font-dm text-[16px] text-text-secondary">
                   {loading ? 'Loading dogs…' : 'Choose a dog'}
                 </p>
               </>
@@ -531,7 +531,7 @@ export default function StartStayPage() {
           {/* Multi-dog profiles: everyone's on by default, tap a dog to leave it home */}
           {group.length > 1 && (
             <>
-              <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mt-5 mb-3">
+              <p className="font-dm font-bold text-[14px] text-text-secondary uppercase tracking-widest mt-5 mb-3">
                 Who's staying?
               </p>
               <div className="flex flex-wrap gap-2">
@@ -573,7 +573,7 @@ export default function StartStayPage() {
 
         {/* Date range */}
         <section>
-          <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
+          <p className="font-dm font-bold text-[14px] text-text-secondary uppercase tracking-widest mb-3">
             Stay Dates
           </p>
           <div className="flex flex-col gap-3">
@@ -597,7 +597,7 @@ export default function StartStayPage() {
 
         {/* Stay notes */}
         <section>
-          <label className="block font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
+          <label className="block font-dm font-bold text-[14px] text-text-secondary uppercase tracking-widest mb-3">
             Notes (optional)
           </label>
           <textarea
@@ -605,12 +605,12 @@ export default function StartStayPage() {
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
             placeholder="Owner travel details, special instructions..."
-            className="w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-dm text-[15px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors resize-none"
+            className="w-full bg-white border border-border-light rounded-[12px] px-4 py-3 font-dm text-[16px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors resize-none"
           />
         </section>
 
         {selectedDog && (
-          <p className="font-dm text-[13px] text-text-secondary text-center">
+          <p className="font-dm text-[14px] text-text-secondary text-center">
             {isEditMode
               ? 'Care tasks will be regenerated for the new dates.'
               : `Tasks will be generated from ${stayName}'s care schedule.`}
@@ -652,7 +652,7 @@ export default function StartStayPage() {
             </p>
             {deleteError && (
               <div className="bg-[#fee2e2] rounded-[12px] px-4 py-3 mb-3">
-                <p className="font-dm text-[13px] text-[#b91c1c]">{deleteError}</p>
+                <p className="font-dm text-[14px] text-[#b91c1c]">{deleteError}</p>
               </div>
             )}
             <div className="flex flex-col gap-2">

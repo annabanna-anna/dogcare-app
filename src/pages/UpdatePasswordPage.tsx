@@ -50,7 +50,7 @@ export default function UpdatePasswordPage({ onDone }: { onDone: () => void }) {
       </div>
 
       <div className="mt-2 mb-6">
-        <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-1">
+        <p className="font-dm font-bold text-[14px] text-coral uppercase tracking-widest mb-1">
           Almost there
         </p>
         <h1 className="font-outfit font-bold text-[40px] leading-none text-cobalt">
@@ -62,7 +62,7 @@ export default function UpdatePasswordPage({ onDone }: { onDone: () => void }) {
         {error && (
           <div className="flex items-start gap-2 bg-[#fee2e2] rounded-[12px] px-4 py-3">
             <AlertCircle size={16} className="text-[#b91c1c] shrink-0 mt-0.5" />
-            <p className="font-dm text-[13px] text-[#b91c1c]">{error}</p>
+            <p className="font-dm text-[14px] text-[#b91c1c]">{error}</p>
           </div>
         )}
 
@@ -77,7 +77,7 @@ export default function UpdatePasswordPage({ onDone }: { onDone: () => void }) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="New password (8+ characters)"
-            className="w-full bg-white border border-border-light rounded-[12px] pl-11 pr-12 py-3.5 font-dm text-[15px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-coral transition-colors"
+            className="w-full bg-white border border-border-light rounded-[12px] pl-11 pr-12 py-3.5 font-dm text-[16px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-coral transition-colors"
           />
           <button
             onClick={() => setShowPassword((v) => !v)}

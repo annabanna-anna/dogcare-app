@@ -98,7 +98,7 @@ export interface Stay {
 
 export type TaskType = 'walk' | 'meal' | 'medication' | 'potty' | 'other'
 
-export type TaskStatus = 'pending' | 'done' | 'skipped' | 'overdue'
+export type TaskStatus = 'pending' | 'done' | 'overdue'
 
 export interface Task {
   id: string

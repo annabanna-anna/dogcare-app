@@ -85,7 +85,7 @@ export default function BottomNav() {
                 className={`transition-colors duration-300 ${active ? 'text-white' : ''}`}
               />
               <span
-                className={`font-dm text-[11px] leading-none transition-colors duration-300 ${
+                className={`font-dm text-[12px] leading-none transition-colors duration-300 ${
                   active ? 'font-bold text-white' : 'font-medium'
                 }`}
               >

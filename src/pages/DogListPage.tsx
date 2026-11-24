@@ -123,7 +123,7 @@ export default function DogListPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search dogs, breeds, owners"
-              className="flex-1 min-w-0 bg-transparent font-dm text-[15px] text-text-primary placeholder:text-text-muted focus:outline-none"
+              className="flex-1 min-w-0 bg-transparent font-dm text-[16px] text-text-primary placeholder:text-text-muted focus:outline-none"
             />
           </div>
         </div>
@@ -135,7 +135,7 @@ export default function DogListPage() {
         >
           <div className="bg-[#dcfce7] rounded-[12px] px-4 py-3 flex items-center gap-2 shadow-lg">
             <Check size={16} className="text-[#15803d] shrink-0" />
-            <p className="font-dm text-[13px] text-[#15803d]">
+            <p className="font-dm text-[14px] text-[#15803d]">
               {addedBanner} was successfully added.
             </p>
           </div>
@@ -144,7 +144,7 @@ export default function DogListPage() {
 
       {error && (
         <div className="mx-6 mt-4 bg-[#fee2e2] rounded-[12px] px-4 py-3">
-          <p className="font-dm text-[13px] text-[#b91c1c]">{error}</p>
+          <p className="font-dm text-[14px] text-[#b91c1c]">{error}</p>
         </div>
       )}
 
@@ -156,7 +156,7 @@ export default function DogListPage() {
             {/* Active stays first */}
             {activeDogs.length > 0 && (
               <section>
-                <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-3">
+                <p className="font-dm font-bold text-[14px] text-coral uppercase tracking-widest mb-3">
                   Active
                 </p>
                 <div className="flex flex-col gap-3">
@@ -176,7 +176,7 @@ export default function DogListPage() {
                 }}
                 className="scroll-mt-[156px]"
               >
-                <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
+                <p className="font-dm font-bold text-[14px] text-text-secondary uppercase tracking-widest mb-3">
                   {group.letter}
                 </p>
                 <div className="flex flex-col gap-3">
@@ -225,7 +225,7 @@ export default function DogListPage() {
                       key={letter}
                       onClick={() => enabled && jumpTo(letter)}
                       disabled={!enabled}
-                      className={`font-dm font-bold text-[10px] leading-[15px] w-4 text-center ${
+                      className={`font-dm font-bold text-[10px] leading-[16px] w-4 text-center ${
                         enabled ? 'text-cobalt' : 'text-text-muted/40'
                       }`}
                     >

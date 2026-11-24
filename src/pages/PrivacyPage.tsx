@@ -14,7 +14,7 @@ function H2({ id, children }: { id: string; children: ReactNode }) {
   return (
     <h2
       id={id}
-      className="font-outfit font-bold text-[24px] sm:text-[27px] text-text-primary leading-tight tracking-[-0.01em] mt-14 mb-4 scroll-mt-24 first:mt-0"
+      className="font-outfit font-bold text-[24px] sm:text-[28px] text-text-primary leading-tight tracking-[-0.01em] mt-14 mb-4 scroll-mt-24 first:mt-0"
     >
       {children}
     </h2>
@@ -98,7 +98,7 @@ export default function PrivacyPage() {
         </div>
 
         <nav aria-label="Contents" className="mt-10">
-          <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest">
+          <p className="font-dm font-bold text-[14px] text-text-secondary uppercase tracking-widest">
             Contents
           </p>
           <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
@@ -106,7 +106,7 @@ export default function PrivacyPage() {
               <li key={entry.id}>
                 <a
                   href={`#${entry.id}`}
-                  className="font-dm text-[15px] text-text-secondary underline underline-offset-4 decoration-border-light hover:text-coral hover:decoration-coral transition-colors rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-coral"
+                  className="font-dm text-[16px] text-text-secondary underline underline-offset-4 decoration-border-light hover:text-coral hover:decoration-coral transition-colors rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-coral"
                 >
                   {entry.label}
                 </a>
@@ -344,7 +344,7 @@ export default function PrivacyPage() {
         <div className="mt-16 pt-8 border-t border-border-faint">
           <Link
             to="/"
-            className="font-dm font-bold text-[15px] text-coral hover:text-coral-deep transition-colors rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-coral"
+            className="font-dm font-bold text-[16px] text-coral hover:text-coral-deep transition-colors rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-coral"
           >
             ← Back to HeyPup
           </Link>

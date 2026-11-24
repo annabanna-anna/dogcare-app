@@ -47,7 +47,7 @@ export function RadioCard({
       >
         <RadioDot selected={selected} />
         <span className="min-w-0">
-          <span className="block font-dm font-bold text-[15px] text-text-primary">{label}</span>
+          <span className="block font-dm font-bold text-[16px] text-text-primary">{label}</span>
           {hint && <span className="block font-dm text-[12px] text-text-secondary">{hint}</span>}
         </span>
       </button>
@@ -233,8 +233,8 @@ export function LongWalkChoice({
                         on ? 'bg-coral text-white' : 'bg-white border border-border-light text-text-primary'
                       }`}
                     >
-                      <span className="font-dm font-bold text-[13px]">{part.label}</span>
-                      <span className={`font-dm text-[11px] ${on ? 'text-white/90' : 'text-text-muted'}`}>
+                      <span className="font-dm font-bold text-[14px]">{part.label}</span>
+                      <span className={`font-dm text-[12px] ${on ? 'text-white/90' : 'text-text-muted'}`}>
                         {part.range}
                       </span>
                     </button>
@@ -256,7 +256,7 @@ export function LongWalkChoice({
                       value={w.note ?? ''}
                       onChange={(e) => setDayPartNote(w.dayPart, e.target.value)}
                       placeholder="Note (optional) — e.g. 45 min, first thing out"
-                      className="w-full bg-white border border-border-faint rounded-[10px] px-3 py-2 font-dm text-[13px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors"
+                      className="w-full bg-white border border-border-faint rounded-[10px] px-3 py-2 font-dm text-[14px] text-text-primary placeholder:text-[#c4c4c4] focus:outline-none focus:border-coral transition-colors"
                     />
                   </div>
                 )
@@ -333,7 +333,7 @@ export function TypicalDay({ rule, walkTimes }: { rule: OutingRule; walkTimes: T
       {/* Zero-width columns put each dot's center on the line's ends; the
           padding leaves room for the end labels. */}
       <div className="relative flex justify-between items-start px-4">
-        <div className="absolute left-4 right-4 top-[11px] h-0.5 bg-border-light" />
+        <div className="absolute left-4 right-4 top-3 -translate-y-1/2 h-0.5 bg-border-light" />
         {points.map((p, i) => {
           const showLabel = !crowded || p.kind === 'walk' || i === 0 || i === points.length - 1
           return (
@@ -346,7 +346,7 @@ export function TypicalDay({ rule, walkTimes }: { rule: OutingRule; walkTimes: T
                 />
               </span>
               <span
-                className={`font-dm text-[11px] text-text-secondary whitespace-nowrap ${showLabel ? '' : 'invisible'}`}
+                className={`font-dm text-[12px] text-text-secondary whitespace-nowrap ${showLabel ? '' : 'invisible'}`}
               >
                 {/* A rough-time walk has no clock time yet — name its part of the day. */}
                 {p.label ?? shortClock(p.at)}

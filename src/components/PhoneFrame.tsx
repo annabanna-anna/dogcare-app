@@ -22,7 +22,7 @@ export default function PhoneFrame({ children, className = '' }: Props) {
     >
       <div className="h-full rounded-[28px] bg-cream overflow-hidden flex flex-col">
         <div className="relative flex items-center justify-between px-6 pt-2.5 pb-1 shrink-0">
-          <span className="font-dm font-bold text-[11px] text-text-primary">9:41</span>
+          <span className="font-dm font-bold text-[12px] text-text-primary">9:41</span>
           <div
             aria-hidden="true"
             className="absolute left-1/2 top-1.5 -translate-x-1/2 h-[16px] w-[78px] rounded-full bg-text-primary"
@@ -30,7 +30,7 @@ export default function PhoneFrame({ children, className = '' }: Props) {
           <span className="flex items-center gap-1 text-text-primary">
             <Signal size={12} strokeWidth={2.5} />
             <Wifi size={12} strokeWidth={2.5} />
-            <BatteryFull size={15} strokeWidth={2} />
+            <BatteryFull size={16} strokeWidth={2} />
           </span>
         </div>
         <div className="flex-1 min-h-0 overflow-hidden">{children}</div>

@@ -26,7 +26,7 @@ export default function PageHeader({ title, subtitle, back = false, onBack, righ
       )}
       <div className="flex-1 min-w-0">
         {subtitle && (
-          <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-wide mb-1 truncate">
+          <p className="font-dm font-bold text-[14px] text-coral uppercase tracking-wide mb-1 truncate">
             {subtitle}
           </p>
         )}

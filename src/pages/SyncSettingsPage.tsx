@@ -47,7 +47,7 @@ function PurposeRow({ done, label, soon }: { done: boolean; label: string; soon?
       ) : (
         <Circle size={16} className="text-[#d1d5db] shrink-0" />
       )}
-      <p className="font-dm text-[13px] text-text-secondary min-w-0">
+      <p className="font-dm text-[14px] text-text-secondary min-w-0">
         {label}
         {soon && <span className="text-text-muted"> (soon)</span>}
       </p>
@@ -78,11 +78,11 @@ function SettingRow({
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-dm font-bold text-[15px] text-text-primary leading-none">
+        <p className="font-dm font-bold text-[16px] text-text-primary leading-none">
           {label}
         </p>
         {description && (
-          <p className="font-dm text-[13px] text-text-secondary mt-0.5">{description}</p>
+          <p className="font-dm text-[14px] text-text-secondary mt-0.5">{description}</p>
         )}
       </div>
       {right}
@@ -159,7 +159,7 @@ function FeedbackModal({
             </p>
             {error && (
               <div className="flex items-start gap-2 bg-[#fee2e2] rounded-[12px] px-3 py-2.5 mb-3">
-                <AlertCircle size={15} className="text-[#b91c1c] shrink-0 mt-0.5" />
+                <AlertCircle size={16} className="text-[#b91c1c] shrink-0 mt-0.5" />
                 <p className="font-dm text-[12px] text-[#b91c1c] leading-snug">{error}</p>
               </div>
             )}
@@ -344,13 +344,13 @@ export default function SyncSettingsPage() {
       <div className="px-6 mt-4 flex flex-col gap-4">
         {/* Sync section */}
         <section>
-          <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
+          <p className="font-dm font-bold text-[14px] text-text-secondary uppercase tracking-widest mb-3">
             Calendar Sync
           </p>
           {connectError && (
             <div className="flex items-start gap-2 bg-[#fee2e2] rounded-[12px] px-4 py-3 mb-3">
               <AlertCircle size={16} className="text-[#b91c1c] shrink-0 mt-0.5" />
-              <p className="font-dm text-[13px] text-[#b91c1c]">{connectError}</p>
+              <p className="font-dm text-[14px] text-[#b91c1c]">{connectError}</p>
             </div>
           )}
           <div className="bg-white border border-border-light rounded-[16px] px-4">
@@ -371,7 +371,7 @@ export default function SyncSettingsPage() {
             <div className="pb-4 flex flex-col gap-3">
               {pullError && (
                 <div className="flex items-start gap-2 bg-[#fee2e2] rounded-[12px] px-3 py-2.5">
-                  <AlertCircle size={15} className="text-[#b91c1c] shrink-0 mt-0.5" />
+                  <AlertCircle size={16} className="text-[#b91c1c] shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <p className="font-dm text-[12px] text-[#b91c1c] leading-snug">{pullError}</p>
                     {!calendarConnected && (
@@ -409,7 +409,7 @@ export default function SyncSettingsPage() {
                   ) : (
                     <Circle size={16} className="text-[#d1d5db] shrink-0" />
                   )}
-                  <p className="font-dm text-[13px] text-text-secondary">
+                  <p className="font-dm text-[14px] text-text-secondary">
                     Shows tasks on your Google calendar
                   </p>
                 </div>
@@ -423,7 +423,7 @@ export default function SyncSettingsPage() {
 
               {calendarConnected && pushEnabled && pushError && (
                 <div className="flex items-start gap-2 bg-[#fee2e2] rounded-[12px] px-3 py-2.5">
-                  <AlertCircle size={15} className="text-[#b91c1c] shrink-0 mt-0.5" />
+                  <AlertCircle size={16} className="text-[#b91c1c] shrink-0 mt-0.5" />
                   <p className="font-dm text-[12px] text-[#b91c1c] leading-snug">
                     Last push didn't go through: {pushError}
                   </p>
@@ -436,7 +436,7 @@ export default function SyncSettingsPage() {
 
         {/* Reminders section */}
         <section>
-          <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
+          <p className="font-dm font-bold text-[14px] text-text-secondary uppercase tracking-widest mb-3">
             Reminders
           </p>
           <div className="bg-white border border-border-light rounded-[16px] px-4 divide-y divide-border-faint">
@@ -456,14 +456,14 @@ export default function SyncSettingsPage() {
             {reminderError && (
               <div className="py-3">
                 <div className="flex items-start gap-2 bg-[#fee2e2] rounded-[12px] px-3 py-2.5">
-                  <AlertCircle size={15} className="text-[#b91c1c] shrink-0 mt-0.5" />
+                  <AlertCircle size={16} className="text-[#b91c1c] shrink-0 mt-0.5" />
                   <p className="font-dm text-[12px] text-[#b91c1c] leading-snug">{reminderError}</p>
                 </div>
               </div>
             )}
             {reminders && (
               <div className="py-4">
-                <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
+                <p className="font-dm font-bold text-[14px] text-text-secondary uppercase tracking-widest mb-3">
                   Remind me before
                 </p>
                 <div className="flex gap-2 flex-wrap">
@@ -471,7 +471,7 @@ export default function SyncSettingsPage() {
                     <button
                       key={min}
                       onClick={() => pickReminderMinutes(min)}
-                      className={`px-4 py-2 rounded-full font-dm font-bold text-[13px] border transition-colors ${
+                      className={`px-4 py-2 rounded-full font-dm font-bold text-[14px] border transition-colors ${
                         reminderMinutes === min
                           ? 'bg-coral border-coral text-white'
                           : 'bg-white border-border-light text-text-secondary'
@@ -488,7 +488,7 @@ export default function SyncSettingsPage() {
 
         {/* Support */}
         <section>
-          <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
+          <p className="font-dm font-bold text-[14px] text-text-secondary uppercase tracking-widest mb-3">
             Support
           </p>
           <div className="bg-white border border-border-light rounded-[16px] px-4 divide-y divide-border-faint">
@@ -511,7 +511,7 @@ export default function SyncSettingsPage() {
 
         {/* Privacy */}
         <section>
-          <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
+          <p className="font-dm font-bold text-[14px] text-text-secondary uppercase tracking-widest mb-3">
             About
           </p>
           <div className="bg-white border border-border-light rounded-[16px] px-4 divide-y divide-border-faint">
@@ -627,7 +627,7 @@ export default function SyncSettingsPage() {
               This permanently deletes your dogs, stays, tasks and settings from HeyPup. It
               can't be undone. Your Google account isn't affected.
             </p>
-            <p className="font-dm text-[13px] text-text-secondary mb-2">
+            <p className="font-dm text-[14px] text-text-secondary mb-2">
               Type <span className="font-bold">delete</span> to confirm.
             </p>
             <input
@@ -642,7 +642,7 @@ export default function SyncSettingsPage() {
               className="w-full font-dm text-[14px] text-text-primary bg-white border border-border-light rounded-[14px] px-4 py-3 mb-4 focus:outline-none focus:border-coral"
             />
             {deleteError && (
-              <p className="font-dm text-[13px] text-red-600 mb-3">{deleteError}</p>
+              <p className="font-dm text-[14px] text-red-600 mb-3">{deleteError}</p>
             )}
             <div className="flex flex-col gap-2">
               <Button

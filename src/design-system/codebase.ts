@@ -30,8 +30,8 @@ export const indexCss = Object.values(
   import.meta.glob('/src/index.css', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>,
 )[0]
 
-/** Only the UI layer — components and pages — counts toward usage. */
-const uiFiles = Object.entries(sources).filter(([p]) => p.endsWith('.tsx'))
+/** All app source counts toward usage — .ts files like taskTypeStyle.ts hold class names too. */
+const uiFiles = Object.entries(sources)
 
 export interface Usage {
   count: number

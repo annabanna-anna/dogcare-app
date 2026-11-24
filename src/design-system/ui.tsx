@@ -9,7 +9,7 @@ import Switch from '../components/Switch'
 export function DocHeader({ eyebrow, title, children }: { eyebrow: string; title: string; children?: ReactNode }) {
   return (
     <header className="mb-10">
-      <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-wide mb-2">{eyebrow}</p>
+      <p className="font-dm font-bold text-[14px] text-coral uppercase tracking-wide mb-2">{eyebrow}</p>
       <h1 className="font-outfit font-bold text-[40px] sm:text-[48px] leading-none text-cobalt">{title}</h1>
       {children && <div className="mt-4 max-w-[62ch] font-dm text-[16px] leading-relaxed text-text-secondary">{children}</div>}
     </header>
@@ -29,7 +29,7 @@ export function Section({ title, children, aside }: { title: string; children: R
 }
 
 export function Prose({ children }: { children: ReactNode }) {
-  return <div className="max-w-[62ch] font-dm text-[15px] leading-relaxed text-text-secondary space-y-3">{children}</div>
+  return <div className="max-w-[62ch] font-dm text-[16px] leading-relaxed text-text-secondary space-y-3">{children}</div>
 }
 
 /** A named rule from DESIGN.md, set apart so it reads as law, not commentary. */
@@ -52,8 +52,8 @@ export function DoDont({ good, bad }: { good: { visual: ReactNode; text: string 
         <figure key={String(d.ok)} className="rounded-[16px] border border-border-light overflow-hidden bg-white">
           <div className="h-40 bg-cream flex items-center justify-center p-6">{d.visual}</div>
           <figcaption className={`px-4 py-3 border-t-4 ${d.ok ? 'border-green-vivid' : 'border-[#b91c1c]'}`}>
-            <span className={`flex items-center gap-1.5 font-dm font-bold text-[13px] ${d.ok ? 'text-[#15803d]' : 'text-[#b91c1c]'}`}>
-              {d.ok ? <Check size={15} strokeWidth={3} /> : <X size={15} strokeWidth={3} />}
+            <span className={`flex items-center gap-1.5 font-dm font-bold text-[14px] ${d.ok ? 'text-[#15803d]' : 'text-[#b91c1c]'}`}>
+              {d.ok ? <Check size={16} strokeWidth={3} /> : <X size={16} strokeWidth={3} />}
               {d.ok ? 'Do' : 'Don’t'}
             </span>
             <span className="block font-dm text-[14px] text-text-primary mt-1 leading-snug">{d.text}</span>
@@ -79,7 +79,7 @@ export function CopyButton({ text, label = 'Copy' }: { text: string; label?: str
       }}
       className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-dm font-bold text-[12px] text-text-secondary bg-white border border-border-light active:scale-[0.97] transition-transform"
     >
-      {copied ? <Check size={13} strokeWidth={3} className="text-green-vivid" /> : <Copy size={13} />}
+      {copied ? <Check size={14} strokeWidth={3} className="text-green-vivid" /> : <Copy size={14} />}
       {copied ? 'Copied' : label}
     </button>
   )
@@ -92,7 +92,7 @@ export function CodeBlock({ code, title }: { code: string; title?: string }) {
         <span className="font-dm text-[12px] text-white/60 truncate">{title ?? 'JSX'}</span>
         <CopyButton text={code} />
       </div>
-      <pre className="p-4 overflow-x-auto text-[13px] leading-relaxed font-mono">
+      <pre className="p-4 overflow-x-auto text-[14px] leading-relaxed font-mono">
         <code>{code}</code>
       </pre>
     </div>
@@ -131,11 +131,11 @@ export function SourceFile({ path }: { path: string }) {
 // ─── Usage ──────────────────────────────────────────────────────────────────
 
 export function UsageList({ usage, max = 6 }: { usage: Usage; max?: number }) {
-  if (!usage.count) return <p className="font-dm text-[13px] text-text-muted">Not used in any component or page.</p>
+  if (!usage.count) return <p className="font-dm text-[14px] text-text-muted">Not used in any component or page.</p>
   return (
     <ul className="space-y-1">
       {usage.files.slice(0, max).map((f) => (
-        <li key={f.path} className="flex justify-between gap-3 font-dm text-[13px]">
+        <li key={f.path} className="flex justify-between gap-3 font-dm text-[14px]">
           <span className="truncate text-text-secondary">{f.path.replace(/^src\//, '')}</span>
           <span className="shrink-0 font-bold text-text-primary tabular-nums">{f.count}</span>
         </li>
@@ -211,7 +211,7 @@ export function Playground<A extends Args>({
         <div className="flex items-center gap-1" role="group" aria-label="Canvas width">
           {(
             [
-              ['phone', Smartphone, '375'],
+              ['phone', Smartphone, '390'],
               ['full', Maximize2, 'Full'],
             ] as const
           ).map(([w, Icon, label]) => (
@@ -224,7 +224,7 @@ export function Playground<A extends Args>({
                 width === w ? 'bg-cobalt text-white' : 'text-text-secondary'
               }`}
             >
-              <Icon size={13} /> {label}
+              <Icon size={14} /> {label}
             </button>
           ))}
         </div>
@@ -233,7 +233,7 @@ export function Playground<A extends Args>({
       {/* Canvas */}
       <div className={`${surfaceClass[surface]} transition-colors px-4 py-8 flex justify-center`}>
         <div
-          className={`relative w-full ${width === 'phone' ? 'max-w-[375px]' : ''} flex flex-col justify-center ${
+          className={`relative w-full ${width === 'phone' ? 'max-w-[390px]' : ''} flex flex-col justify-center ${
             contain ? 'overflow-hidden rounded-[16px]' : ''
           }`}
           // A transform makes this box the containing block for fixed children.
@@ -371,7 +371,7 @@ export function Specimen({ label, children, className = '' }: { label: string; c
 export function PropsTable({ rows }: { rows: [name: string, type: string, def: string, desc: string][] }) {
   return (
     <div className="rounded-[16px] border border-border-light bg-white overflow-x-auto">
-      <table className="w-full text-left font-dm text-[13px]">
+      <table className="w-full text-left font-dm text-[14px]">
         <thead>
           <tr className="border-b border-border-light text-text-secondary">
             <th className="px-4 py-2.5 font-bold">Prop</th>

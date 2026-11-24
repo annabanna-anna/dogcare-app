@@ -43,7 +43,7 @@ export default function GoingOutBlock({ rule, careSchedule }: { rule: OutingRule
   return (
     <div className="bg-card rounded-[14px] p-3.5 flex flex-col gap-3">
       <div>
-        <p className="font-dm font-bold text-[15px] text-text-primary">Out at least every {hrs}</p>
+        <p className="font-dm font-bold text-[16px] text-text-primary">Out at least every {hrs}</p>
         <p className="font-dm text-[12px] text-text-secondary mt-0.5">
           Walks and potty breaks both count{rule.askWhenItHappened ? ' · asks when it happened' : ''}
         </p>
@@ -53,7 +53,7 @@ export default function GoingOutBlock({ rule, careSchedule }: { rule: OutingRule
         return (
           <div key={i} className={`flex gap-3 ${l.sub ? 'items-start' : 'items-center'}`}>
             <span
-              className={`font-dm font-bold text-[13px] w-[68px] shrink-0 ${l.sub ? 'pt-0.5' : ''} ${
+              className={`font-dm font-bold text-[14px] w-[68px] shrink-0 ${l.sub ? 'pt-0.5' : ''} ${
                 l.accent ? 'text-coral' : l.muted ? 'text-text-muted' : 'text-text-primary'
               }`}
             >

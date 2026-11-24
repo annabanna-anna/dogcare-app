@@ -134,7 +134,7 @@ export default function DogProfilePage() {
     return (
       <div className="min-h-svh bg-cream flex items-center justify-center px-6">
         <div className="text-center">
-          <p className="font-outfit font-bold text-[17px] text-text-primary mb-2">Dog not found</p>
+          <p className="font-outfit font-bold text-[18px] text-text-primary mb-2">Dog not found</p>
           <Button onClick={() => navigate('/dogs')} variant="secondary">
             Back to Dogs
           </Button>
@@ -151,23 +151,23 @@ export default function DogProfilePage() {
   const scheduleCard = (
     <div className="bg-white border border-border-light rounded-[16px] p-4">
       <div className="flex items-start gap-2 mb-4">
-        <Clock size={16} className="text-coral shrink-0 mt-[3px]" />
-        <h3 className="font-dm font-bold text-[13px] leading-[22px] text-text-secondary uppercase tracking-wide whitespace-nowrap">
+        <Clock size={16} className="text-coral shrink-0 mt-1" />
+        <h3 className="font-dm font-bold text-[14px] leading-[22px] text-text-secondary uppercase tracking-wide whitespace-nowrap">
           Daily Schedule
         </h3>
         <div className="ml-auto flex flex-wrap justify-end gap-1">
           {isGroup && (
-            <span className="text-[11px] font-dm font-bold bg-[#eef1fd] text-cobalt rounded-full px-2 py-0.5">
+            <span className="text-[12px] font-dm font-bold bg-[#eef1fd] text-cobalt rounded-full px-2 py-0.5">
               {dogDisplayName(dog)}
             </span>
           )}
           {dog.outingRule && (
-            <span className="text-[11px] font-dm font-bold bg-coral-soft text-coral rounded-full px-2 py-0.5">
+            <span className="text-[12px] font-dm font-bold bg-coral-soft text-coral rounded-full px-2 py-0.5">
               Out every {dog.outingRule.everyHours} {dog.outingRule.everyHours === 1 ? 'hr' : 'hrs'}
             </span>
           )}
           {dog.walkTimeFlexible && !dog.outingRule && (
-            <span className="text-[11px] font-dm font-bold bg-[#eef1fd] text-cobalt rounded-full px-2 py-0.5">
+            <span className="text-[12px] font-dm font-bold bg-[#eef1fd] text-cobalt rounded-full px-2 py-0.5">
               Walk time flexible
             </span>
           )}
@@ -183,7 +183,7 @@ export default function DogProfilePage() {
           return (
           <div key={i} className={`flex gap-3 ${entry.note ? 'items-start' : 'items-center'}`}>
             <span
-              className={`font-dm font-bold text-[13px] text-text-primary w-[68px] shrink-0 ${
+              className={`font-dm font-bold text-[14px] text-text-primary w-[68px] shrink-0 ${
                 entry.note ? 'pt-0.5' : ''
               }`}
             >
@@ -202,7 +202,7 @@ export default function DogProfilePage() {
                   {entry.customTitle?.trim() || typeLabel[entry.taskType]}
                 </p>
                 {onlyFor && (
-                  <span className="text-[11px] font-dm font-bold bg-[#f2f2f2] text-text-secondary rounded-full px-2 py-0.5">
+                  <span className="text-[12px] font-dm font-bold bg-[#f2f2f2] text-text-secondary rounded-full px-2 py-0.5">
                     {onlyFor} only
                   </span>
                 )}
@@ -260,7 +260,7 @@ export default function DogProfilePage() {
                 </p>
                 <p className="font-dm text-[12px] leading-tight text-text-secondary truncate">{d.breed}</p>
               </div>
-              <p className="font-dm text-[13px] leading-tight text-text-primary mt-2.5 truncate">
+              <p className="font-dm text-[14px] leading-tight text-text-primary mt-2.5 truncate">
                 {dog.ownerName}
               </p>
             </div>
@@ -284,23 +284,23 @@ export default function DogProfilePage() {
                   </p>
                   {new Date(currentStay.startDate) <= new Date() &&
                     new Date(currentStay.endDate) >= new Date() && (
-                      <span className="text-[11px] font-dm font-bold bg-[#dcfce7] text-[#15803d] rounded-full px-2 py-0.5">
+                      <span className="text-[12px] font-dm font-bold bg-[#dcfce7] text-[#15803d] rounded-full px-2 py-0.5">
                         Active
                       </span>
                     )}
                 </div>
-                <p className="font-dm text-[13px] text-text-secondary">
+                <p className="font-dm text-[14px] text-text-secondary">
                   {formatShortDate(currentStay.startDate)} {formatTime(currentStay.startDate)} →{' '}
                   {formatShortDate(currentStay.endDate)} {formatTime(currentStay.endDate)}
                 </p>
                 {dogsAtHome(dog, currentStay.dogKeys).length > 0 && (
-                  <p className="font-dm text-[13px] text-text-secondary mt-0.5">
+                  <p className="font-dm text-[14px] text-text-secondary mt-0.5">
                     {stayDisplayName(dog, currentStay.dogKeys)} staying ·{' '}
                     {joinDogNames(dogsAtHome(dog, currentStay.dogKeys).map((d) => d.name))} at home
                   </p>
                 )}
                 {currentStay.notes && (
-                  <p className="font-dm text-[13px] text-text-muted mt-1">{currentStay.notes}</p>
+                  <p className="font-dm text-[14px] text-text-muted mt-1">{currentStay.notes}</p>
                 )}
               </div>
             </div>
@@ -327,7 +327,7 @@ export default function DogProfilePage() {
 
         {isGroup && (
           <div className="flex flex-col gap-2.5">
-            <h3 className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-wide">
+            <h3 className="font-dm font-bold text-[14px] text-text-secondary uppercase tracking-wide">
               Care Notes
             </h3>
             <DogTabs dogs={group} value={care.key} onChange={setActiveDogKey} />
@@ -343,7 +343,7 @@ export default function DogProfilePage() {
             accent={care.hasAllergies === 'yes'}
           />
           {care.hasAllergies !== 'unsure' && care.allergyNotes && (
-            <p className="font-dm text-[13px] text-text-secondary leading-relaxed pl-6 -mt-1">
+            <p className="font-dm text-[14px] text-text-secondary leading-relaxed pl-6 -mt-1">
               {care.allergyNotes}
             </p>
           )}
@@ -354,7 +354,7 @@ export default function DogProfilePage() {
             accent={care.goesToDogParks === 'yes'}
           />
           {care.goesToDogParks !== 'unsure' && care.dogParkNotes && (
-            <p className="font-dm text-[13px] text-text-secondary leading-relaxed pl-6 -mt-1">
+            <p className="font-dm text-[14px] text-text-secondary leading-relaxed pl-6 -mt-1">
               {care.dogParkNotes}
             </p>
           )}
@@ -427,7 +427,7 @@ export default function DogProfilePage() {
               linked to them. This can't be undone.
             </p>
             <label className="block mb-4">
-              <span className="block font-dm text-[13px] text-text-secondary mb-1.5">
+              <span className="block font-dm text-[14px] text-text-secondary mb-1.5">
                 Type <span className="font-bold text-text-primary">{dog.name.trim()}</span> to confirm
               </span>
               <input
@@ -443,7 +443,7 @@ export default function DogProfilePage() {
             </label>
             {deleteError && (
               <div className="bg-[#fee2e2] rounded-[12px] px-4 py-3 mb-3">
-                <p className="font-dm text-[13px] text-[#b91c1c]">{deleteError}</p>
+                <p className="font-dm text-[14px] text-[#b91c1c]">{deleteError}</p>
               </div>
             )}
             <div className="flex flex-col gap-2">

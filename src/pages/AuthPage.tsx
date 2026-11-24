@@ -109,7 +109,7 @@ export default function AuthPage() {
         </p>
         <button
           onClick={() => setCheckEmail(false)}
-          className="font-dm font-bold text-[13px] text-coral mt-2"
+          className="font-dm font-bold text-[14px] text-coral mt-2"
         >
           Back to sign up
         </button>
@@ -133,7 +133,7 @@ export default function AuthPage() {
             setResetSent(false)
             setMode('login')
           }}
-          className="font-dm font-bold text-[13px] text-coral mt-2"
+          className="font-dm font-bold text-[14px] text-coral mt-2"
         >
           Back to log in
         </button>
@@ -148,7 +148,7 @@ export default function AuthPage() {
       </div>
 
       <div className="mt-2 mb-6">
-        <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest mb-1">
+        <p className="font-dm font-bold text-[14px] text-coral uppercase tracking-widest mb-1">
           {isReset ? 'Reset password' : isLogin ? 'Welcome back' : 'Get started'}
         </p>
         <h1 className="font-outfit font-bold text-[40px] leading-none text-cobalt">
@@ -165,7 +165,7 @@ export default function AuthPage() {
         {error && (
           <div className="flex items-start gap-2 bg-[#fee2e2] rounded-[12px] px-4 py-3">
             <AlertCircle size={16} className="text-[#b91c1c] shrink-0 mt-0.5" />
-            <p className="font-dm text-[13px] text-[#b91c1c]">{error}</p>
+            <p className="font-dm text-[14px] text-[#b91c1c]">{error}</p>
           </div>
         )}
 
@@ -180,7 +180,7 @@ export default function AuthPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
-            className="w-full bg-white border border-border-light rounded-[12px] pl-11 pr-4 py-3.5 font-dm text-[15px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-coral transition-colors"
+            className="w-full bg-white border border-border-light rounded-[12px] pl-11 pr-4 py-3.5 font-dm text-[16px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-coral transition-colors"
           />
         </div>
         {!isReset && (
@@ -195,7 +195,7 @@ export default function AuthPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder={isLogin ? 'Password' : 'Password (8+ characters)'}
-              className="w-full bg-white border border-border-light rounded-[12px] pl-11 pr-12 py-3.5 font-dm text-[15px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-coral transition-colors"
+              className="w-full bg-white border border-border-light rounded-[12px] pl-11 pr-12 py-3.5 font-dm text-[16px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-coral transition-colors"
             />
             <button
               onClick={() => setShowPassword((v) => !v)}
@@ -217,7 +217,7 @@ export default function AuthPage() {
               setMode('reset')
               setError(null)
             }}
-            className="font-dm font-bold text-[13px] text-text-secondary text-center py-1"
+            className="font-dm font-bold text-[14px] text-text-secondary text-center py-1"
           >
             Forgot password?
           </button>
@@ -229,7 +229,7 @@ export default function AuthPage() {
               setMode('login')
               setError(null)
             }}
-            className="font-dm font-bold text-[13px] text-text-secondary text-center py-1"
+            className="font-dm font-bold text-[14px] text-text-secondary text-center py-1"
           >
             Back to log in
           </button>
@@ -246,7 +246,7 @@ export default function AuthPage() {
 
             <button
               onClick={continueWithGoogle}
-              className="w-full flex items-center justify-center gap-2.5 rounded-full bg-white border-2 border-text-primary px-5 py-3 font-dm font-bold text-[15px] text-text-primary active:bg-gray-50 active:scale-[0.98] transition-all duration-100"
+              className="w-full flex items-center justify-center gap-2.5 rounded-full bg-white border-2 border-text-primary px-5 py-3 font-dm font-bold text-[16px] text-text-primary active:bg-gray-50 active:scale-[0.98] transition-all duration-100"
             >
               <GoogleLogo />
               Continue with Google
@@ -273,7 +273,7 @@ export default function AuthPage() {
             the app is without making an account. */}
         <Link
           to="/"
-          className="font-dm text-[13px] text-text-muted hover:text-text-secondary underline underline-offset-2 transition-colors"
+          className="font-dm text-[14px] text-text-muted hover:text-text-secondary underline underline-offset-2 transition-colors"
         >
           What is HeyPup?
         </Link>

@@ -87,7 +87,7 @@ export function OverviewPage({ go }: { go: (id: string) => void }) {
             ['Cartoon kitsch', 'Mascot dominating screens, baby-talk copy. The mascot is an accent.'],
           ].map(([t, d]) => (
             <div key={t} className="rounded-[16px] bg-[#fee2e2]/50 p-5">
-              <p className="font-dm font-bold text-[15px] text-[#b91c1c]">{t}</p>
+              <p className="font-dm font-bold text-[16px] text-[#b91c1c]">{t}</p>
               <p className="font-dm text-[14px] text-text-primary mt-1 leading-relaxed">{d}</p>
             </div>
           ))}
@@ -100,7 +100,7 @@ export function OverviewPage({ go }: { go: (id: string) => void }) {
           <p className="font-outfit font-bold text-[44px] leading-none text-text-primary tracking-tight">HeyPup</p>
           <p className="font-dm font-bold text-[14px] text-coral uppercase tracking-widest">fetching your day…</p>
         </div>
-        <p className="font-dm text-[13px] text-text-muted mt-3">
+        <p className="font-dm text-[14px] text-text-muted mt-3">
           The Lottie dog (public/splash.lottie) is reserved for loading and empty states: 150–260px on splash and auth,
           140px in empty states. Animation by Waris ahmed on LottieFiles.
         </p>
@@ -111,7 +111,7 @@ export function OverviewPage({ go }: { go: (id: string) => void }) {
 
 // ─── Colors ─────────────────────────────────────────────────────────────────
 
-const COLOR_META: Record<string, { name: string; group: 'Brand' | 'Accent' | 'Neutral' | 'Semantic' | 'Pastel'; role: string }> = {
+const COLOR_META: Record<string, { name: string; group: 'Brand' | 'Accent' | 'Neutral' | 'Semantic'; role: string }> = {
   coral: { name: 'Ember', group: 'Brand', role: 'Action, status, emphasis, eyebrows. If it’s coral, it’s important.' },
   'coral-deep': { name: 'Ember Deep', group: 'Brand', role: 'Pressed state of Ember.' },
   'coral-soft': { name: 'Ember Soft', group: 'Brand', role: 'Faint tint behind Ember icons and highlights.' },
@@ -128,10 +128,6 @@ const COLOR_META: Record<string, { name: string; group: 'Brand' | 'Accent' | 'Ne
   'blue-task': { name: 'Walk Blue', group: 'Semantic', role: 'Walk task badge. Same value as Cobalt.' },
   'purple-task': { name: 'Medication Purple', group: 'Semantic', role: 'Medication task badge.' },
   'green-vivid': { name: 'Potty Green', group: 'Semantic', role: 'Potty badge, done states.' },
-  peach: { name: 'Peach', group: 'Pastel', role: 'Legacy pastel from the July rebrand.' },
-  lavender: { name: 'Lavender', group: 'Pastel', role: 'Legacy pastel from the July rebrand.' },
-  lemon: { name: 'Lemon', group: 'Pastel', role: 'Legacy pastel from the July rebrand.' },
-  mint: { name: 'Mint', group: 'Pastel', role: 'Legacy pastel from the July rebrand.' },
 }
 
 function luminance(hex: string) {
@@ -153,7 +149,7 @@ function ContrastPill({ fg, bg }: { fg: string; bg: string }) {
   const grade = r >= 7 ? 'AAA' : r >= 4.5 ? 'AA' : r >= 3 ? 'AA large' : 'Fail'
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-2 h-5 font-dm font-bold text-[11px] tabular-nums ${
+      className={`inline-flex items-center gap-1 rounded-full px-2 h-5 font-dm font-bold text-[12px] tabular-nums ${
         grade === 'Fail' ? 'bg-[#fee2e2] text-[#b91c1c]' : 'bg-[#dcfce7] text-[#15803d]'
       }`}
     >
@@ -174,7 +170,7 @@ export function ColorsPage() {
       })),
     [],
   )
-  const groups = ['Brand', 'Accent', 'Neutral', 'Semantic', 'Pastel'] as const
+  const groups = ['Brand', 'Accent', 'Neutral', 'Semantic'] as const
   const sel = tokens.find((t) => t.key === selected)
 
   return (
@@ -253,7 +249,7 @@ export function ColorsPage() {
                   ['As text on Studio White', sel.hex, '#fcfcfc'],
                 ].map(([l, fg, bg]) => (
                   <div key={l} className="flex items-center justify-between gap-2">
-                    <span className="font-dm text-[13px] text-text-secondary">{l}</span>
+                    <span className="font-dm text-[14px] text-text-secondary">{l}</span>
                     <ContrastPill fg={fg} bg={bg} />
                   </div>
                 ))}
@@ -285,7 +281,7 @@ export function ColorsPage() {
                   <Icon size={20} />
                 </span>
                 <span className="font-dm font-bold text-[14px] text-text-primary capitalize">{t}</span>
-                <span className="font-mono text-[11px] text-text-muted">{bg}</span>
+                <span className="font-mono text-[12px] text-text-muted">{bg}</span>
               </div>
             )
           })}
@@ -294,7 +290,7 @@ export function ColorsPage() {
 
       <Section
         title="Hard-coded colors"
-        aside={<span className="font-dm text-[13px] text-text-muted">{hardcodedColors.length} values bypass the tokens</span>}
+        aside={<span className="font-dm text-[14px] text-text-muted">{hardcodedColors.length} values bypass the tokens</span>}
       >
         <Prose>
           <p>
@@ -310,13 +306,13 @@ export function ColorsPage() {
               <details key={h.value} className="group">
                 <summary className="flex items-center gap-3 px-4 py-2.5 cursor-pointer list-none">
                   <span className="size-7 rounded-[8px] border border-border-light shrink-0" style={{ background: h.value }} />
-                  <span className="font-mono text-[13px] text-text-primary uppercase w-20">{h.value}</span>
+                  <span className="font-mono text-[14px] text-text-primary uppercase w-20">{h.value}</span>
                   {dupe && (
-                    <span className="rounded-full bg-[#fef9c3] text-[#a16207] px-2 font-dm font-bold text-[11px]">
+                    <span className="rounded-full bg-[#fef9c3] text-[#a16207] px-2 font-dm font-bold text-[12px]">
                       = {dupe[0]} token
                     </span>
                   )}
-                  <span className="ml-auto font-dm font-bold text-[13px] text-text-primary tabular-nums">{h.usage.count}×</span>
+                  <span className="ml-auto font-dm font-bold text-[14px] text-text-primary tabular-nums">{h.usage.count}×</span>
                 </summary>
                 <div className="px-4 pb-3 pl-14">
                   <UsageList usage={h.usage} max={10} />
@@ -363,7 +359,7 @@ export function TypographyPage() {
               <p className={`font-${key} font-bold text-[64px] leading-none text-text-primary`}>Aa</p>
               <p className="font-dm font-bold text-[16px] text-text-primary mt-4">{fontTokens[key][0].replace(/"/g, '')}</p>
               <p className="font-mono text-[12px] text-text-muted">font-{key} · used {usage.count}×</p>
-              <p className={`font-${key} text-[15px] text-text-secondary mt-3 leading-relaxed`}>
+              <p className={`font-${key} text-[16px] text-text-secondary mt-3 leading-relaxed`}>
                 ABCDEFGHIJKLM nopqrstuvwxyz 0123456789 · 7:30 AM · 2 of 5 done
               </p>
             </div>
@@ -382,7 +378,7 @@ export function TypographyPage() {
               <div className="min-w-0 space-y-2">
                 <p className={`${r.cls} break-words`}>{sample || r.sample}</p>
                 <div className="flex items-center gap-2">
-                  <code className="font-mono text-[11px] text-text-muted break-all">{r.cls}</code>
+                  <code className="font-mono text-[12px] text-text-muted break-all">{r.cls}</code>
                   <CopyButton text={r.cls} />
                 </div>
               </div>
@@ -395,7 +391,7 @@ export function TypographyPage() {
             value={sample}
             onChange={(e) => setSample(e.target.value)}
             placeholder="e.g. Poppy’s evening meds"
-            className="w-full max-w-md bg-white border border-border-light rounded-[12px] px-4 py-3 font-dm text-[15px] focus:outline-none focus:border-coral"
+            className="w-full max-w-md bg-white border border-border-light rounded-[12px] px-4 py-3 font-dm text-[16px] focus:outline-none focus:border-coral"
           />
         </label>
       </Section>
@@ -411,7 +407,7 @@ export function TypographyPage() {
                   role="radio"
                   aria-checked={family === f}
                   onClick={() => setFamily(f)}
-                  className={`rounded-full px-4 py-2 font-dm font-bold text-[13px] ${
+                  className={`rounded-full px-4 py-2 font-dm font-bold text-[14px] ${
                     family === f ? 'bg-coral text-white' : 'bg-white border border-border-light text-text-primary'
                   }`}
                 >
@@ -446,15 +442,24 @@ export function TypographyPage() {
         </div>
       </Section>
 
-      <Section title="Sizes actually in use" aside={<span className="font-dm text-[13px] text-text-muted">{fontSizes.length} distinct sizes</span>}>
+      <Section title="Sizes actually in use" aside={<span className="font-dm text-[14px] text-text-muted">{fontSizes.length} distinct sizes</span>}>
         <Prose>
-          <p>Every <code className="font-mono">text-[Npx]</code> in the code, largest first. Long bars are the real scale; one-offs are worth questioning.</p>
+          <p>
+            Every <code className="font-mono">text-[Npx]</code> in the code, largest first. Long bars are the real scale;
+            one-offs are worth questioning. Odd sizes break the Even Sizes Rule and are marked in red.
+          </p>
         </Prose>
         <div className="mt-4 rounded-[16px] border border-border-light bg-white p-4 space-y-1.5">
           {fontSizes.map((f) => (
             <details key={f.value}>
               <summary className="flex items-center gap-3 cursor-pointer list-none">
-                <span className="w-12 font-mono text-[12px] text-text-secondary text-right tabular-nums">{f.value}px</span>
+                <span
+                  className={`w-12 font-mono text-[12px] text-right tabular-nums ${
+                    Number(f.value) % 2 ? 'text-[#b91c1c] font-bold' : 'text-text-secondary'
+                  }`}
+                >
+                  {f.value}px
+                </span>
                 <span className="flex-1 h-5 bg-card rounded-full overflow-hidden">
                   <span
                     className={`block h-full rounded-full ${f.usage.count <= 2 ? 'bg-[#f4c3b0]' : 'bg-coral'}`}
@@ -475,9 +480,9 @@ export function TypographyPage() {
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           {fontWeights.map((w) => (
             <div key={w.key} className="rounded-[16px] border border-border-light bg-white p-4">
-              <p className={`font-dm font-${w.key} text-[28px] leading-none text-text-primary`}>Ag</p>
+              <p className="font-dm text-[28px] leading-none text-text-primary" style={{ fontWeight: ({ normal: 400, medium: 500, semibold: 600, bold: 700, extrabold: 800 } as Record<string, number>)[w.key] }}>Ag</p>
               <p className="font-mono text-[12px] text-text-muted mt-2">font-{w.key}</p>
-              <p className="font-dm font-bold text-[13px] text-text-primary">{w.usage.count}×</p>
+              <p className="font-dm font-bold text-[14px] text-text-primary">{w.usage.count}×</p>
             </div>
           ))}
         </div>
@@ -555,9 +560,9 @@ export function ShapePage() {
               </label>
             ))}
             <div className="rounded-[12px] bg-card px-4 py-3">
-              <p className="font-dm text-[13px] text-text-secondary">Card radius</p>
+              <p className="font-dm text-[14px] text-text-secondary">Card radius</p>
               <p className="font-outfit font-bold text-[28px] text-coral leading-none mt-1 tabular-nums">{outer}px</p>
-              <code className="block font-mono text-[11px] text-text-muted mt-2">
+              <code className="block font-mono text-[12px] text-text-muted mt-2">
                 rounded-[{outer}px] p-[{pad}px] → photo rounded-[{inner}px]
               </code>
             </div>
@@ -634,7 +639,7 @@ export function LayoutPage() {
             <div key={l} className="rounded-[22px] bg-card p-5">
               <p className="font-outfit font-bold text-[36px] leading-none text-coral">{v}</p>
               <p className="font-dm font-bold text-[14px] text-text-primary mt-2">{l}</p>
-              <p className="font-dm text-[13px] text-text-secondary mt-1 leading-snug">{d}</p>
+              <p className="font-dm text-[14px] text-text-secondary mt-1 leading-snug">{d}</p>
             </div>
           ))}
         </div>
@@ -651,8 +656,8 @@ export function LayoutPage() {
             <div key={n} className="flex items-center gap-4">
               <span className="w-10 font-mono text-[12px] text-text-secondary">{n}</span>
               <span className="h-5 bg-coral rounded-[4px]" style={{ width: (px as number) * 4 }} />
-              <span className="font-dm font-bold text-[13px] text-text-primary tabular-nums">{px}px</span>
-              <span className="font-dm text-[13px] text-text-muted hidden sm:inline">{d}</span>
+              <span className="font-dm font-bold text-[14px] text-text-primary tabular-nums">{px}px</span>
+              <span className="font-dm text-[14px] text-text-muted hidden sm:inline">{d}</span>
             </div>
           ))}
         </div>
@@ -733,7 +738,7 @@ export function MotionPage() {
             </span>
           ))}
         </div>
-        <p className="font-dm text-[13px] text-text-muted mt-2">Paws pop out of the check badge when a swipe commits a task to Done.</p>
+        <p className="font-dm text-[14px] text-text-muted mt-2">Paws pop out of the check badge when a swipe commits a task to Done.</p>
       </Section>
 
       <Section title="All keyframes in index.css">
@@ -753,7 +758,7 @@ export function MotionPage() {
                         {k.name.startsWith('swipe') ? (
                           <div className={`size-full rounded-[10px] ${k.name === 'swipe-fill-in' ? 'bg-[#166534]' : 'bg-white border border-border-light'}`} />
                         ) : k.name.startsWith('toast') ? (
-                          <div className="rounded-full bg-text-primary text-white font-dm font-bold text-[13px] px-4 py-2 whitespace-nowrap">Walk logged</div>
+                          <div className="rounded-full bg-text-primary text-white font-dm font-bold text-[14px] px-4 py-2 whitespace-nowrap">Walk logged</div>
                         ) : (
                           <div className="rounded-[16px] bg-coral text-white font-dm font-bold text-[14px] px-5 py-3">Hello</div>
                         )}
@@ -761,9 +766,9 @@ export function MotionPage() {
                     )}
                   </div>
                   <div className="p-4">
-                    <p className="font-mono font-bold text-[13px] text-text-primary">{k.name}</p>
-                    {k.rule && <p className="font-mono text-[11px] text-text-muted mt-1 break-words">{k.rule}</p>}
-                    {demo && <p className="font-dm text-[13px] text-text-secondary mt-2 leading-snug">{demo.note}</p>}
+                    <p className="font-mono font-bold text-[14px] text-text-primary">{k.name}</p>
+                    {k.rule && <p className="font-mono text-[12px] text-text-muted mt-1 break-words">{k.rule}</p>}
+                    {demo && <p className="font-dm text-[14px] text-text-secondary mt-2 leading-snug">{demo.note}</p>}
                   </div>
                 </div>
               )
@@ -823,7 +828,7 @@ export function IconsPage() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search icons"
-          className="w-full max-w-sm mb-4 bg-card rounded-full px-5 py-3 font-dm text-[15px] focus:outline-none focus:ring-2 focus:ring-coral"
+          className="w-full max-w-sm mb-4 bg-card rounded-full px-5 py-3 font-dm text-[16px] focus:outline-none focus:ring-2 focus:ring-coral"
         />
         <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-7 gap-3">
           {list.map(({ name, files }) => {
@@ -843,7 +848,7 @@ export function IconsPage() {
             )
           })}
         </div>
-        <p className="font-dm text-[13px] text-text-muted mt-3">Click an icon to copy its JSX. Hover to see which files use it.</p>
+        <p className="font-dm text-[14px] text-text-muted mt-3">Click an icon to copy its JSX. Hover to see which files use it.</p>
       </Section>
     </>
   )
@@ -871,7 +876,7 @@ export function VoicePage() {
           ].map(([l, t]) => (
             <div key={l} className="rounded-[16px] border border-border-light bg-white p-5">
               <p className="font-dm font-bold text-[12px] uppercase tracking-wide text-text-secondary">{l}</p>
-              <p className="font-dm font-bold text-[17px] text-text-primary mt-1">{t}</p>
+              <p className="font-dm font-bold text-[18px] text-text-primary mt-1">{t}</p>
             </div>
           ))}
         </div>
@@ -880,16 +885,16 @@ export function VoicePage() {
       <Section title="Guidelines">
         <div className="space-y-4">
           <DoDont
-            good={{ text: 'Name the dog and the thing.', visual: <p className="font-dm font-bold text-[17px]">Give Poppy her evening pill</p> }}
-            bad={{ text: 'Generic system speak.', visual: <p className="font-dm font-bold text-[17px]">Task #4 pending</p> }}
+            good={{ text: 'Name the dog and the thing.', visual: <p className="font-dm font-bold text-[18px]">Give Poppy her evening pill</p> }}
+            bad={{ text: 'Generic system speak.', visual: <p className="font-dm font-bold text-[18px]">Task #4 pending</p> }}
           />
           <DoDont
-            good={{ text: 'Plain and warm.', visual: <p className="font-dm font-bold text-[17px]">All done for today</p> }}
-            bad={{ text: 'Baby talk undermines trust.', visual: <p className="font-dm font-bold text-[17px]">Yay!! Pupper is a happy fluffball!! 🐶💕</p> }}
+            good={{ text: 'Plain and warm.', visual: <p className="font-dm font-bold text-[18px]">All done for today</p> }}
+            bad={{ text: 'Baby talk undermines trust.', visual: <p className="font-dm font-bold text-[18px]">Yay!! Pupper is a happy fluffball!! 🐶💕</p> }}
           />
           <DoDont
-            good={{ text: 'An “other” task shows its own title.', visual: <p className="font-dm font-bold text-[17px]">Nail trim</p> }}
-            bad={{ text: 'Never the generic label.', visual: <p className="font-dm font-bold text-[17px]">Task</p> }}
+            good={{ text: 'An “other” task shows its own title.', visual: <p className="font-dm font-bold text-[18px]">Nail trim</p> }}
+            bad={{ text: 'Never the generic label.', visual: <p className="font-dm font-bold text-[18px]">Task</p> }}
           />
         </div>
       </Section>

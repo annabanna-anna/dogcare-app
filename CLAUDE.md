@@ -9,6 +9,8 @@ This project has a documented design system — read before making UI changes:
 
 Rule for edit screens (see DESIGN.md › Buttons): Save stays disabled until something has actually changed.
 
+Rule for sizes (see DESIGN.md › The Even Sizes Rule): font sizes, padding/margin/gaps and icon sizes are multiples of 2 (prefer 4) — no 11/13/15/17px. Borders are exempt.
+
 Rule for dog photos (see DESIGN.md › The Shape Match Rule): a photo matches its container — round inside a pill, concentric corners inside a card.
 
 North Star: "The Good Boy Standard" — bold and playful, but never at the cost of being fast and legible for someone mid-shift, one-handed.

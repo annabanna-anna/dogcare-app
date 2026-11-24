@@ -192,10 +192,10 @@ function HeroTodayScreen({
             className="size-8 rounded-full object-cover shrink-0"
           />
           <span>
-            <span className="block font-dm font-semibold text-[13px] text-text-primary leading-none">
+            <span className="block font-dm font-semibold text-[14px] text-text-primary leading-none">
               George
             </span>
-            <span className="block font-dm text-[11px] text-text-secondary mt-0.5">
+            <span className="block font-dm text-[12px] text-text-secondary mt-0.5">
               Until {untilDate}
             </span>
           </span>
@@ -310,7 +310,7 @@ function AddDogPhotoCollage() {
             <span className={`inline-flex items-center justify-center rounded-full size-7 shrink-0 ${bg}`}>
               <Icon size={14} className="text-white" />
             </span>
-            <span className="font-dm font-bold text-[11px] tracking-wide text-text-primary leading-tight">
+            <span className="font-dm font-bold text-[12px] tracking-wide text-text-primary leading-tight">
               {text}
             </span>
           </div>
@@ -455,11 +455,11 @@ function StartStayCollage() {
             <p className="font-dm font-bold text-[12px] text-text-secondary tracking-[0.05em] mb-1.5">START</p>
             <div className="flex gap-2">
               <div className="flex-1 flex items-center justify-between rounded-[12px] border border-border-light px-4 py-3">
-                <span className="font-dm text-[15px] text-text-primary">Aug 20, 2026</span>
+                <span className="font-dm text-[16px] text-text-primary">Aug 20, 2026</span>
                 <CalendarDays size={18} className="text-text-muted" />
               </div>
               <div className="shrink-0 w-[108px] rounded-[12px] border border-border-light px-4 py-3">
-                <span className="font-dm text-[15px] text-text-primary">9:00 AM</span>
+                <span className="font-dm text-[16px] text-text-primary">9:00 AM</span>
               </div>
             </div>
           </div>
@@ -467,11 +467,11 @@ function StartStayCollage() {
             <p className="font-dm font-bold text-[12px] text-text-secondary tracking-[0.05em] mb-1.5">END</p>
             <div className="flex gap-2">
               <div className="flex-1 flex items-center justify-between rounded-[12px] border border-border-light px-4 py-3">
-                <span className="font-dm text-[15px] text-text-primary">Aug 25, 2026</span>
+                <span className="font-dm text-[16px] text-text-primary">Aug 25, 2026</span>
                 <CalendarDays size={18} className="text-text-muted" />
               </div>
               <div className="shrink-0 w-[108px] rounded-[12px] border border-border-light px-4 py-3">
-                <span className="font-dm text-[15px] text-text-primary">5:00 PM</span>
+                <span className="font-dm text-[16px] text-text-primary">5:00 PM</span>
               </div>
             </div>
           </div>
@@ -513,10 +513,10 @@ function GeneratedTaskRow({
           <Icon size={16} className="text-white" />
         </span>
         <div className="flex-1 min-w-0">
-          <p className="font-dm font-bold text-[15px] text-text-primary leading-tight">{title}</p>
-          {subtitle && <p className="font-dm text-[13px] text-text-secondary mt-1">{subtitle}</p>}
+          <p className="font-dm font-bold text-[16px] text-text-primary leading-tight">{title}</p>
+          {subtitle && <p className="font-dm text-[14px] text-text-secondary mt-1">{subtitle}</p>}
         </div>
-        <span className="font-dm font-bold text-[13px] text-text-muted shrink-0">{time}</span>
+        <span className="font-dm font-bold text-[14px] text-text-muted shrink-0">{time}</span>
       </div>
     </div>
   )
@@ -539,12 +539,12 @@ function TasksGenerateCollage() {
       ref={ref}
       className="mx-auto w-full max-w-[380px] rounded-[20px] bg-white border border-border-faint p-5 flex flex-col gap-3"
     >
-      <p className="font-dm font-bold text-[13px] uppercase tracking-[0.03em] text-coral">
+      <p className="font-dm font-bold text-[14px] uppercase tracking-[0.03em] text-coral">
         Harry・5 tasks
       </p>
 
       <div className={`pop-in-target flex flex-col gap-2 ${inView ? 'pop-in' : ''}`}>
-        <p className="font-dm text-[13px] text-text-secondary">TODAY</p>
+        <p className="font-dm text-[14px] text-text-secondary">TODAY</p>
         <div className="rounded-[16px] border border-border-light overflow-hidden">
           <GeneratedTaskRow time="5:00 PM" title="Dinner" subtitle="One cups of dry kibble" type="meal" />
           <GeneratedTaskRow time="8:00 PM" title="Evening Walk" type="walk" divider={false} />
@@ -555,7 +555,7 @@ function TasksGenerateCollage() {
         className={`pop-in-target flex flex-col gap-2 ${inView ? 'pop-in' : ''}`}
         style={{ animationDelay: `${TASKS_GENERATE_SECOND_DELAY_MS}ms` }}
       >
-        <p className="font-dm text-[13px] text-text-secondary">TOMORROW</p>
+        <p className="font-dm text-[14px] text-text-secondary">TOMORROW</p>
         <div className="rounded-[16px] border border-border-light overflow-hidden">
           <GeneratedTaskRow time="8:30 AM" title="Morning Walk" type="walk" />
           <GeneratedTaskRow time="9:00 AM" title="Breakfast" subtitle="One cups of dry kibble" type="meal" />
@@ -638,7 +638,7 @@ function CheckOffTaskRow({
       <div
         className={`relative bg-white flex gap-3 p-2 h-full w-[calc(100%-32px)] rounded-[10px] ${swipe ? 'swipe-reveal' : ''}`}
       >
-        <span className="font-dm font-bold text-[13px] text-text-primary shrink-0 pt-1">{time}</span>
+        <span className="font-dm font-bold text-[14px] text-text-primary shrink-0 pt-1">{time}</span>
         <div className="flex flex-col items-center shrink-0">
           <span className={`inline-flex items-center justify-center rounded-[16px] size-8 shrink-0 ${bg}`}>
             <Icon size={16} className="text-white" />
@@ -647,7 +647,7 @@ function CheckOffTaskRow({
         </div>
         <div className="flex-1 min-w-0 pt-0.5">
           <p className="font-dm font-bold text-[16px] text-text-primary leading-tight">{title}</p>
-          {subtitle && <p className="font-dm text-[13px] text-text-secondary mt-0.5">{subtitle}</p>}
+          {subtitle && <p className="font-dm text-[14px] text-text-secondary mt-0.5">{subtitle}</p>}
         </div>
       </div>
     </div>
@@ -716,8 +716,8 @@ function CheckOffCollage() {
         <div className="inline-flex items-center gap-2.5 rounded-full border border-border-light pl-1.5 pr-4 py-1.5">
           <img src="/how-it-works/step5-rusty.png" alt="" className="size-9 rounded-full object-cover" />
           <div>
-            <p className="font-dm font-bold text-[13px] text-text-primary leading-none">Rusty</p>
-            <p className="font-dm text-[11px] text-text-secondary mt-1">Until Aug 25</p>
+            <p className="font-dm font-bold text-[14px] text-text-primary leading-none">Rusty</p>
+            <p className="font-dm text-[12px] text-text-secondary mt-1">Until Aug 25</p>
           </div>
         </div>
       </div>
@@ -801,8 +801,8 @@ function NotificationCard({ n }: { n: (typeof NOTIFICATIONS)[number] }) {
       style={{ width: NOTIFICATION_CARD_WIDTH }}
     >
       <img src={n.photo} alt="" className="w-10 h-10 rounded-[8px] object-cover shrink-0" />
-      <p className="flex-1 min-w-0 font-dm font-medium text-[13px] text-text-primary leading-snug">{n.message}</p>
-      <span className="shrink-0 font-dm text-[11px] text-text-muted">{n.time}</span>
+      <p className="flex-1 min-w-0 font-dm font-medium text-[14px] text-text-primary leading-snug">{n.message}</p>
+      <span className="shrink-0 font-dm text-[12px] text-text-muted">{n.time}</span>
     </div>
   )
 }
@@ -944,7 +944,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
         aria-expanded={open}
         className="w-full flex items-center justify-between gap-4 py-5 text-left"
       >
-        <span className="font-outfit font-bold text-[17px] text-text-primary leading-snug">{q}</span>
+        <span className="font-outfit font-bold text-[18px] text-text-primary leading-snug">{q}</span>
         <ChevronDown
           size={18}
           className={`shrink-0 text-cobalt transition-transform duration-300 ${open ? 'rotate-180' : ''}`}
@@ -956,7 +956,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
         }`}
       >
         <div className="overflow-hidden">
-          <p className="font-dm text-[15px] text-text-secondary leading-relaxed pb-5 max-w-[60ch]">{a}</p>
+          <p className="font-dm text-[16px] text-text-secondary leading-relaxed pb-5 max-w-[60ch]">{a}</p>
         </div>
       </div>
     </div>
@@ -998,7 +998,7 @@ export default function AboutPage() {
             <span className="block text-coral">One list.</span>
           </h1>
           <p
-            className="rise-in font-dm text-[17px] sm:text-[19px] text-text-secondary leading-relaxed mt-6 max-w-[52ch]"
+            className="rise-in font-dm text-[18px] sm:text-[20px] text-text-secondary leading-relaxed mt-6 max-w-[52ch]"
             style={{ animationDelay: '90ms', textWrap: 'pretty' }}
           >
             HeyPup turns every boarding stay into a schedule of care tasks, grouped by dog. Built
@@ -1008,14 +1008,14 @@ export default function AboutPage() {
           <div className="rise-in flex flex-wrap gap-3 mt-8" style={{ animationDelay: '180ms' }}>
             <a
               href={APP_URL}
-              className="inline-flex items-center gap-2 rounded-full bg-coral px-6 py-3.5 font-dm font-bold text-[15px] text-white hover:bg-coral-deep transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
+              className="inline-flex items-center gap-2 rounded-full bg-coral px-6 py-3.5 font-dm font-bold text-[16px] text-white hover:bg-coral-deep transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
             >
               Start tracking
-              <ArrowRight size={17} />
+              <ArrowRight size={18} />
             </a>
             <a
               href="#calendar-sync"
-              className="inline-flex items-center gap-2 rounded-full bg-white border-2 border-text-primary px-6 py-3.5 font-dm font-bold text-[15px] text-text-primary hover:bg-card transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coral"
+              className="inline-flex items-center gap-2 rounded-full bg-white border-2 border-text-primary px-6 py-3.5 font-dm font-bold text-[16px] text-text-primary hover:bg-card transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coral"
             >
               How calendar sync works
             </a>
@@ -1046,7 +1046,7 @@ export default function AboutPage() {
               </PhoneFrame>
             </div>
           </div>
-          <p className="font-dm text-[13px] text-text-muted text-center mt-4">
+          <p className="font-dm text-[14px] text-text-muted text-center mt-4">
             Go ahead, swipe a task to mark it <span className="font-bold text-text-secondary">Done</span>. It
             works right in your browser, nothing to download.
           </p>
@@ -1101,13 +1101,13 @@ export default function AboutPage() {
                 }`}
               >
                 <div>
-                  <span className="font-dm font-bold text-[13px] uppercase tracking-[0.1em] text-coral">
+                  <span className="font-dm font-bold text-[14px] uppercase tracking-[0.1em] text-coral">
                     Step {i + 1}
                   </span>
                   <p className="font-outfit font-bold text-cobalt text-[clamp(1.75rem,3.2vw,2.5rem)] leading-[1.05] tracking-[-0.02em] mt-1.5">
                     {step.title}
                   </p>
-                  <p className="font-dm text-[17px] leading-relaxed text-text-secondary mt-3 max-w-[40ch]">
+                  <p className="font-dm text-[18px] leading-relaxed text-text-secondary mt-3 max-w-[40ch]">
                     {step.body}
                   </p>
                 </div>
@@ -1142,7 +1142,7 @@ export default function AboutPage() {
                   <Icon size={20} className="text-cobalt" />
                 </span>
                 <p className="font-outfit font-bold text-[20px] text-text-primary mt-4">{title}</p>
-                <p className="font-dm text-[15px] text-text-secondary leading-relaxed mt-2 max-w-[40ch]">
+                <p className="font-dm text-[16px] text-text-secondary leading-relaxed mt-2 max-w-[40ch]">
                   {body}
                 </p>
               </div>
@@ -1162,8 +1162,8 @@ export default function AboutPage() {
                   a dead quarter-screen under this column on desktop. */}
               <div className="lg:self-center">
                 <div className="inline-flex items-center gap-2 rounded-full bg-white border border-border-light px-3 py-1.5">
-                  <CalendarDays size={15} className="text-cobalt" />
-                  <span className="font-dm font-bold text-[13px] text-text-primary">
+                  <CalendarDays size={16} className="text-cobalt" />
+                  <span className="font-dm font-bold text-[14px] text-text-primary">
                     Google Calendar
                   </span>
                 </div>
@@ -1186,7 +1186,7 @@ export default function AboutPage() {
                       Reading your bookings
                     </span>
                   </dt>
-                  <dd className="font-dm text-[15px] text-text-secondary leading-relaxed mt-2.5">
+                  <dd className="font-dm text-[16px] text-text-secondary leading-relaxed mt-2.5">
                     If you use Rover's calendar sync, HeyPup finds that calendar automatically and
                     reads only its confirmed bookings, so a stay you accepted on Rover shows up here
                     without retyping it. No other calendar is read.
@@ -1200,7 +1200,7 @@ export default function AboutPage() {
                       Writing your care tasks
                     </span>
                   </dt>
-                  <dd className="font-dm text-[15px] text-text-secondary leading-relaxed mt-2.5">
+                  <dd className="font-dm text-[16px] text-text-secondary leading-relaxed mt-2.5">
                     Meals, meds, and walks are written as timed events to a separate calendar called
                     “HeyPup” that the app creates for you. Your personal calendar is never written
                     to, and you can turn pushing off while staying connected.
@@ -1214,7 +1214,7 @@ export default function AboutPage() {
                       Ending it is one tap
                     </span>
                   </dt>
-                  <dd className="font-dm text-[15px] text-text-secondary leading-relaxed mt-2.5">
+                  <dd className="font-dm text-[16px] text-text-secondary leading-relaxed mt-2.5">
                     Disconnect in Settings and HeyPup deletes the access it was given. You can also
                     revoke it from your Google Account at any time.{' '}
                     <Link
@@ -1274,7 +1274,7 @@ export default function AboutPage() {
           >
             Zero missed meals. Zero missed meds.
           </h2>
-          <p className="font-dm text-[17px] text-white/90 leading-relaxed mt-5 mx-auto max-w-[48ch]">
+          <p className="font-dm text-[18px] text-white/90 leading-relaxed mt-5 mx-auto max-w-[48ch]">
             Free to use while HeyPup is finding its feet. Bring your own dogs.
           </p>
           <a

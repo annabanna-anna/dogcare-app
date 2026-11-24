@@ -153,7 +153,7 @@ export default function CalendarPage() {
               <p className="font-dm font-bold text-[14px] text-text-primary leading-snug">
                 Connect Google Calendar
               </p>
-              <p className="font-dm text-[13px] text-text-secondary mt-0.5 leading-snug">
+              <p className="font-dm text-[14px] text-text-secondary mt-0.5 leading-snug">
                 Works if Rover is already syncing to your Google Calendar. No Rover
                 ↔︎ Google connection means no bookings here either.
               </p>
@@ -161,14 +161,14 @@ export default function CalendarPage() {
                 <button
                   onClick={handleConnect}
                   disabled={connecting}
-                  className="font-dm font-bold text-[13px] text-cobalt"
+                  className="font-dm font-bold text-[14px] text-cobalt"
                 >
                   {connecting ? 'Connecting…' : 'Connect'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowCalendarInfo(true)}
-                  className="font-dm font-bold text-[13px] text-text-secondary"
+                  className="font-dm font-bold text-[14px] text-text-secondary"
                 >
                   Learn more
                 </button>
@@ -178,7 +178,7 @@ export default function CalendarPage() {
         )}
 
         <div className="flex items-center justify-between">
-          <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest">
+          <p className="font-dm font-bold text-[14px] text-text-secondary uppercase tracking-widest">
             Upcoming Stays
           </p>
           {googleConnected && isPushEnabled() && upcomingStays.length > 0 && !lastPushError && (
@@ -195,7 +195,7 @@ export default function CalendarPage() {
 
         {error && (
           <div className="bg-[#fee2e2] rounded-[12px] px-4 py-3">
-            <p className="font-dm text-[13px] text-[#b91c1c]">{error}</p>
+            <p className="font-dm text-[14px] text-[#b91c1c]">{error}</p>
           </div>
         )}
 
@@ -203,7 +203,7 @@ export default function CalendarPage() {
           <div className="flex items-start gap-2 bg-[#fee2e2] rounded-[12px] px-4 py-3">
             <AlertCircle size={16} className="text-[#b91c1c] shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="font-dm text-[13px] text-[#b91c1c] leading-snug">
+              <p className="font-dm text-[14px] text-[#b91c1c] leading-snug">
                 A push to Google didn't go through: {lastPushError}
               </p>
               <button
@@ -222,7 +222,7 @@ export default function CalendarPage() {
         {!loading && upcomingStays.length === 0 && (
           <div className="py-16 flex flex-col items-center gap-3 text-center">
             <CalendarDays size={40} className="text-[#d1d5db]" />
-            <p className="font-outfit font-bold text-[17px] text-text-primary">
+            <p className="font-outfit font-bold text-[18px] text-text-primary">
               No upcoming stays
             </p>
             <p className="font-dm text-[14px] text-text-secondary">
@@ -251,22 +251,22 @@ export default function CalendarPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
-                  <p className="font-outfit font-semibold text-[17px] text-text-primary leading-none">
+                  <p className="font-outfit font-semibold text-[18px] text-text-primary leading-none">
                     {stayDisplayName(dog, stay.dogKeys)}
                   </p>
                   {isActive && (
-                    <span className="text-[11px] font-dm font-bold bg-[#dcfce7] text-[#15803d] rounded-full px-2 py-0.5">
+                    <span className="text-[12px] font-dm font-bold bg-[#dcfce7] text-[#15803d] rounded-full px-2 py-0.5">
                       Active
                     </span>
                   )}
                 </div>
-                <p className="font-dm text-[13px] text-text-secondary">
+                <p className="font-dm text-[14px] text-text-secondary">
                   {formatShortDate(stay.startDate)} → {formatShortDate(stay.endDate)}
                   {dogsAtHome(dog, stay.dogKeys).length > 0 &&
                     ` · ${joinDogNames(dogsAtHome(dog, stay.dogKeys).map((d) => d.name))} at home`}
                 </p>
                 {stay.notes && (
-                  <p className="font-dm text-[13px] text-text-muted mt-1 truncate">
+                  <p className="font-dm text-[14px] text-text-muted mt-1 truncate">
                     {stay.notes}
                   </p>
                 )}
@@ -278,7 +278,7 @@ export default function CalendarPage() {
         {googleConnected && (
           <>
             <div className="flex items-center justify-between mt-2">
-              <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest">
+              <p className="font-dm font-bold text-[14px] text-text-secondary uppercase tracking-widest">
                 {isRover ? 'From Rover' : 'From Google Calendar'}
               </p>
               <button
@@ -294,7 +294,7 @@ export default function CalendarPage() {
               <div className="flex items-start gap-2 bg-[#fee2e2] rounded-[12px] px-4 py-3">
                 <AlertCircle size={16} className="text-[#b91c1c] shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <p className="font-dm text-[13px] text-[#b91c1c]">{googleError}</p>
+                  <p className="font-dm text-[14px] text-[#b91c1c]">{googleError}</p>
                   <button
                     onClick={() => navigate('/settings')}
                     className="font-dm font-bold text-[12px] text-[#b91c1c] underline mt-1"
@@ -306,7 +306,7 @@ export default function CalendarPage() {
             )}
 
             {!googleError && googleEvents.length === 0 && (
-              <p className="font-dm text-[13px] text-text-secondary">
+              <p className="font-dm text-[14px] text-text-secondary">
                 {isRover
                   ? 'No upcoming confirmed bookings.'
                   : 'No upcoming events on your Google Calendar.'}
@@ -328,7 +328,7 @@ export default function CalendarPage() {
                   <p className="font-outfit font-semibold text-[16px] text-text-primary leading-tight truncate">
                     {event.title}
                   </p>
-                  <p className="font-dm text-[13px] text-text-secondary mt-0.5">
+                  <p className="font-dm text-[14px] text-text-secondary mt-0.5">
                     {formatEventRange(event)}
                   </p>
                 </div>
@@ -357,7 +357,7 @@ export default function CalendarPage() {
             </p>
             <button
               onClick={() => setShowCalendarInfo(false)}
-              className="w-full rounded-full py-3 font-dm font-bold text-[15px] text-text-secondary active:bg-black/5 transition-colors"
+              className="w-full rounded-full py-3 font-dm font-bold text-[16px] text-text-secondary active:bg-black/5 transition-colors"
             >
               Got it
             </button>

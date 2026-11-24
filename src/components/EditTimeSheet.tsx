@@ -64,7 +64,7 @@ export default function EditTimeSheet({ task, followers, onSave, onClose, planne
           </span>
           <div className="min-w-0">
             <p className="font-outfit font-bold text-[22px] text-text-primary leading-tight truncate">{task.title}</p>
-            <p className="font-dm text-[13px] text-text-secondary">
+            <p className="font-dm text-[14px] text-text-secondary">
               {planned ? `Planned ${originalLabel} · ${planned}` : 'Today only · the usual schedule stays the same'}
             </p>
           </div>
@@ -75,8 +75,8 @@ export default function EditTimeSheet({ task, followers, onSave, onClose, planne
         <div className="flex items-center gap-2 mt-3 min-h-8">
           {changed ? (
             <>
-              <span className="font-dm text-[15px] text-text-muted line-through">{originalLabel}</span>
-              <span className="font-dm text-[15px] text-text-muted">→</span>
+              <span className="font-dm text-[16px] text-text-muted line-through">{originalLabel}</span>
+              <span className="font-dm text-[16px] text-text-muted">→</span>
               <span className="font-dm font-bold text-[20px] text-text-primary">{formatTime(at.toISOString())}</span>
               <span className="px-2 py-0.5 rounded-full bg-coral-soft font-dm font-bold text-[12px] text-coral">
                 {formatShift(shift)}
@@ -90,7 +90,7 @@ export default function EditTimeSheet({ task, followers, onSave, onClose, planne
         </div>
 
         {planned && changed && (
-          <p className="font-dm text-[13px] text-text-secondary mt-2 leading-snug">
+          <p className="font-dm text-[14px] text-text-secondary mt-2 leading-snug">
             Saved as today’s time, so the reminder goes off as usual. After it, the plan follows from when{' '}
             {task.dogName || 'the dog'} actually goes out.
           </p>
@@ -109,18 +109,18 @@ export default function EditTimeSheet({ task, followers, onSave, onClose, planne
                 return (
                   <li key={f.id} className={`flex items-center gap-2.5 transition-opacity ${moveRest ? '' : 'opacity-45'}`}>
                     <span className={`size-6 rounded-full flex items-center justify-center shrink-0 ${fbg}`}>
-                      <FIcon size={13} className="text-white" />
+                      <FIcon size={14} className="text-white" />
                     </span>
                     <span className="flex-1 min-w-0 font-dm font-bold text-[14px] text-text-primary truncate">{f.title}</span>
                     {moveRest ? (
                       <>
-                        <span className="font-dm text-[13px] text-text-muted line-through">{shortTime(from)}</span>
-                        <span className="font-dm font-bold text-[13px] text-text-primary whitespace-nowrap">
+                        <span className="font-dm text-[14px] text-text-muted line-through">{shortTime(from)}</span>
+                        <span className="font-dm font-bold text-[14px] text-text-primary whitespace-nowrap">
                           {formatTime(to.toISOString())}
                         </span>
                       </>
                     ) : (
-                      <span className="font-dm text-[13px] text-text-secondary whitespace-nowrap">
+                      <span className="font-dm text-[14px] text-text-secondary whitespace-nowrap">
                         {formatTime(from.toISOString())} · stays
                       </span>
                     )}

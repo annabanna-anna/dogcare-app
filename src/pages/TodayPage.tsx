@@ -668,8 +668,8 @@ export default function TodayPage() {
     <div className="min-h-svh bg-cream pb-28">
       {/* Header */}
       <div className="sticky top-0 z-30 bg-cream px-6 pt-8 pb-4">
-        <div className="flex items-center justify-between mb-1 h-[13px] leading-none">
-          <p className="font-dm font-bold text-[13px] text-coral uppercase tracking-widest leading-none">
+        <div className="flex items-center justify-between mb-1 h-3.5 leading-none">
+          <p className="font-dm font-bold text-[14px] text-coral uppercase tracking-widest leading-none">
             {formatTodayHeading(selectedDate)}
           </p>
           {!isTodaySelected && (
@@ -680,7 +680,7 @@ export default function TodayPage() {
               className="flex items-center gap-1 text-coral active:scale-95 transition-transform leading-none"
             >
               <CalendarCheck2 size={14} />
-              <span className="font-dm font-bold text-[13px] uppercase tracking-widest leading-none underline underline-offset-2">
+              <span className="font-dm font-bold text-[14px] uppercase tracking-widest leading-none underline underline-offset-2">
                 Today
               </span>
             </button>
@@ -724,11 +724,11 @@ export default function TodayPage() {
                   onClick={() => handleWeekDayClick(day)}
                   className="flex flex-col items-center gap-1.5 active:scale-[0.94] transition-transform"
                 >
-                  <span className="font-dm font-bold text-[11px] uppercase tracking-widest text-text-muted">
+                  <span className="font-dm font-bold text-[12px] uppercase tracking-widest text-text-muted">
                     {WEEKDAY_LETTERS[i]}
                   </span>
                   <span
-                    className={`size-10 rounded-full flex items-center justify-center font-dm font-bold text-[15px] transition-colors ${
+                    className={`size-10 rounded-full flex items-center justify-center font-dm font-bold text-[16px] transition-colors ${
                       isSelected
                         ? 'bg-coral text-white'
                         : isToday
@@ -762,7 +762,7 @@ export default function TodayPage() {
               >
                 <ChevronLeft size={18} />
               </button>
-              <p className="font-outfit font-bold text-[17px] text-text-primary">
+              <p className="font-outfit font-bold text-[18px] text-text-primary">
                 {selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
               </p>
               <button
@@ -780,7 +780,7 @@ export default function TodayPage() {
               {WEEKDAY_LETTERS.map((l, i) => (
                 <span
                   key={i}
-                  className="text-center font-dm font-bold text-[11px] uppercase tracking-widest text-text-muted"
+                  className="text-center font-dm font-bold text-[12px] uppercase tracking-widest text-text-muted"
                 >
                   {l}
                 </span>
@@ -841,7 +841,7 @@ export default function TodayPage() {
 
       {error && (
         <div className="mx-6 mb-4 bg-[#fee2e2] rounded-[12px] px-4 py-3">
-          <p className="font-dm text-[13px] text-[#b91c1c]">{error}</p>
+          <p className="font-dm text-[14px] text-[#b91c1c]">{error}</p>
         </div>
       )}
 
@@ -869,7 +869,7 @@ export default function TodayPage() {
                           <DogIcon size={18} className="text-text-muted" />
                         )}
                       </div>
-                      <p className="font-dm font-bold text-[15px] text-text-primary leading-snug">
+                      <p className="font-dm font-bold text-[16px] text-text-primary leading-snug">
                         {ambiguous
                           ? `Which ${label} are you taking care of today?`
                           : `Are you taking care of ${label} starting today?`}
@@ -943,7 +943,7 @@ export default function TodayPage() {
                     <div className="size-10 rounded-[10px] overflow-hidden bg-white flex items-center justify-center shrink-0">
                       <UserPlus size={18} className="text-cobalt" />
                     </div>
-                    <p className="font-dm font-bold text-[15px] text-text-primary leading-snug">
+                    <p className="font-dm font-bold text-[16px] text-text-primary leading-snug">
                       {dogName} isn't in your dog list yet
                     </p>
                   </div>
@@ -973,7 +973,7 @@ export default function TodayPage() {
           {/* Active Care */}
           {activeDogs.length > 0 && (
             <section className="px-6 mb-6">
-              <p className="font-dm font-bold text-[13px] text-text-secondary uppercase tracking-widest mb-3">
+              <p className="font-dm font-bold text-[14px] text-text-secondary uppercase tracking-widest mb-3">
                 Active Care
               </p>
               {/* One row that scrolls sideways, bleeding to the screen edges so
@@ -1004,7 +1004,7 @@ export default function TodayPage() {
                             {d.photoUrl ? (
                               <img src={d.photoUrl} alt={d.name} className="size-full object-cover" />
                             ) : (
-                              <DogIcon size={17} className="text-text-muted" />
+                              <DogIcon size={18} className="text-text-muted" />
                             )}
                           </div>
                         ))}
@@ -1023,9 +1023,9 @@ export default function TodayPage() {
                 <button
                   type="button"
                   onClick={() => navigate('/stays/new')}
-                  className="flex shrink-0 self-center items-center gap-1.5 whitespace-nowrap rounded-full h-12 px-4 border border-dashed border-border-light text-text-muted font-dm font-medium text-[13px] active:scale-[0.97] transition-transform"
+                  className="flex shrink-0 self-center items-center gap-1.5 whitespace-nowrap rounded-full h-12 px-4 border border-dashed border-border-light text-text-muted font-dm font-medium text-[14px] active:scale-[0.97] transition-transform"
                 >
-                  <CalendarPlus size={15} />
+                  <CalendarPlus size={16} />
                   Start another stay
                 </button>
               </div>
@@ -1044,7 +1044,7 @@ export default function TodayPage() {
               {clock?.last && (
                 <div className="mb-4 bg-card rounded-[12px] pl-3 pr-1 py-1 flex items-center gap-2.5">
                   <Clock size={16} className="text-green-vivid shrink-0" />
-                  <p className="flex-1 min-w-0 font-dm font-medium text-[13px] text-text-primary leading-snug py-2">
+                  <p className="flex-1 min-w-0 font-dm font-medium text-[14px] text-text-primary leading-snug py-2">
                     Out every {clock.rule.everyHours} {clock.rule.everyHours === 1 ? 'hr' : 'hrs'} · last out{' '}
                     {formatTime(clock.last.at.toISOString())}
                   </p>
@@ -1053,7 +1053,7 @@ export default function TodayPage() {
                     onClick={() =>
                       setLastOutSheet({ dog: clock.dog, stay: clock.stay, initial: clock.last!.at, task: clock.last!.task, isChange: true })
                     }
-                    className="shrink-0 px-3 py-2 rounded-full font-dm font-bold text-[13px] text-coral active:bg-coral-soft"
+                    className="shrink-0 px-3 py-2 rounded-full font-dm font-bold text-[14px] text-coral active:bg-coral-soft"
                   >
                     Change
                   </button>
@@ -1143,7 +1143,7 @@ export default function TodayPage() {
                 <p className="font-outfit font-bold text-[20px] text-[#15803d] leading-tight">
                   All done for today!
                 </p>
-                <p className="font-dm text-[13px] text-[#166534]">
+                <p className="font-dm text-[14px] text-[#166534]">
                   Every task is checked off — nice work.
                 </p>
               </div>
@@ -1246,11 +1246,11 @@ export default function TodayPage() {
         // Sits just above the bottom nav.
         <div className="fixed inset-x-0 bottom-28 z-40 flex justify-center px-6 pointer-events-none">
           <div className="rise-in pointer-events-auto w-full max-w-[432px] bg-text-primary rounded-[14px] pl-4 pr-2 py-2 flex items-center gap-3" role="status">
-            <p className="flex-1 min-w-0 font-dm font-medium text-[13px] text-white leading-snug py-1.5">{moveToast.message}</p>
+            <p className="flex-1 min-w-0 font-dm font-medium text-[14px] text-white leading-snug py-1.5">{moveToast.message}</p>
             <button
               type="button"
               onClick={() => void undoMove()}
-              className="shrink-0 px-3 py-2 rounded-full font-dm font-bold text-[13px] text-white underline underline-offset-2 active:bg-white/10"
+              className="shrink-0 px-3 py-2 rounded-full font-dm font-bold text-[14px] text-white underline underline-offset-2 active:bg-white/10"
             >
               Undo
             </button>

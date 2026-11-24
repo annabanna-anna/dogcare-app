@@ -46,8 +46,7 @@ function stripWindow(note: string | undefined, range: string): string | undefine
 export default function TaskCard({ task, onDone, onUndo, showDogName = true, onlyFor, dense = false, plan, passed, onEdit }: Props) {
   const { icon: Icon, bg } = TASK_TYPE_STYLE[task.type] ?? TASK_TYPE_STYLE.other
   const isDone = task.status === 'done'
-  const isSkipped = task.status === 'skipped'
-  const isCompleted = isDone || isSkipped
+  const isCompleted = isDone
   const editable = !!onEdit && !isCompleted && !dense
   // The time it had before being moved on Today, shown struck through.
   const movedFrom =
@@ -94,7 +93,7 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, onl
   // use px-6/24px) so the negative-margin clipping buffer below never
   // pushes the row wider than the screen.
   const restPeek = dense ? 22 : 16
-  const restOffset = isSkipped ? 0 : isDone ? restPeek : -restPeek
+  const restOffset = isDone ? restPeek : -restPeek
 
   // Swipe only — no tap fallback. Anything short of the threshold is just
   // an aborted drag and snaps back without triggering anything.
@@ -126,7 +125,7 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, onl
   }
 
   const handlePointerDown = (e: React.PointerEvent) => {
-    if (isSkipped || celebrating) return
+    if (celebrating) return
     e.currentTarget.setPointerCapture(e.pointerId)
     startXRef.current = e.clientX
     setDragging(true)
@@ -149,7 +148,7 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, onl
 
   // How far into the swipe we are, 0→1 — drives the reveal panel's color
   // ramp and the badge's grow-as-you-commit feedback.
-  const swipeProgress = isSkipped ? 0 : Math.min(Math.abs(dragX) / SWIPE_THRESHOLD, 1)
+  const swipeProgress = Math.min(Math.abs(dragX) / SWIPE_THRESHOLD, 1)
   // The white card's own slide, expressed as a percentage of its own width
   // (not a fixed px amount) so it's fully pushed off to one side — not
   // just nudged over — by the time the drag reaches the commit threshold,
@@ -183,7 +182,6 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, onl
           darker fill as the swipe approaches the commit threshold — green
           "Done" swiping left, grey "Undo" swiping right on a done task.
           The badge itself grows along with it for the same reason. */}
-      {!isSkipped && (
         <div aria-hidden="true" className="absolute inset-x-0 top-0 bottom-5 rounded-[10px] overflow-hidden">
           <div className={`absolute inset-0 ${isDone ? 'bg-[#f3f4f6]' : 'bg-[#dcfce7]'}`} />
           <div
@@ -209,8 +207,8 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, onl
                 </>
               ) : (
                 <>
-                  <CheckCircle2 size={dense ? 15 : 16} className="text-green-vivid" style={{ opacity: 1 - swipeProgress, ...badgeTransition }} />
-                  <CheckCircle2 size={dense ? 15 : 16} className="absolute inset-0 text-white" style={{ opacity: swipeProgress, ...badgeTransition }} />
+                  <CheckCircle2 size={16} className="text-green-vivid" style={{ opacity: 1 - swipeProgress, ...badgeTransition }} />
+                  <CheckCircle2 size={16} className="absolute inset-0 text-white" style={{ opacity: swipeProgress, ...badgeTransition }} />
                 </>
               )}
             </div>
@@ -226,29 +224,28 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, onl
               >
                 <PawPrintFilled
                   className="paw-burst absolute text-white"
-                  size={dense ? 13 : 16}
+                  size={dense ? 14 : 16}
                   style={{ '--tx': '-20px', '--ty': '-16px', '--rot': '-25deg', animationDelay: '0ms' } as React.CSSProperties}
                 />
                 <PawPrintFilled
                   className="paw-burst absolute text-white"
-                  size={dense ? 13 : 16}
+                  size={dense ? 14 : 16}
                   style={{ '--tx': '18px', '--ty': '-18px', '--rot': '20deg', animationDelay: '70ms' } as React.CSSProperties}
                 />
                 <PawPrintFilled
                   className="paw-burst absolute text-white"
-                  size={dense ? 13 : 16}
+                  size={dense ? 14 : 16}
                   style={{ '--tx': '-16px', '--ty': '18px', '--rot': '15deg', animationDelay: '140ms' } as React.CSSProperties}
                 />
                 <PawPrintFilled
                   className="paw-burst absolute text-white"
-                  size={dense ? 13 : 16}
+                  size={dense ? 14 : 16}
                   style={{ '--tx': '20px', '--ty': '16px', '--rot': '-15deg', animationDelay: '40ms' } as React.CSSProperties}
                 />
               </div>
             )}
           </div>
         </div>
-      )}
 
       {/* The whole row — time, icon, and content — swipes together as one unit.
           Carries its own cream→dark-fill background so the darkening reads
@@ -278,26 +275,26 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, onl
               // without moving the time out of line with other rows.
               className="-m-2 p-2 rounded-[10px] flex flex-col items-start gap-0.5 active:bg-card transition-colors"
             >
-              <span className="flex items-center gap-1.5 font-dm font-bold text-[13px] leading-none py-0.5 text-text-primary whitespace-nowrap">
+              <span className="flex items-center gap-1.5 font-dm font-bold text-[14px] leading-none py-0.5 text-text-primary whitespace-nowrap">
                 {displayTime}
                 <Pencil size={12} className="shrink-0 -translate-y-px" aria-hidden="true" />
               </span>
               {movedFrom && (
-                <span className="font-dm text-[11px] text-text-muted line-through whitespace-nowrap">{movedFrom}</span>
+                <span className="font-dm text-[12px] text-text-muted line-through whitespace-nowrap">{movedFrom}</span>
               )}
             </button>
           ) : (
             <>
-              <span className={`font-dm font-bold whitespace-nowrap ${dense ? 'text-[12px]' : 'text-[13px]'} ${plan ? 'text-text-secondary' : 'text-text-primary'}`}>
+              <span className={`font-dm font-bold whitespace-nowrap ${dense ? 'text-[12px]' : 'text-[14px]'} ${plan ? 'text-text-secondary' : 'text-text-primary'}`}>
                 {displayTime}
               </span>
               {movedFrom && (
-                <span className="mt-0.5 font-dm text-[11px] text-text-muted line-through whitespace-nowrap">{movedFrom}</span>
+                <span className="mt-0.5 font-dm text-[12px] text-text-muted line-through whitespace-nowrap">{movedFrom}</span>
               )}
             </>
           )}
           {plan?.next && !isOverdue && task.status === 'pending' && (
-            <span className="mt-1 inline-block px-1.5 py-0.5 rounded-full bg-coral-soft font-dm font-bold text-[11px] text-coral whitespace-nowrap">
+            <span className="mt-1 inline-block px-1.5 py-0.5 rounded-full bg-coral-soft font-dm font-bold text-[12px] text-coral whitespace-nowrap">
               in {formatDuration(plan.at.getTime() - now.getTime())}
             </span>
           )}
@@ -313,7 +310,7 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, onl
           <div
             className={`${dense ? 'size-6' : 'size-8'} rounded-full flex items-center justify-center shrink-0 ${bg}`}
           >
-            <Icon size={dense ? 13 : 17} className="text-white" />
+            <Icon size={dense ? 14 : 18} className="text-white" />
           </div>
           {/* connector line – always present, fades at end of list via CSS in parent */}
           <div className="flex-1 w-0.5 bg-border-faint rounded min-h-0" />
@@ -327,12 +324,12 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, onl
           }`}
         >
           {onlyFor ? (
-            <p className="font-dm font-bold text-[11px] text-text-secondary leading-none mb-1">
+            <p className="font-dm font-bold text-[12px] text-text-secondary leading-none mb-1">
               {onlyFor} only
             </p>
           ) : (
             showDogName && (
-              <p className="font-dm text-[11px] text-text-muted leading-none mb-1">
+              <p className="font-dm text-[12px] text-text-muted leading-none mb-1">
                 {task.dogName}
               </p>
             )
@@ -340,7 +337,7 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, onl
           <p className={`font-dm font-bold ${dense ? 'text-[14px] truncate' : 'text-[16px]'} leading-tight text-text-primary`}>
             {task.title}
             {isOverdue && (
-              <span className="ml-2 px-1.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide text-coral bg-[#fdeee9]">
+              <span className="ml-2 px-1.5 py-0.5 rounded-full text-[12px] font-bold uppercase tracking-wide text-coral bg-[#fdeee9]">
                 Overdue
               </span>
             )}
@@ -349,21 +346,16 @@ export default function TaskCard({ task, onDone, onUndo, showDogName = true, onl
               so every row reserves the same one-line-of-description height
               instead of shrinking when a task happens to have no note. */}
           {showReason && (
-            <p className="font-dm text-[13px] text-text-secondary mt-1 leading-snug">{plan.reason}</p>
+            <p className="font-dm text-[14px] text-text-secondary mt-1 leading-snug">{plan.reason}</p>
           )}
           <p
-            className={`font-dm ${dense ? 'text-[10px] truncate' : 'text-[13px]'} text-text-secondary mt-1 leading-snug ${
+            className={`font-dm ${dense ? 'text-[10px] truncate' : 'text-[14px]'} text-text-secondary mt-1 leading-snug ${
               note ? '' : 'invisible'
             } ${plan && !note ? 'hidden' : ''}`}
           >
             {note || 'placeholder'}
           </p>
 
-          {isSkipped && (
-            <p className="font-dm text-[12px] text-text-muted font-semibold mt-1">
-              – Skipped
-            </p>
-          )}
         </div>
         </div>
       </div>
