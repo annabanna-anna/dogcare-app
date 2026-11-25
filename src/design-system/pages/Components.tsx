@@ -23,8 +23,8 @@ import type { Dog, Stay, Task, TaskStatus, TaskType } from '../../types'
 
 // ─── Sample data ────────────────────────────────────────────────────────────
 
-const PHOTOS = ['/how-it-works/step4-luna.png', '/how-it-works/step4-poppy.png', '/how-it-works/step4-puffin.png']
-const NAMES = ['Luna', 'Poppy', 'Puffin']
+export const PHOTOS = ['/how-it-works/step4-luna.png', '/how-it-works/step4-poppy.png', '/how-it-works/step4-puffin.png']
+export const NAMES = ['Luna', 'Poppy', 'Puffin']
 const BREEDS = ['Shiba Inu', 'Cavalier', 'Corgi']
 
 const notes = {
@@ -32,7 +32,7 @@ const notes = {
   hasAllergies: 'unsure', allergyNotes: '', goesToDogParks: 'unsure', dogParkNotes: '',
 } as const
 
-function sampleDog(count: number, photos: boolean, owner: string): Dog {
+export function sampleDog(count: number, photos: boolean, owner: string): Dog {
   return {
     ...notes,
     id: 'demo',
@@ -58,7 +58,7 @@ function sampleDog(count: number, photos: boolean, owner: string): Dog {
   }
 }
 
-function sampleStay(kind: string): Stay | undefined {
+export function sampleStay(kind: string): Stay | undefined {
   const day = 86_400_000
   const now = Date.now()
   if (kind === 'none') return undefined
@@ -66,7 +66,7 @@ function sampleStay(kind: string): Stay | undefined {
   return { id: 's', dogId: 'demo', startDate: new Date(s).toISOString(), endDate: new Date(e).toISOString(), createdAt: '' }
 }
 
-function at(h: number, m = 0) {
+export function at(h: number, m = 0) {
   const d = new Date()
   d.setHours(h, m, 0, 0)
   return d.toISOString()

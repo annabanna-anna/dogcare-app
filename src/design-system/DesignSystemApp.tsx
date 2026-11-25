@@ -1,19 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Menu, X } from 'lucide-react'
 import PawPrintFilled from '../components/icons/PawPrintFilled'
-import { ColorsPage, IconsPage, LayoutPage, MotionPage, OverviewPage, ShapePage, TypographyPage, VoicePage } from './pages/Foundations'
+import { IconsPage, LayoutPage, MotionPage, ShapePage, TypographyPage, VoicePage } from './pages/Foundations'
+import { ColorsPage } from './pages/Colors'
+import { FOUNDATIONS, HomePage, INTRO, PrinciplesPage } from './pages/Home'
 import { COMPONENT_PAGES } from './pages/Components'
-
-const FOUNDATIONS = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'colors', label: 'Color' },
-  { id: 'typography', label: 'Typography' },
-  { id: 'shape', label: 'Shape' },
-  { id: 'layout', label: 'Layout & depth' },
-  { id: 'motion', label: 'Motion' },
-  { id: 'icons', label: 'Iconography' },
-  { id: 'voice', label: 'Voice & copy' },
-]
 
 const readHash = () => window.location.hash.replace(/^#\/?/, '') || 'overview'
 
@@ -31,15 +22,12 @@ export default function DesignSystemApp() {
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
 
-  const go = (id: string) => {
-    window.location.hash = `/${id}`
-  }
-
   const comp = COMPONENT_PAGES.find((c) => c.id === page)
   const groups = [...new Set(COMPONENT_PAGES.map((c) => c.group))]
 
   let content
   switch (page) {
+    case 'principles': content = <PrinciplesPage />; break
     case 'colors': content = <ColorsPage />; break
     case 'typography': content = <TypographyPage />; break
     case 'shape': content = <ShapePage />; break
@@ -47,7 +35,7 @@ export default function DesignSystemApp() {
     case 'motion': content = <MotionPage />; break
     case 'icons': content = <IconsPage />; break
     case 'voice': content = <VoicePage />; break
-    default: content = comp ? <comp.Page key={comp.id} /> : <OverviewPage go={go} />
+    default: content = comp ? <comp.Page key={comp.id} /> : <HomePage />
   }
 
   const link = (id: string, label: string) => (
@@ -66,10 +54,18 @@ export default function DesignSystemApp() {
 
   const nav = (
     <nav aria-label="Design system" className="space-y-6">
-      <div>
-        <p className="px-4 mb-1.5 font-dm font-bold text-[12px] uppercase tracking-wide text-coral">Foundations</p>
-        <ul className="space-y-0.5">{FOUNDATIONS.map((f) => link(f.id, f.label))}</ul>
-      </div>
+      <ul className="space-y-0.5">{link('overview', 'Home')}</ul>
+      {(
+        [
+          ['Introduction', INTRO],
+          ['Foundations', FOUNDATIONS],
+        ] as const
+      ).map(([title, items]) => (
+        <div key={title}>
+          <p className="px-4 mb-1.5 font-dm font-bold text-[12px] uppercase tracking-wide text-coral">{title}</p>
+          <ul className="space-y-0.5">{items.map((f) => link(f.id, f.label))}</ul>
+        </div>
+      ))}
       {groups.map((g) => (
         <div key={g}>
           <p className="px-4 mb-1.5 font-dm font-bold text-[12px] uppercase tracking-wide text-coral">{g}</p>

@@ -108,7 +108,8 @@ export default function LogTimeSheet({ type, title, dogName, rule, onConfirm, on
             </p>
           </div>
         </div>
-        <Button fullWidth onClick={() => onConfirm(at)}>
+        {/* Already saved as "just now" — nothing to save until another time is picked. */}
+        <Button fullWidth disabled={choice === 'now'} onClick={() => onConfirm(at)}>
           Save
         </Button>
       </div>

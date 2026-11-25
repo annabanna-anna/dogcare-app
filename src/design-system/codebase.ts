@@ -15,6 +15,26 @@ const tw = Object.values(twModules)[0] as {
 export const colorTokens: Record<string, string> = tw.theme.extend.colors
 export const fontTokens: Record<string, string[]> = tw.theme.extend.fontFamily
 
+// Primitive ramps (src/theme/primitives.js) — plain JS, so also via glob.
+const primModule = Object.values(import.meta.glob('/src/theme/primitives.js', { eager: true }))[0] as {
+  primitives: Record<string, Record<string, string>>
+  rampRoles: Record<string, string>
+  white: string
+  black: string
+}
+export const primitives = primModule.primitives
+export const rampRoles = primModule.rampRoles
+export const primitiveWhite = primModule.white
+export const primitiveBlack = primModule.black
+
+/** "ember/500" for a hex that is exactly a primitive step, else undefined. */
+const byHex = new Map<string, string>()
+for (const [ramp, steps] of Object.entries(primitives))
+  for (const [step, hex] of Object.entries(steps)) if (!byHex.has(hex.toLowerCase())) byHex.set(hex.toLowerCase(), `${ramp}/${step}`)
+byHex.set(primModule.white, 'white')
+byHex.set(primModule.black, 'black')
+export const primitiveName = (hex: string) => byHex.get(hex.toLowerCase())
+
 /** Every app source file (the design system itself excluded), as text. */
 export const sources: Record<string, string> = Object.fromEntries(
   Object.entries(
