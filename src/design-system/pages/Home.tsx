@@ -20,6 +20,7 @@ import LastOutPrompt from '../../components/LastOutPrompt'
 import PhoneFrame from '../../components/PhoneFrame'
 import DogIcon from '../../components/icons/DogIcon'
 import PawPrintFilled from '../../components/icons/PawPrintFilled'
+import { LogoLockup, LogoMark, Wordmark } from '../../components/Logo'
 import { AddButton, Chips, TextField } from '../../components/DogSetupWizard'
 import { TASK_TYPE_STYLE } from '../../components/taskTypeStyle'
 import type { TaskType } from '../../types'
@@ -447,10 +448,46 @@ export function PrinciplesPage() {
         </div>
       </Section>
 
+      <Section title="Logo">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-[22px] bg-cream border border-border-light flex items-center justify-center px-6 py-12 md:col-span-2">
+            <LogoLockup size={72} />
+          </div>
+          <div className="rounded-[22px] bg-text-primary flex items-center justify-center px-6 py-10">
+            <LogoLockup size={48} tone="dark" />
+          </div>
+          <div className="rounded-[22px] bg-card flex items-end justify-center gap-6 px-6 py-10">
+            {[96, 64, 40, 24, 16].map((s) => (
+              <div key={s} className="flex flex-col items-center gap-2">
+                <LogoMark size={s} title={s === 96 ? 'HeyPup app icon' : undefined} />
+                <span className="font-dm text-[12px] text-text-muted tabular-nums">{s}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          {[
+            ['Lockup', 'Icon + wordmark. Public site header and footer. On dark backgrounds “Hey” turns white; “Pup” stays coral.', '<LogoLockup size={36} />'],
+            ['Icon', 'The raised paw saying “hey”. App icon, favicon, design-system sidebar. Always on its coral tile.', '<LogoMark size={40} />'],
+            ['Wordmark', 'Outlined lettering, no font needed. Splash screen. Never retype “HeyPup” in a font to fake it.', '<Wordmark height={48} />'],
+          ].map(([t, d, c]) => (
+            <div key={t} className="rounded-[16px] bg-card p-5">
+              <p className="font-dm font-bold text-[16px] text-text-primary">{t}</p>
+              <p className="font-dm text-[14px] text-text-secondary mt-1 leading-relaxed">{d}</p>
+              <code className="block mt-3 font-mono text-[12px] text-cobalt">{c}</code>
+            </div>
+          ))}
+        </div>
+        <p className="font-dm text-[14px] text-text-muted mt-3">
+          Source: Figma “HeyPup” › 🎨 Brand › ✅ FINAL. Code: src/components/Logo.tsx. Static files in public/: favicon.svg,
+          logo.svg, logo-wordmark.svg, icon-192/512.png, icon-maskable-512.png, apple-touch-icon.png, badge-96.png.
+        </p>
+      </Section>
+
       <Section title="Brand moment">
         <div className="rounded-[22px] bg-cream border border-border-light flex flex-col items-center py-10 gap-4">
           <DotLottieReact src="/splash.lottie" loop autoplay style={{ width: 200, height: 200 }} />
-          <p className="font-outfit font-bold text-[44px] leading-none text-text-primary tracking-tight">HeyPup</p>
+          <Wordmark height={48} />
           <p className="font-dm font-bold text-[14px] text-coral uppercase tracking-widest">fetching your day…</p>
         </div>
         <p className="font-dm text-[14px] text-text-muted mt-3">
