@@ -1,12 +1,30 @@
 import { useEffect, useState } from 'react'
-import { Menu, X } from 'lucide-react'
-import PawPrintFilled from '../components/icons/PawPrintFilled'
+import { ChevronDown, Menu, X } from 'lucide-react'
+import { LogoMark, Wordmark } from '../components/Logo'
 import { IconsPage, LayoutPage, MotionPage, ShapePage, TypographyPage, VoicePage } from './pages/Foundations'
 import { ColorsPage } from './pages/Colors'
 import { FOUNDATIONS, HomePage, INTRO, PrinciplesPage } from './pages/Home'
 import { COMPONENT_PAGES } from './pages/Components'
 
 const readHash = () => window.location.hash.replace(/^#\/?/, '') || 'overview'
+
+// Which sidebar groups are collapsed — a per-viewer convenience, so plain
+// localStorage (wrapped: it can throw in private windows).
+const COLLAPSED_KEY = 'ds-collapsed-groups'
+function loadCollapsed(): Set<string> {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(COLLAPSED_KEY) ?? '[]') as string[])
+  } catch {
+    return new Set()
+  }
+}
+function saveCollapsed(set: Set<string>) {
+  try {
+    localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...set]))
+  } catch {
+    /* not persisted — fine */
+  }
+}
 
 export default function DesignSystemApp() {
   const [page, setPage] = useState(readHash)
@@ -23,7 +41,37 @@ export default function DesignSystemApp() {
   }, [])
 
   const comp = COMPONENT_PAGES.find((c) => c.id === page)
-  const groups = [...new Set(COMPONENT_PAGES.map((c) => c.group))]
+  const sections: { title: string; items: readonly { id: string; label: string }[] }[] = [
+    { title: 'Introduction', items: INTRO },
+    { title: 'Foundations', items: FOUNDATIONS },
+    ...[...new Set(COMPONENT_PAGES.map((c) => c.group))].map((g) => ({
+      title: g,
+      items: COMPONENT_PAGES.filter((c) => c.group === g),
+    })),
+  ]
+
+  const [collapsed, setCollapsed] = useState(loadCollapsed)
+  const toggle = (title: string) =>
+    setCollapsed((prev) => {
+      const next = new Set(prev)
+      if (next.has(title)) next.delete(title)
+      else next.add(title)
+      saveCollapsed(next)
+      return next
+    })
+
+  // The group holding the current page always opens, so you never lose your place.
+  const currentGroup = sections.find((s) => s.items.some((i) => i.id === page))?.title
+  useEffect(() => {
+    if (!currentGroup) return
+    setCollapsed((prev) => {
+      if (!prev.has(currentGroup)) return prev
+      const next = new Set(prev)
+      next.delete(currentGroup)
+      saveCollapsed(next)
+      return next
+    })
+  }, [currentGroup])
 
   let content
   switch (page) {
@@ -53,36 +101,43 @@ export default function DesignSystemApp() {
   )
 
   const nav = (
-    <nav aria-label="Design system" className="space-y-6">
+    <nav aria-label="Design system" className="space-y-4">
       <ul className="space-y-0.5">{link('overview', 'Home')}</ul>
-      {(
-        [
-          ['Introduction', INTRO],
-          ['Foundations', FOUNDATIONS],
-        ] as const
-      ).map(([title, items]) => (
-        <div key={title}>
-          <p className="px-4 mb-1.5 font-dm font-bold text-[12px] uppercase tracking-wide text-coral">{title}</p>
-          <ul className="space-y-0.5">{items.map((f) => link(f.id, f.label))}</ul>
-        </div>
-      ))}
-      {groups.map((g) => (
-        <div key={g}>
-          <p className="px-4 mb-1.5 font-dm font-bold text-[12px] uppercase tracking-wide text-coral">{g}</p>
-          <ul className="space-y-0.5">{COMPONENT_PAGES.filter((c) => c.group === g).map((c) => link(c.id, c.label))}</ul>
-        </div>
-      ))}
+      {sections.map(({ title, items }) => {
+        const open = !collapsed.has(title)
+        const listId = `nav-${title.replace(/\W+/g, '-').toLowerCase()}`
+        return (
+          <div key={title}>
+            <button
+              type="button"
+              onClick={() => toggle(title)}
+              aria-expanded={open}
+              aria-controls={listId}
+              className="w-full flex items-center justify-between gap-2 rounded-full px-4 py-1.5 mb-0.5 font-dm font-bold text-[12px] uppercase tracking-wide text-coral hover:bg-card transition-colors"
+            >
+              <span>{title}</span>
+              <span className="flex items-center gap-1.5 text-text-muted">
+                {!open && <span className="font-dm text-[12px] normal-case tracking-normal tabular-nums">{items.length}</span>}
+                <ChevronDown size={16} className={`transition-transform duration-200 ${open ? '' : '-rotate-90'}`} />
+              </span>
+            </button>
+            {open && (
+              <ul id={listId} className="space-y-0.5">
+                {items.map((f) => link(f.id, f.label))}
+              </ul>
+            )}
+          </div>
+        )
+      })}
     </nav>
   )
 
   const brand = (
-    <a href="#/overview" className="flex items-center gap-2.5">
-      <span className="size-9 rounded-full bg-coral text-white flex items-center justify-center">
-        <PawPrintFilled size={18} />
-      </span>
+    <a href="#/overview" className="flex items-center gap-3">
+      <LogoMark size={40} />
       <span>
-        <span className="block font-outfit font-bold text-[20px] leading-none text-text-primary">HeyPup</span>
-        <span className="block font-dm font-bold text-[12px] text-text-muted mt-0.5">Design system</span>
+        <Wordmark height={20} className="block" />
+        <span className="block font-dm font-bold text-[12px] text-text-muted mt-1">Design system</span>
       </span>
     </a>
   )

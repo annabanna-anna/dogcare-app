@@ -1,4 +1,5 @@
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
+import { Wordmark } from './Logo'
 
 interface Props {
   fading: boolean
@@ -26,10 +27,8 @@ export default function SplashScreen({ fading }: Props) {
         style={{ width: 260, height: 260 }}
       />
 
-      <div className="flex flex-col items-center gap-2">
-        <p className="font-outfit font-bold text-[44px] leading-none text-text-primary tracking-tight">
-          HeyPup
-        </p>
+      <div className="flex flex-col items-center gap-4">
+        <Wordmark height={48} />
         <p className="font-dm font-bold text-[14px] text-coral uppercase tracking-widest">
           fetching your day…
         </p>

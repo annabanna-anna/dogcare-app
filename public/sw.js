@@ -60,8 +60,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(payload.title, {
       body: payload.body,
-      icon: '/paw.svg',
-      badge: '/paw.svg',
+      icon: '/icon-192.png',
+      badge: '/badge-96.png',
       tag: payload.tag, // same tag replaces rather than stacks duplicates
       data: { url: payload.url },
     }),

@@ -2,6 +2,7 @@ import { type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { APP_URL } from '../lib/host'
 import { CONTACT_EMAIL } from '../lib/siteConfig'
+import { LogoLockup } from './Logo'
 
 interface Props {
   children: ReactNode
@@ -21,9 +22,10 @@ export default function PublicPageShell({ children }: Props) {
         <div className="mx-auto max-w-[1100px] px-6 h-16 flex items-center justify-between gap-4">
           <Link
             to="/"
-            className="font-outfit font-bold text-[22px] tracking-tight text-cobalt rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-coral"
+            aria-label="HeyPup home"
+            className="flex rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-coral"
           >
-            HeyPup
+            <LogoLockup size={36} />
           </Link>
           <nav className="flex items-center gap-5" aria-label="Site">
             <Link
@@ -47,7 +49,7 @@ export default function PublicPageShell({ children }: Props) {
       <footer className="bg-text-primary text-white">
         <div className="mx-auto max-w-[1100px] px-6 py-12 flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="font-outfit font-bold text-[26px] tracking-tight leading-none">HeyPup</p>
+            <LogoLockup size={44} tone="dark" />
             <p className="font-dm text-[14px] text-[#a1a1a1] mt-2 max-w-[38ch] leading-relaxed">
               A task-tracking companion for dog sitters and boarders.
             </p>
